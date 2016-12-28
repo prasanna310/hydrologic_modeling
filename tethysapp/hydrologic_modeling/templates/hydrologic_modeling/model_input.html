@@ -153,6 +153,19 @@
     </div>
 
   <input type="submit" name="input-form" class="btn btn-default" value="Simulate Watershed">
+
+  </form>
+
+ <!--Load previous simulation instead of preparing one-->
+  <form id ="load_simulation"  method="post" action="{% url 'hydrologic_modeling:model_run' %}" enctype="form-data">
+    {% csrf_token %}
+
+        <hr>
+          Simulation already prepared? Load the previously saved simulation instead.
+          {% gizmo select_input simulation_names_list %}
+
+  <input type="submit" name="simulation-load" class="btn btn-default" value="Load simulation" >
+  <input type="hidden" name="load_simulation_name" value= "{{simulation_names_list}}">
   </form>
 
 {% endblock %}

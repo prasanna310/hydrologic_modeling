@@ -28,6 +28,8 @@ sys.path.append('/utils')
 from utils.pytopkapi_utils import *
 
 
+
+
 def create_hydrograph(date_in_datetime, Qsim, simulation_name, error):
     # preparing timeseries data in the format shown in: http://docs.tethysplatform.org/en/latest/tethys_sdk/gizmos/plot_view.html#time-series
     from tethys_sdk.gizmos import TimeSeries
@@ -54,12 +56,82 @@ def create_hydrograph(date_in_datetime, Qsim, simulation_name, error):
     )
     return observed_hydrograph
 
-def handle_uploaded_file(f):
-    with open('some/file/name.txt', 'wb+') as destination:
-        for chunk in f.chunks():
-            destination.write(chunk)
+def create_model_input_dict_from_request(request):
+    # from the user input forms in model_input page, the request is converted to a dictionary of inputs
+
+    inputs_dictionary = {"user_name": request.user.username,
+                         "simulation_name": request.POST['simulation_name'],
+                         "simulation_start_date": request.POST['simulation_start_date_picker'],
+                         "simulation_end_date": request.POST['simulation_end_date_picker'],
+                         "USGS_gage": int(request.POST['USGS_gage']),
+
+                         "outlet_y": float(request.POST['outlet_y']),
+                         "outlet_x": float(request.POST['outlet_x']),
+                         "box_topY": float(request.POST['box_topY']),
+                         "box_bottomY": float(request.POST['box_bottomY']),
+                         "box_rightX": float(request.POST['box_rightX']),
+                         "box_leftX": float(request.POST['box_leftX']),
+
+                         "timeseries_source": request.POST['timeseries_source'],
+
+                         "threshold": int(request.POST['threshold']),
+                         "cell_size": float(request.POST['cell_size']),
+                         "timestep": float(request.POST['timestep']),
+                         "model_engine": request.POST['model_engine'],
+
+                         }
+    return inputs_dictionary
+
+def create_model_input_dict_from_db(current_model_inputs_table_id, user_name ):
+    """
+    :param model_inputs_table:  primary key id for the model_input table
+    :param user_name:           tethys or hydroshare username
+    :return:                    dictionary of input parameters
+    """
+    from .model import  SessionMaker, model_inputs_table
+    session = SessionMaker()
+
+    # # IMPORTENT STEP: retrieve the model_inputs_table.id of this entry to pass it to the next page (calibration page)
+    # current_model_inputs_table_id = str(len(session.query(model_inputs_table).filter(
+    #     model_inputs_table.user_name == user_name).all()))  # because PK is the same as no of rows, i.e. length
+    # print 'model_input ID for last sim, which will be used for calibration: ', current_model_inputs_table_id
+
+    # # If passing to calibration is not our aim, we take the id as user input
+    print 'model_input ID for which rest of the inputs are being retrieved: ', current_model_inputs_table_id
+
+    all_rows = session.query(model_inputs_table).filter(model_inputs_table.id == current_model_inputs_table_id).all()
+
+    # retrieve the parameters and write to a dictionary
+    inputs_dictionary = {}
+
+    for row in all_rows:
+        inputs_dictionary['id'] = row.id
+        inputs_dictionary['user_name'] = row.user_name
+        inputs_dictionary['simulation_name'] = row.simulation_name
+        inputs_dictionary['simulation_folder'] = row.simulation_folder
+        inputs_dictionary['simulation_start_date'] = row.simulation_start_date
+        inputs_dictionary['simulation_end_date'] = row.simulation_end_date
+        inputs_dictionary['USGS_gage'] = row.USGS_gage
+
+        inputs_dictionary['outlet_x'] = row.outlet_x
+        inputs_dictionary['outlet_y'] = row.outlet_y
+        inputs_dictionary['box_topY'] = row.box_topY
+        inputs_dictionary['box_bottomY'] = row.box_bottomY
+        inputs_dictionary['box_rightX'] = row.box_rightX
+        inputs_dictionary['box_leftX'] = row.box_leftX
+
+        timeseries_source, threshold, cell_size, timestep = row.other_model_parameters.split("__")
+        inputs_dictionary['timeseries_source'] = timeseries_source
+        inputs_dictionary['threshold'] = threshold
+        inputs_dictionary['cell_size'] = cell_size
+        inputs_dictionary['timestep'] = timestep
+
+        inputs_dictionary['model_engine'] = row.model_engine
+
+    return  inputs_dictionary
 
 def create_simulation_list_after_querying_db(user_name):
+    # returns a tethys gizmo or a drop down list, which should be referenced in html with name = 'simulation_names_list'
     from .model import engine, SessionMaker, Base, model_inputs_table, model_calibration_table
     from tethys_sdk.gizmos import SelectInput
 
@@ -84,7 +156,6 @@ def create_simulation_list_after_querying_db(user_name):
                                      options= queries  #[ (  simulations_queried[0].id, '1'),  (  simulations_queried[1].simulation_name, '2'  ),  (   simulations_queried[1].user_name, '2'  )]
                                                           )
     return simulation_names_list
-
 
 def get_outlet_xy_from_shp_shx(shp_file, shx_file, simulation_folder='/usr/lib/tethys/src/tethys_apps/tethysapp/my_first_app/workspaces/user_workspaces/usr1/'):
 
@@ -179,70 +250,71 @@ def get_box_xyxy_from_shp_shx(shp_file, shx_file, simulation_folder='/usr/lib/te
 
     return box_rightX, box_bottomY, box_leftX, box_topY
 
-
-def write_input_parameters_to_db(user_name, simulation_name, input_parameters_string, calibration_parameter_string ):
-
-    # write the inputs to the database
-    from .model import engine, SessionMaker, Base, model_inputs_table, model_calibration_table
-
-    Base.metadata.create_all(engine)    # Create tables
-    session = SessionMaker()            # Make session
-
-    one_run = model_inputs_table(user_name, input_parameters_string, calibration_parameter_string)
-
-    session.add(one_run)
-    session.commit()
-
-    # read the id
-    current_model_inputs_table_id = str(len(session.query(model_inputs_table).filter(
-    model_inputs_table.user_name == user_name).all()))  # because PK is the same as no of rows, i.e. length
-
-    return current_model_inputs_table_id
-
-def call_subprocess(cmdString, debugString):
-    cmdargs = shlex.split(cmdString)
-    debFile = open('debug_file.txt', 'w')
-    debFile.write('Starting %s \n' % debugString)
-    retValue = subprocess.call(cmdargs,stdout=debFile)
-    if (retValue==0):
-        debFile.write('%s Successful\n' % debugString)
-        debFile.close()
-    else:
-        debFile.write('There was error in %s\n' % debugString)
-        debFile.close()
-
-def change_point_to_WGS84(list_of_points, in_shp_file):
-
+def run_model_with_input_as_dictionary(inputs_dictionary, simulation_folder=""):
     """
-    :param list_of_points: a python list of points to be transformed to WGS 1984
-    :param in_shp_file: shapefile, to read its input projection
-    :return: a list of transformed points
-
-    Helper Source:
-    http://zevross.com/blog/2014/06/09/no-esri-no-problem-manipulate-shapefiles-with-the-python-library-osgeo/
-    http://geoinformaticstutorial.blogspot.com/2012/10/reprojecting-shapefile-with-gdalogr-and.html
+    :param inputs_dictionary:   inputs converted to dictionary in validation step. Type of inouts are taken care of
+                                e.g. float is already a float type, int is int, and string is string.
+    :param simulation_folder:
+    :return:                    Hydrograph (as timeseries, between datetime Vs Discharge)
     """
+    # inputs extracted from the dictionary
 
-    driver = ogr.GetDriverByName('ESRI Shapefile')
-    dataSource = driver.Open(in_shp_file, 0)  # 0 means read-only, 1 means writeable
-    layer = dataSource.GetLayer()
+    user_name = inputs_dictionary['user_name']
+    simulation_name = inputs_dictionary['simulation_name']
+    simulation_folder = simulation_folder
+    simulation_start_date = inputs_dictionary['simulation_start_date']
+    simulation_end_date = inputs_dictionary['simulation_end_date']
+    USGS_gage = int(inputs_dictionary['USGS_gage'])
 
-    sourceprj = layer.GetSpatialRef()
-    targetprj = osr.SpatialReference()
-    targetprj.ImportFromEPSG(4326)
-    transform = osr.CoordinateTransformation(sourceprj, targetprj)
+    outlet_x = float(inputs_dictionary['outlet_x'])
+    outlet_y = float(inputs_dictionary['outlet_y'])
+    box_topY = float(inputs_dictionary['box_topY'])
+    box_bottomY = float(inputs_dictionary['box_bottomY'])
+    box_rightX = float(inputs_dictionary['box_rightX'])
+    box_leftX = float(inputs_dictionary['box_leftX'])
 
-    #
-    # # convert the points to WGS 84
-    # point = ogr.CreateGeometryFromWkt("POINT (%s %s)"%(outlet_x,outlet_y ) )
-    # point.Transform(transform)
-    #
-    # outlet_x = point.ExportToWkt()[0]
-    # outlet_y = point.ExportToWkt()[1]
-    #
-    # #
-    # # return list_of_transferred_points
+    timeseries_source = inputs_dictionary['timeseries_source']
+    threshold = float(inputs_dictionary['box_bottomY'])
+    cell_size = float(inputs_dictionary['box_bottomY'])
+    timestep = float(inputs_dictionary['box_bottomY'])
+    model_engine = inputs_dictionary['model_engine']
 
+    # :todo some sort of algorith to create a folder name. ini_fname = simulation_name OR may not be required
+    temp_folder_name = 'usr1'
+    ini_fname = 'BlackSmithFork.ini'
+
+    simulation_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'workspaces', 'user_workspaces',
+                                     temp_folder_name)
+    ini_path = os.path.join(simulation_folder, ini_fname)
+
+    # TOPKAPI MODEL
+    if model_engine == 'TOPKAPI':
+        # step0,
+        run_1 = pytopkapi_run_instance(simulation_name=simulation_name, cell_size=cell_size, timestep=timestep,
+                                       xy_outlet=[outlet_x, outlet_y],
+                                       yyxx_boundingBox=[box_topY, box_bottomY, box_leftX, box_rightX],
+                                       USGS_gage=USGS_gage, list_of_threshold=[threshold],
+                                       simulation_folder=simulation_folder)
+
+        step1_create_ini = run_1.prepare_supporting_ini()  # step1
+        # step2_run_model = run_1.run()                               # step2
+        date_in_datetime, Qsim, error = run_1.get_Qsim_and_error()
+
+        # write_to_db_input_as_dictionary(inputs_dictionary, simulation_folder)
+        write_to_db_input_as_dictionary(inputs_dictionary, simulation_folder)
+
+        # create_viewplot_hydrograph(date_in_datetime, Qsim, error)  # aile kina ho kaam garena
+
+        # preparing timeseries data in the format shown in: http://docs.tethysplatform.org/en/latest/tethys_sdk/gizmos/plot_view.html#time-series
+        hydrograph_series = []
+        date_broken = [[dt.year, dt.month, dt.day, dt.hour, dt.minute] for dt in date_in_datetime]
+        for i in range(len(Qsim)):
+            date = datetime(year=date_broken[i][0], month=date_broken[i][1], day=date_broken[i][2],
+                            hour=date_broken[i][3],
+                            minute=date_broken[i][4])
+            hydrograph_series.append([date, float(Qsim[i])])
+
+    return hydrograph_series
 
 def validate_inputs(request):
     """
@@ -251,7 +323,7 @@ def validate_inputs(request):
     :return:
         Validation status   :True if valid form, False if something wrong with the form
         Form Error          :If there is something wrong, gives a superficial error message
-        Inputs              :If form is complete, returns the list of inputs as a dictionary
+        inputs_dictionary   :If form is complete, returns the list of inputs as a dictionary
     """
 
     # defaults
@@ -284,7 +356,7 @@ def validate_inputs(request):
     # # From RADIO BOX (not created so far), make sure inputs is read here so no IF required
 
     # # Ask confirmation of shapefile inputs
-    shapefile_radio = True
+    shapefile_radio = False
     if shapefile_radio:
         # get the outlet x,y and the bounding box
         try:
@@ -360,12 +432,12 @@ def validate_inputs(request):
                     "box_rightX": float(box_rightX),
                     "box_leftX" : float(box_leftX),
 
-                    "model_engine": request.POST['model_engine'],
                     "timeseries_source": request.POST['timeseries_source'],
 
                     "threshold": int(request.POST['threshold']),
                     "cell_size": float(request.POST['cell_size']),
                     "timestep": float(request.POST['timestep']),
+                    "model_engine":request.POST['model_engine'],
 
             }
 
@@ -373,83 +445,6 @@ def validate_inputs(request):
         validation_status = False
 
     return validation_status, error_msg, inputs_dictionary
-
-
-def run_model_with_input_as_dictionary(inputs_dictionary, simulation_folder):
-    """
-
-    :param inputs_dictionary:   inputs converted to dictionary in validation step. Type of inouts are taken care of
-                                e.g. float is already a float type, int is int, and string is string.
-    :param simulation_folder:
-    :return:                    Hydrograph (as timeseries, between datetime Vs Discharge)
-    """
-    # inputs extracted from the dictionary
-
-    user_name = inputs_dictionary['user_name']
-    simulation_name = inputs_dictionary['simulation_name']
-    simulation_folder = simulation_folder
-    simulation_start_date = inputs_dictionary['simulation_start_date']
-    simulation_end_date = inputs_dictionary['simulation_end_date']
-    USGS_gage = int(inputs_dictionary['USGS_gage'])
-
-    outlet_x = float(inputs_dictionary['outlet_x'])
-    outlet_y = float(inputs_dictionary['outlet_y'])
-    box_topY = float(inputs_dictionary['box_topY'])
-    box_bottomY = float(inputs_dictionary['box_bottomY'])
-    box_rightX = float(inputs_dictionary['box_rightX'])
-    box_leftX = float(inputs_dictionary['box_leftX'])
-
-    timeseries_source = inputs_dictionary['timeseries_source']
-    threshold = float(inputs_dictionary['box_bottomY'])
-    cell_size = float(inputs_dictionary['box_bottomY'])
-    timestep = float(inputs_dictionary['box_bottomY'])
-
-
-    # :TODO load all the parameters to the database, and use that information in the block below to retreive
-    # # write to database
-    write_to_db_input_as_dictionary(inputs_dictionary, simulation_folder)
-
-    # :TODO write the inputs in a database
-
-    # use the inputs to create (0r for the time being run) the model
-
-    # :todo some sort of algorith to create a folder name. ini_fname = simulation_name OR may not be required
-    temp_folder_name = 'usr1'
-    ini_fname = 'BlackSmithFork.ini'
-
-    simulation_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'workspaces', 'user_workspaces',
-                                     temp_folder_name)
-    ini_path = os.path.join(simulation_folder, ini_fname)
-
-    # step0
-    run_1 = pytopkapi_run_instance(simulation_name=simulation_name, cell_size=cell_size, timestep=timestep,
-                                   xy_outlet=[outlet_x, outlet_y],
-                                   yyxx_boundingBox=[box_topY, box_bottomY, box_leftX, box_rightX],
-                                   USGS_gage=USGS_gage, list_of_threshold=[threshold],
-                                   simulation_folder=simulation_folder)
-
-    step1_create_ini = run_1.prepare_supporting_ini()           # step1
-    # step2_run_model = run_1.run()                               # step2
-    date_in_datetime, Qsim, error = run_1.get_Qsim_and_error()
-
-
-    # # # write to database
-    # write_to_db_input_as_dictionary(inputs_dictionary, simulation_folder)
-
-
-
-    # create_viewplot_hydrograph(date_in_datetime, Qsim, error)  # aile kina ho kaam garena
-
-    # preparing timeseries data in the format shown in: http://docs.tethysplatform.org/en/latest/tethys_sdk/gizmos/plot_view.html#time-series
-    hydrograph_series = []
-    date_broken = [[dt.year, dt.month, dt.day, dt.hour, dt.minute] for dt in date_in_datetime]
-    for i in range(len(Qsim)):
-        date = datetime(year=date_broken[i][0], month=date_broken[i][1], day=date_broken[i][2], hour=date_broken[i][3],
-                        minute=date_broken[i][4])
-        hydrograph_series.append([date, float(Qsim[i])])
-
-
-    return hydrograph_series
 
 def write_to_db_input_as_dictionary(inputs_dictionary, simulation_folder):
 
@@ -471,18 +466,22 @@ def write_to_db_input_as_dictionary(inputs_dictionary, simulation_folder):
     cell_size = float(inputs_dictionary['cell_size'])
     timestep = float(inputs_dictionary['timestep'])
 
+    model_engine = inputs_dictionary['model_engine']
+
     # other model parameter is string or text, combining parametes with __ (double underscore)
     other_model_parameters = str(timeseries_source)+ "__"+ str(threshold) + "__"+ str(cell_size) + "__"+ str(timestep)
 
     # :TODO write only when sim_name is different for a user
-    from .model import engine, SessionMaker, Base, model_inputs_table, model_calibration_table
+    from .model import engine,Base, SessionMaker, model_inputs_table, model_calibration_table
     # model_calibration_table.__table__.drop(engine)   # to delete the tables, in case anything wrong goes
     # model_inputs_table.__table__.drop(engine)
-    # Base.metadata.create_all(engine)  # Create tables
-    session = SessionMaker()  # Make session
+    # Base.metadata.create_all(engine)    # Create tables
+    session = SessionMaker()            # Make session
+
+    # one etnry / row
     one_run = model_inputs_table(user_name, simulation_name,simulation_folder,simulation_start_date,simulation_end_date,USGS_gage,
                  outlet_x,outlet_y, box_topY,box_bottomY, box_rightX,box_leftX,
-                 other_model_parameters )
+                 model_engine, other_model_parameters )
     session.add(one_run)
     session.commit()
 
@@ -490,6 +489,54 @@ def write_to_db_input_as_dictionary(inputs_dictionary, simulation_folder):
     current_model_inputs_table_id = str(len(session.query(model_inputs_table).filter(
         model_inputs_table.user_name == user_name).all()))  # because PK is the same as no of rows, i.e. length
 
+
+# # UN-USED or INCOMPLETE functions
+def call_subprocess(cmdString, debugString):
+    cmdargs = shlex.split(cmdString)
+    debFile = open('debug_file.txt', 'w')
+    debFile.write('Starting %s \n' % debugString)
+    retValue = subprocess.call(cmdargs,stdout=debFile)
+    if (retValue==0):
+        debFile.write('%s Successful\n' % debugString)
+        debFile.close()
+    else:
+        debFile.write('There was error in %s\n' % debugString)
+        debFile.close()
+def change_point_to_WGS84(list_of_points, in_shp_file):
+
+    """
+    :param list_of_points: a python list of points to be transformed to WGS 1984
+    :param in_shp_file: shapefile, to read its input projection
+    :return: a list of transformed points
+
+    Helper Source:
+    http://zevross.com/blog/2014/06/09/no-esri-no-problem-manipulate-shapefiles-with-the-python-library-osgeo/
+    http://geoinformaticstutorial.blogspot.com/2012/10/reprojecting-shapefile-with-gdalogr-and.html
+    """
+
+    driver = ogr.GetDriverByName('ESRI Shapefile')
+    dataSource = driver.Open(in_shp_file, 0)  # 0 means read-only, 1 means writeable
+    layer = dataSource.GetLayer()
+
+    sourceprj = layer.GetSpatialRef()
+    targetprj = osr.SpatialReference()
+    targetprj.ImportFromEPSG(4326)
+    transform = osr.CoordinateTransformation(sourceprj, targetprj)
+
+    #
+    # # convert the points to WGS 84
+    # point = ogr.CreateGeometryFromWkt("POINT (%s %s)"%(outlet_x,outlet_y ) )
+    # point.Transform(transform)
+    #
+    # outlet_x = point.ExportToWkt()[0]
+    # outlet_y = point.ExportToWkt()[1]
+    #
+    # #
+    # # return list_of_transferred_points
+def handle_uploaded_file(f):
+    with open('some/file/name.txt', 'wb+') as destination:
+        for chunk in f.chunks():
+            destination.write(chunk)
 def load_shapefile_to_db(shapefile_base="/usr/lib/tethys/src/tethys_apps/tethysapp/my_first_app/workspaces/user_workspaces/usr1/outlet_boundary/Wshed_BlackSmithFork", db='Spatial_dataset_service1'):
     # https://github.com/tethysplatform/tethys/blob/master/docs/tethys_sdk/spatial_dataset_services.rst
 
@@ -520,8 +567,27 @@ def load_shapefile_to_db(shapefile_base="/usr/lib/tethys/src/tethys_apps/tethysa
 
 
     return result['result']
+def write_input_parameters_to_db(user_name, simulation_name, input_parameters_string, calibration_parameter_string):
+    # NOT USED
 
+    # write the inputs to the database
+    from .model import engine, SessionMaker, Base, model_inputs_table, model_calibration_table
 
+    Base.metadata.create_all(engine)  # Create tables
+    session = SessionMaker()  # Make session
+
+    one_run = model_inputs_table(user_name, input_parameters_string, calibration_parameter_string)
+
+    session.add(one_run)
+    session.commit()
+
+    # read the id
+    current_model_inputs_table_id = str(len(session.query(model_inputs_table).filter(
+        model_inputs_table.user_name == user_name).all()))  # because PK is the same as no of rows, i.e. length
+
+    return current_model_inputs_table_id
+
+# # In test phase functions
 def test_hds():
 
     path = os.path.dirname(os.path.realpath(__file__)) + "/hydrogate_python_client"
@@ -557,14 +623,6 @@ def test_hds():
     hs_obj = HydroshareResource(upload_30m_DEM)
     hs_obj.add(upload_outlet)
     hs_obj.add(upload_wshed)
-
-
-
-
-
-
-
-
 class HydroshareResource(object):
 
     def __init__(self, fpath="", username = "prasanna_310",  password = "Hydrology12!@" ):

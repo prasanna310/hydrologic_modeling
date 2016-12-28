@@ -39,6 +39,7 @@ class model_inputs_table(Base):
     box_rightX = Column(Float)
     box_leftX = Column(Float)
 
+    model_engine = Column(Text)
     other_model_parameters = Column(Text)
     # timeseries_source =  Column(Text)
     # threshold = Column(Float)
@@ -48,7 +49,7 @@ class model_inputs_table(Base):
 
     def __init__(self, user_name, simulation_name,simulation_folder,simulation_start_date,simulation_end_date,USGS_gage,
                  outlet_x,outlet_y, box_topY,box_bottomY, box_rightX,box_leftX,
-                 other_model_parameters ):
+                 model_engine,other_model_parameters ):
         """
         Constructor for a gage
         """
@@ -66,6 +67,7 @@ class model_inputs_table(Base):
         self.box_rightX = box_rightX
         self.box_leftX = box_leftX
 
+        self.model_engine = model_engine
         self.other_model_parameters = other_model_parameters
         # self.cell_size = cell_size
         # self.timestep = timestep

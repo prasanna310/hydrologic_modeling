@@ -1162,11 +1162,13 @@ class pytopkapi_run_instance:
 
         return "successfully ran the simulation"
     def get_Qsim_and_error(self):
+        print "At pytopkapi_utils, 1165: get_Qsim_and_error"
 
         self.outlet_ID, self.no_of_cell = get_outletID_noOfCell(self.simulation_folder + '/cell_param.dat')
         self.date, self.ar_Q_sim, self.error_checking_param= get_hydrograph(self.simulation_folder,
                                                                   self.Q_observed_file, self.outlet_ID)
 
+        print "Date and Q-simulated array read from the prepared run"
         return self.date, self.ar_Q_sim, self.error_checking_param
 
     def get_cell_size_demo(self):

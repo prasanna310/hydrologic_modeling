@@ -47,9 +47,12 @@
 
 
 {% block app_content %}
+  If the simulation is retreived from the drop down menu, the name of the sim will be:
+  <h5> Test Variable: <u><b>{{simulation_loaded_id}}</b></u>  </h5>
+
   {% if simulation_name %} <!--- If the input is complete --->
         <h5> Contragulations! <u><b>{{simulation_name}}</b></u> ran successfully!  </h5>
-        <h5> Test Variable: ! <u><b>{{test_var}}</b></u>  </h5>
+
       Here is the simulated discharge for the outlet you picked. <b>(long: {{outlet_lon}} , lat: {{outlet_lat}}) </b>
         <br>
 
@@ -60,10 +63,20 @@
 
   {% if fac_L_form != "" %} <!--- If the input is complete --->
       <h5> Contragulations <b>{{user_name}}</b>! Parameters were changed successfully!  </h5>
-            Using the calibratoin parameters provided, the graph was updated for the model-input id: {{Iwillgiveyou_model_inputs_table_id_from_another_html}}
+            Using the calibratoin parameters provided, the graph was updated for the ll-input id: {{Iwillgiveyou_model_inputs_table_id_from_another_html}}
 
 
             {% gizmo plot_view observed_hydrograph_userModified %}
+
+
+   {% endif %}
+
+  {% if simulation_loaded_id != "" %} <!--- If the input is complete --->
+      <h5> Contragulations <b>{{user_name}}</b>! Parameters were changed successfully!  </h5>
+            Using the calibratoin parameters provided, the graph was updated for the ll-input id: {{Iwillgiveyou_model_inputs_table_id_from_another_html}}
+
+
+            {% gizmo plot_view observed_hydrograph_loaded %}
 
 
    {% endif %}
