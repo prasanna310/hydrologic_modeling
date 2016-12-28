@@ -1,0 +1,50 @@
+#Please import the tool AutoPTPK_2 into the ArcGIS
+#The scripts here are to be run from inside of ArcGIS environment, except SSURGO_merge_tool2.py
+#All of them, except SSURGO_merge_tool2.py uses arcpy module
+#Also, some of them use Pandas and few other modules
+#Files have different names in ArcGIS tool, 
+
+[files]
+GetDataPTPK_Tool		Downloads DEM and Landuse data from the we, using arcgis services
+[STEP1..]				{
+						Associated with get data script in ArcGIS
+						Inputs: a polygen shapefile(located in a geodatabase), a geodatabase to save
+						Output: DEM and the landuse data, (downloaded)}
+DEM_processing_Tool		Preprocessing of DEM and Landuse data to create useful datasets
+[STEP2..]				{
+						Inputs: DEM, Landuse,draining outlet point shapefile, Personal Geodatabase
+						Output: files in the Geodatabase, projected in UTM  Zone 12
+								str_cr   (stream network)
+								fdr_cr   (flow direction)
+								mask_r    (watershed area)
+								SD        (soil depth raster) 
+								n_channel,(Mannings coefficient for Channel) 
+								n_Overland (Mannings coefficient for overland)
+								drp_r     (slope or drop)
+								DEM_Prj_C} (DEM file)	
+								}
+SSURGO_merge_tool2		Joins different SSURGO tables, maps all soil properties required to map units
+[STEP3..]				To be run  from an environment that contains Pandas module
+						{
+						Inputs: A folder that contains the SSURGO folders (SSURGO downloaded data come in folders like UT_612)
+							    Path to the GreenAmpt lookup tables, that matches soil to different properties	 
+						Output: In each SSURGO folder, MUKEY-Vs-Values.csv is created 
+						}
+								
+Join and Feature to Raster
+[STEP4..]				Joins the soil properties files that were mapped to map units to the SSURGO shapefile
+						{
+						Inputs: The folder that contains the SSURGO folders (SSURGO downloaded data come in folders like UT_612)
+								A raster to match the extent and projection, recommended:DEM_Prj_C
+								A folder where the rasters created are to be saved
+						Output: Projected SSURGO shapefile, with soil properties column joint
+								Rasters:
+								KSAT-t_UTxxxc (saturated Hydraulic Conductivity)
+								EFPO-t_UTxxxc (Effective porosity)
+								RSM-t_UTxxxc  (Residual Soil Moisture Content)
+								BBL-t_UTxxxc  (Bubbling Pressure)
+								PSD-t_UTxxxc  (Pore size distribution)
+						}
+						
+*NOTE: All the files as output (from "Join and Feature to Raster", and "DEM_processing_Tool" ) needs to be converted to tifs using arcGIS tool "to the other format"
+**Other files can be ignored for now

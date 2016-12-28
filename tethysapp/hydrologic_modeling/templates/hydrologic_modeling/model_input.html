@@ -1,0 +1,258 @@
+{% extends "hydrologic_modeling/base.html" %}
+
+
+{% load tethys_gizmos %}
+
+{% block app_navigation %}
+    <h3>Inputs for the model </h3>
+    <p>Prepare the hydrologic model by entering the inputs (in the three steps) below. The error is:  {{form_error}} </p>
+
+
+  <form id ="inputs"  method="post" action="{% url 'hydrologic_modeling:model_run' %}" enctype="multipart/form-data">
+  {% csrf_token %}
+
+    <!--http://stackoverflow.com/questions/29151241/using-bootstrap-collapse-on-radio-buttons-to-show-hide-content-no-js-->
+    <!--<input type="radio" name="group1" value="1" data-toggle="collapse" data-parent="#accordion" data-target="#collapseOne" >-->
+    <!--<input type="radio" name="group1" value="2" data-toggle="collapse" data-parent="#accordion" data-target="#collapseTwo">-->
+    <!--<input type="radio" name="group1" value="3" data-toggle="collapse" data-parent="#accordion" data-target="#collapseThree">-->
+
+
+    <!--Bootstrap panels (accordion) for clean looking inputs  -->
+    <div class="inputs_as_accordion" id="inputs_as_accordion">
+
+        <!--             First Input Section                  -->
+        <div class="panel panel-default">
+            <div class="panel-heading" data-toggle="collapse" data-target="#generalInputs">
+                <h4 class="panel-title">    1. General Inputs    </h4>
+            </div>
+
+            <div id="generalInputs" class="panel-collapse collapse in">
+                <div class="panel-body">
+
+                      {% gizmo text_input simulation_name %}
+                      {% gizmo text_input USGS_gage %}
+
+                      <table style="width:100%">
+                              <tr>
+                                    <th> {% gizmo date_picker simulation_start_date_picker %} </th>
+                                    <th>  {% gizmo date_picker simulation_end_date_picker %} </th>
+                              </tr>
+                      </table>
+                </div>
+            </div>
+
+        </div>
+
+
+
+        <!--             Second Input Section                  -->
+        <div class="panel panel-default">
+            <div class="panel-heading" data-toggle="collapse" data-target="#domainInputs">
+                <h4 class="panel-title">
+                    2. The domain
+                </h4>
+            </div>
+            <div id="domainInputs" class="panel-collapse collapse">
+                <div class="panel-body">
+
+                                    <input type="radio" name="domain_radio" value="1" data-toggle="collapse" data-parent="#accordion" data-target="#specify" > Specify long lat, or draw on map
+
+                                    <div id="specify" class="panel-collapse collapse" >
+                                      <br> <strong> OUTLET  </strong>
+
+                                      <table style="width:100%">
+
+
+                                          <tr>
+                                                <th> {% gizmo text_input outlet_x %} </th>
+                                                <th> {% gizmo text_input outlet_y %} </th>
+                                          </tr>
+
+                                        </table>
+                                        <br>
+
+                                      <strong> BOUNDING BOX </strong> <br>
+                                      <table width="100%">
+                                          <tr>
+                                                <th> </th>
+                                                <th> {% gizmo text_input box_topY %}</th>
+                                                <th> </th>
+                                          </tr>
+                                          <tr>
+                                                <td>{% gizmo text_input box_leftX %}</td>
+                                                <td></td>
+                                                <td>{% gizmo text_input box_rightX %}</td>
+                                          </tr>
+                                          <tr>
+                                                <td></td>
+                                                <td> {% gizmo text_input box_bottomY %}</td>
+                                                <td></td>
+                                          </tr>
+
+                                      </table>
+                                    </div>
+
+                                    <input type="radio" name="domain_radio" value="1" data-toggle="collapse" data-parent="#accordion" data-target="#upload" > Upload ESRI shp files
+
+                                    <div id="upload" class="collapse" >
+                                      <table width="20%">
+                                          <tr>
+                                              <th> Outlet </th>
+                                              <th><input type="file" name="outlet_shp" title=" " multiple/> </th>
+                                              <!--<th><input type="submit" name="submit" value="Upload" /> </th>-->
+                                          </tr>
+                                          <tr>
+                                              <th> Watershed </th>
+                                              <th><input type="file" name="watershed_shp"  accept="image/*" title="&nbsp;" multiple/> </th>
+                                              <!--<th><input type="submit" name="submit" value="Upload" /> </th>-->
+                                          </tr>
+                                       </table>
+                                    </div>
+
+
+                                    <br><input type="radio" name="domain_radio" value="1" data-toggle="collapse" data-parent="#accordion" data-target="#hs_upload" > Specify Hydroshare Resource ID
+                                    <div id="hs_upload" class="collapse" >
+                                       <table>
+                                          <tr>
+                                              <th> Outlet  </th>
+                                              <th>{% gizmo text_input outlet_hs %} </th>
+                                          </tr>
+                                          <tr>
+                                              <th> Watershed </th>
+                                              <th>{% gizmo text_input bounding_box_hs %} </th>
+                                          </tr>
+                                       </table>
+                                    </div>
+
+
+                </div>
+            </div>
+        </div>
+
+
+
+        <!--             Third Input Section                  -->
+        <div class="panel panel-default">
+            <div class="panel-heading" data-toggle="collapse" data-target="#additionalInputs">
+                <h4 class="panel-title">
+                    3. Additional Inputs
+                </h4>
+            </div>
+            <div id="additionalInputs" class="panel-collapse collapse">
+                <div class="panel-body">
+
+                            {% gizmo text_input cell_size %}
+                            {% gizmo text_input timestep %}
+                            {% gizmo select_input timeseries_source %}
+                            {% gizmo select_input model_engine %}
+                            {% gizmo text_input threshold %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+  <input type="submit" name="input-form" class="btn btn-default" value="Simulate Watershed">
+  </form>
+
+{% endblock %}
+
+
+{% block app_content %}
+    {% gizmo plot_view observed_hydrograph %}
+    <p> Spatial testing: {{test_function_response}} </p>
+
+
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <title>Trying google maps</title>
+
+            <style> #mymap {width:90%; height:600px;} </style>
+              <script async defer
+                      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCJVwfz-TJWiZCvLmgYHv2yHYc8vagp7V0&callback=initMap"
+                      type="text/javascript"></script>
+
+
+            <script>
+                function  init() {
+                    var mapDiv = document.getElementById("mymap");
+                    var mapCenter = new google.maps.LatLng(41.74025, -111.7915);
+                    var mapOptions = {
+                        center: mapCenter,
+                        zoom:9,
+                        mapTypeId: google.maps.MapTypeId.ROADMAP
+                    };
+                    var map = new google.maps.Map(mapDiv, mapOptions);
+
+                    var marker = new google.maps.Marker({
+                        map:map,
+                        position: mapCenter,
+                        draggable:true,
+                        label:"Outlet"
+                    });
+
+                    var rectangle = new google.maps.Rectangle({
+                        map: map,
+                        bounds: new google.maps.LatLngBounds (
+                                new google.maps.LatLng(41.88,-111.8461),
+                                new google.maps.LatLng(41.7215,-111.6208)
+                        ),
+                        fillColor:"green",
+                        strokeColor:"red",
+                        editable:true,
+                        draggable:true
+                    });
+
+                    google.maps.event.addListener(rectangle, "bounds_changed", function(){
+                        var bounds = rectangle.getBounds();
+                        var NE = bounds.getNorthEast();
+                        var SW = bounds.getSouthWest();
+
+                        document.forms["inputs"]["box_topY"].value= SW.lat() ;
+                        document.forms["inputs"]["box_rightX"].value= SW.lng();
+                        document.forms["inputs"]["box_leftX"].value= NE.lng();
+                        document.forms["inputs"]["box_bottomY"].value= NE.lat();
+
+                    });
+
+                    google.maps.event.addListener(marker, "dragend", function(event){
+                        document.forms["inputs"]["outlet_x"].value= this.getPosition().lng() ;
+                        document.forms["inputs"]["outlet_y"].value= this.getPosition().lat() ;
+                    });
+
+                }
+                window.onload = init;
+
+            </script>
+
+
+        </head>
+        <body>
+            <h5>  <strong>Specify the outlet, and the bounding box that completely contains the watershed</strong></h5>
+            <div id="mymap"></div>
+            <div id="info"></div>
+        </body>
+        </html>
+
+
+  {% if validation_status %}
+    <h1> .. </h1>
+  {% else %}
+     <p>There is something wrong with the inputs. Please check for the error:  <strong style="color:#ff0000"> <blink> {{form_error}}</blink></strong>
+  {% endif %}
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+{% block app_actions %}
+  <a href="{% url 'hydrologic_modeling:model_input2' %}" class="btn btn-default">Back to model input (test2) </a>
+{% endblock %}

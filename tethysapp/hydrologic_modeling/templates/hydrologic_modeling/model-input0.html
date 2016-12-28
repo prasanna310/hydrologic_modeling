@@ -1,0 +1,226 @@
+{% extends "hydrologic_modeling/googlemap.html" %}
+
+{% load tethys_gizmos %}
+
+
+{% block app_navigation_items %}
+  <h3>Prepare the model</h3>
+
+
+  <p>Lets start with providing some inputs for the model </p>
+  <form id ="inputs"  method="post" action="{% url 'hydrologic_modeling:test1' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      {% gizmo text_input simulation_name %}
+
+      <table style="width:100%">
+          <tr>
+                <th> {% gizmo text_input cell_size %} </th>
+                <th> {% gizmo text_input timestep %} </th>
+          </tr>
+
+      </table>
+      Outlet Longitude and Latitude
+      <table style="width:100%">
+           <!-- checking to see mixture of forms, tethys and html -->
+          <!--<tr>-->
+                <!--<th> Outlet Lng and Lat </th>-->
+                <!--<th>  </th>-->
+          <!--</tr>-->
+          <!--<tr>-->
+                <!--<td width="20px"><input type="text" name="outlet_x" value= -111.7915 size="15"></td>-->
+                <!--<td width="20px"><input type="text" name="outlet_y" value= 41.74025 size="15"> </td>-->
+
+          <!--</tr>-->
+          <tr>
+                <th> {% gizmo text_input outlet_x %} </th>
+                <th> {% gizmo text_input outlet_y %} </th>
+          </tr>
+
+        </table>
+
+
+
+       Bounding box coordinates
+      <!--<table width="100%">-->
+          <!--<tr>-->
+                <!--<th> </th>-->
+                <!--<th> <input type="text" name="box_topY" value= 41.7215 size="9"> </th>-->
+                <!--<th> </th>-->
+          <!--</tr>-->
+          <!--<tr>-->
+                <!--<td><input type="text" name="box_rightX" value= -111.8461 size="9"></td>-->
+                <!--<td></td>-->
+                <!--<td><input type="text" name="box_leftX" value= -111.6208 size="9"></td>-->
+          <!--</tr>-->
+          <!--<tr>-->
+                <!--<td></td>-->
+                <!--<td><input type="text" name="box_bottomY" value= 41.88 size="9"></td>-->
+                <!--<td></td>-->
+          <!--</tr>-->
+
+      <!--</table>-->
+
+      <table width="100%">
+          <tr>
+                <th> </th>
+                <th> {% gizmo text_input box_topY %}</th>
+                <th> </th>
+          </tr>
+          <tr>
+                <td>{% gizmo text_input box_leftX %}</td>
+                <td></td>
+                <td>{% gizmo text_input box_rightX %}</td>
+          </tr>
+          <tr>
+                <td></td>
+                <td> {% gizmo text_input box_bottomY %}</td>
+                <td></td>
+          </tr>
+
+      </table>
+
+
+
+
+
+      <table style="width:100%">
+          <tr>
+                <th> {% gizmo date_picker simulation_start_date_picker %} </th>
+                <th>  {% gizmo date_picker simulation_end_date_picker %} </th>
+          </tr>
+          <tr>
+                <td>{% gizmo select_input timeseries_source %}</td>
+                <td>{% gizmo select_input model_engine %} </td>
+          </tr>
+      </table>
+
+      {% gizmo text_input USGS_gage %}
+      {% gizmo text_input threshold %}
+
+      Optionally, upload .shp file geometry <br>
+
+      <table>
+          <tr>
+              <th> Outlet </th>
+              <th><input type="file" name="outlet_shp" multiple/> </th>
+              <th><input type="submit" name="submit" value="Upload" /> </th>
+          </tr>
+
+          <tr>
+              <th> Watershed </th>
+              <th><input type="file" name="watershed_shp" multiple/> </th>
+              <th><input type="submit" name="submit" value="Upload" /> </th>
+          </tr>
+
+       </table>
+
+      <input type="submit" name="input-form" class="btn btn-default">
+  </form>
+
+
+{% endblock %}
+
+
+{% block app_actions %}
+
+      <table style="width:100%">
+          <tr>
+              <th> {% gizmo select_input simulation_names_list %}</th>
+              <th> </th>
+              <th> </th>
+              <th> </th>
+              <th> </th>
+              <th> </th>
+              <th> </th>
+              <th>  <a href="{% url 'hydrologic_modeling:home' %}" class="btn btn-default">Back</a> </th>
+          </tr>
+
+      </table>
+
+
+
+  <!-- This is url tag-->
+  <!-- the structure is interesting. map represents name of UrlMap in App.py, and hydrologic_modeling is name of app-->
+  <!-- WE ARE NOT HARD CODING the url. URL is only mentioned once, in app.py-->
+{% endblock %}
+
+
+
+
+ <!-- The following code is collected from googlemap.html-->
+{% block app_content %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Trying google maps</title>
+
+    <style> #mymap {width:90%; height:600px;} </style>
+      <script async defer
+              src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCJVwfz-TJWiZCvLmgYHv2yHYc8vagp7V0&callback=initMap"
+              type="text/javascript"></script>
+
+    <script>
+        function  init() {
+            var mapDiv = document.getElementById("mymap");
+            var mapCenter = new google.maps.LatLng(41.74025, -111.7915);
+            var mapOptions = {
+                center: mapCenter,
+                zoom:9,
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+            };
+            var map = new google.maps.Map(mapDiv, mapOptions);
+
+            var marker = new google.maps.Marker({
+                map:map,
+                position: mapCenter,
+                draggable:true,
+                label:"Outlet"
+            });
+
+            var rectangle = new google.maps.Rectangle({
+                map: map,
+                bounds: new google.maps.LatLngBounds (
+                        new google.maps.LatLng(41.88,-111.8461),
+                        new google.maps.LatLng(41.7215,-111.6208)
+                ),
+                fillColor:"green",
+                strokeColor:"red",
+                editable:true,
+                draggable:true
+            });
+
+            google.maps.event.addListener(rectangle, "bounds_changed", function(){
+                var bounds = rectangle.getBounds();
+                var NE = bounds.getNorthEast();
+                var SW = bounds.getSouthWest();
+
+                document.forms["inputs"]["box_topY"].value= SW.lat() ;
+                document.forms["inputs"]["box_rightX"].value= SW.lng();
+                document.forms["inputs"]["box_leftX"].value= NE.lng();
+                document.forms["inputs"]["box_bottomY"].value= NE.lat();
+
+            });
+
+            google.maps.event.addListener(marker, "dragend", function(event){
+                document.forms["inputs"]["outlet_x"].value= this.getPosition().lng() ;
+                document.forms["inputs"]["outlet_y"].value= this.getPosition().lat() ;
+            });
+
+        }
+        window.onload = init;
+
+    </script>
+
+
+
+</head>
+<body>
+    <h5>  Specify the outlet and the bounding box hat completely contains the watershed</h5>
+    <div id="mymap"></div>
+    <div id="info"></div>
+</body>
+</html>
+
+{% endblock %}
+
+

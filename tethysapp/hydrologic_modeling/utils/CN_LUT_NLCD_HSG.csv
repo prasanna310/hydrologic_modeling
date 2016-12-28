@@ -1,0 +1,23 @@
+"Open Water",11,0,0,0,0
+"Perennial Ice/Snow",12,0,0,0,0
+"Developed, Open Space",21,57,72,81,86
+"Developed, Low Intensity",22,63,77,85,88
+"Developed, Medium Intensity",23,81,88,91,93
+"Developed, High Intensity",24,89,92,94,95
+"Barren Land",31,77,86,91,94
+"Barren Land (Rock/Sand/Clay)",31,77,86,91,94
+"Deciduous Forest",41,36,60,73,79
+"Evergreen Forest",42,36,60,73,79
+"Mixed Forest",43,36,60,73,79
+"Dwarf Scrub",51,35,56,70,77
+"Shrub/Scrub",52,35,56,70,77
+"Herbaceous",72,35,56,70,77
+"Grassland/Herbaceous",71,49,69,79,84
+"Sedge/Herbaceous",72,35,56,70,77
+"Lichens",73,77,86,91,94
+"Moss",74,68,79,86,89
+"Hay/Pasture",81,49,69,79,84
+"Pasture/Hay",81,49,69,79,84
+"Cultivated Crops",82,49,69,79,84
+"Woody Wetlands",90,30,55,70,77
+"Emergent Herbaceous Wetlands",95,30,58,71,78

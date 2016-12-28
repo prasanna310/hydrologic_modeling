@@ -1,0 +1,78 @@
+{% extends "hydrologic_modeling/model-calibration.html" %}
+{% load tethys_gizmos %}
+
+{% block app_navigation_items %}
+  <form method="post" action="{% url 'hydrologic_modeling:model_run' %}" >
+      {% csrf_token %}
+      <b> Did not like the result? Change the model parameters   </b>
+      <br>
+      <br>
+
+      Calibration Parameters
+      <table style="width:100%">
+          <tr>
+                <th> {% gizmo text_input fac_L %} </th>
+                <th> {% gizmo text_input fac_Ks %} </th>
+          </tr>
+          <tr>
+                <td>{% gizmo text_input fac_n_o %}</td>
+                <td>{% gizmo text_input fac_n_c %}</td>
+          </tr>
+          <tr>
+                <td>{% gizmo text_input fac_th_s %}</td>
+                <td></td>
+          </tr>
+          </table>
+      <br>
+      Numeric Parameters
+          <table style="width:100%">
+          <tr>
+                <th> {% gizmo text_input pvs_t0 %} </th>
+                <th> {% gizmo text_input vo_t0 %} </th>
+          </tr>
+          <tr>
+                <td>{% gizmo text_input qc_t0 %}</td>
+                <td>{% gizmo text_input kc %}</td>
+          </tr>
+
+
+        </table>
+      {% gizmo select_input simulation_names_list %}
+
+      <input type="submit" name="input-form" class="btn btn-default">
+      <input type="hidden" name="model_inputs_table_id_from_another_html" value= {{model_inputs_table_id}}>
+  </form>
+{% endblock %}
+
+
+
+{% block app_content %}
+  {% if simulation_name %} <!--- If the input is complete --->
+        <h5> Contragulations! <u><b>{{simulation_name}}</b></u> ran successfully!  </h5>
+        <h5> Test Variable: ! <u><b>{{test_var}}</b></u>  </h5>
+      Here is the simulated discharge for the outlet you picked. <b>(long: {{outlet_lon}} , lat: {{outlet_lat}}) </b>
+        <br>
+
+      {% gizmo plot_view observed_hydrograph %}
+      {% gizmo plot_view line_plot_view %}
+
+   {% endif %}
+
+  {% if fac_L_form != "" %} <!--- If the input is complete --->
+      <h5> Contragulations <b>{{user_name}}</b>! Parameters were changed successfully!  </h5>
+            Using the calibratoin parameters provided, the graph was updated for the model-input id: {{Iwillgiveyou_model_inputs_table_id_from_another_html}}
+
+
+            {% gizmo plot_view observed_hydrograph_userModified %}
+
+
+   {% endif %}
+
+
+{% endblock %}
+
+
+
+{% block app_actions %}
+  <a href="{% url 'hydrologic_modeling:model_input' %}" class="btn btn-default">Back</a>
+{% endblock %}
