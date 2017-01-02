@@ -11,7 +11,7 @@ except Exception, e:
 
 from datetime import date, datetime
 
-from hs_restclient import HydroShare, HydroShareAuthBasic
+
 
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
@@ -640,11 +640,12 @@ def test_hds():
     hs_obj.add(upload_outlet)
     hs_obj.add(upload_wshed)
 class HydroshareResource(object):
-
+    from hs_restclient import HydroShare, HydroShareAuthBasic
     def __init__(self, fpath="", username = "prasanna_310",  password = "Hydrology12!@" ):
         self.username = "prasanna_310"
         self.password = "Hydrology12!@"
-
+        
+        from hs_restclient import HydroShare, HydroShareAuthBasic
         auth = HydroShareAuthBasic(username=username, password=password)
         self.hs = HydroShare(auth=auth)
 
