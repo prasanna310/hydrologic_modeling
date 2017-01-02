@@ -1,7 +1,7 @@
 from datetime import datetime
 import subprocess, shlex
 import fiona
-from shapely.geometry import shape
+
 import os, sys
 
 try:
@@ -166,7 +166,7 @@ def create_simulation_list_after_querying_db(user_name):
     return simulation_names_list
 
 def get_outlet_xy_from_shp_shx(shp_file, shx_file, simulation_folder='/usr/lib/tethys/src/tethys_apps/tethysapp/my_first_app/workspaces/user_workspaces/usr1/'):
-
+    from shapely.geometry import shape
     # convert the django_memory_file format to original shapefile
     filename = "outlet.shp"  # received file name
     file_obj = shp_file
@@ -226,6 +226,7 @@ def get_outlet_xy_from_shp_shx(shp_file, shx_file, simulation_folder='/usr/lib/t
     return outlet_x, outlet_y
 
 def get_box_xyxy_from_shp_shx(shp_file, shx_file, simulation_folder='/usr/lib/tethys/src/tethys_apps/tethysapp/my_first_app/workspaces/user_workspaces/usr1/'):
+    from shapely.geometry import shape
 
     # convert the django_memory_file format to original shapefile
     filename = "watershed.shp"  # received file name
