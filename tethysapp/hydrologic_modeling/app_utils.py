@@ -89,6 +89,7 @@ def create_model_input_dict_from_db(current_model_inputs_table_id, user_name ):
     :return:                    dictionary of input parameters
     """
     from .model import  SessionMaker, model_inputs_table
+    from sqlalchemy import and_
     session = SessionMaker()
 
     # # IMPORTENT STEP: retrieve the model_inputs_table.id of this entry to pass it to the next page (calibration page)
@@ -97,9 +98,11 @@ def create_model_input_dict_from_db(current_model_inputs_table_id, user_name ):
     # print 'model_input ID for last sim, which will be used for calibration: ', current_model_inputs_table_id
 
     # # If passing to calibration is not our aim, we take the id as user input
-    print 'model_input ID for which rest of the inputs are being retrieved: ', current_model_inputs_table_id
+    print 'MSG: model_input ID for which rest of the inputs are being retrieved: ', current_model_inputs_table_id
 
-    all_rows = session.query(model_inputs_table).filter(model_inputs_table.id == current_model_inputs_table_id).all()
+    # :TODO for a particular user_name also requird. Can be poorly achieved by writing if-clause in for-loop below
+    all_rows = session.query(model_inputs_table).\
+        filter(and_(model_inputs_table.id == current_model_inputs_table_id, model_inputs_table.user_name == user_name)).all()
 
     # retrieve the parameters and write to a dictionary
     inputs_dictionary = {}
@@ -127,6 +130,11 @@ def create_model_input_dict_from_db(current_model_inputs_table_id, user_name ):
         inputs_dictionary['timestep'] = timestep
 
         inputs_dictionary['model_engine'] = row.model_engine
+
+
+    print 'MSG: SUCCESS Querrying the database to create dictionary '
+    if inputs_dictionary == {}:
+        print "MSG: ERROR, Dictionary Empty!!! "
 
     return  inputs_dictionary
 
@@ -250,7 +258,7 @@ def get_box_xyxy_from_shp_shx(shp_file, shx_file, simulation_folder='/usr/lib/te
 
     return box_rightX, box_bottomY, box_leftX, box_topY
 
-def run_model_with_input_as_dictionary(inputs_dictionary, simulation_folder=""):
+def run_model_with_input_as_dictionary(inputs_dictionary,write_to_db=True, simulation_folder=""):
     """
     :param inputs_dictionary:   inputs converted to dictionary in validation step. Type of inouts are taken care of
                                 e.g. float is already a float type, int is int, and string is string.
@@ -300,8 +308,9 @@ def run_model_with_input_as_dictionary(inputs_dictionary, simulation_folder=""):
         # step2_run_model = run_1.run()                               # step2
         date_in_datetime, Qsim, error = run_1.get_Qsim_and_error()
 
-        # write_to_db_input_as_dictionary(inputs_dictionary, simulation_folder)
-        write_to_db_input_as_dictionary(inputs_dictionary, simulation_folder)
+        if write_to_db:
+            # write_to_db_input_as_dictionary(inputs_dictionary, simulation_folder)
+            table_id = write_to_db_input_as_dictionary(inputs_dictionary, simulation_folder)
 
         # create_viewplot_hydrograph(date_in_datetime, Qsim, error)  # aile kina ho kaam garena
 
@@ -314,7 +323,7 @@ def run_model_with_input_as_dictionary(inputs_dictionary, simulation_folder=""):
                             minute=date_broken[i][4])
             hydrograph_series.append([date, float(Qsim[i])])
 
-    return hydrograph_series
+    return hydrograph_series, table_id
 
 def validate_inputs(request):
     """
@@ -446,7 +455,12 @@ def validate_inputs(request):
 
     return validation_status, error_msg, inputs_dictionary
 
-def write_to_db_input_as_dictionary(inputs_dictionary, simulation_folder):
+def write_to_db_input_as_dictionary(inputs_dictionary, simulation_folder=""):
+    """
+     :param inputs_dictionary:
+    :param simulation_folder:
+    :return: table_id of (pk) of the run information added to the dictionary
+    """
 
     user_name = inputs_dictionary['user_name']
     simulation_name = inputs_dictionary['simulation_name']
@@ -479,9 +493,10 @@ def write_to_db_input_as_dictionary(inputs_dictionary, simulation_folder):
     session = SessionMaker()            # Make session
 
     # one etnry / row
-    one_run = model_inputs_table(user_name, simulation_name,simulation_folder,simulation_start_date,simulation_end_date,USGS_gage,
-                 outlet_x,outlet_y, box_topY,box_bottomY, box_rightX,box_leftX,
-                 model_engine, other_model_parameters )
+    one_run = model_inputs_table(user_name=user_name, simulation_name=simulation_name,simulation_folder=simulation_folder,
+            simulation_start_date=simulation_start_date,simulation_end_date=simulation_end_date,USGS_gage=USGS_gage,
+                 outlet_x=outlet_x,outlet_y=outlet_y, box_topY=box_topY,box_bottomY=box_bottomY, box_rightX=box_rightX,box_leftX=box_leftX,
+                 model_engine=model_engine, other_model_parameters=other_model_parameters )
     session.add(one_run)
     session.commit()
 
@@ -489,7 +504,7 @@ def write_to_db_input_as_dictionary(inputs_dictionary, simulation_folder):
     current_model_inputs_table_id = str(len(session.query(model_inputs_table).filter(
         model_inputs_table.user_name == user_name).all()))  # because PK is the same as no of rows, i.e. length
 
-
+    return current_model_inputs_table_id
 # # UN-USED or INCOMPLETE functions
 def call_subprocess(cmdString, debugString):
     cmdargs = shlex.split(cmdString)

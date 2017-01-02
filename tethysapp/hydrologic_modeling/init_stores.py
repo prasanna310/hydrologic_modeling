@@ -9,7 +9,7 @@ def init_hydrologic_modeling_db(first_time):
     # Create tables
     Base.metadata.create_all(engine)
 
-    # Initial data
+    # :TODO Initiate the table data
     if first_time:
         # Make session
         # session = SessionMaker()

@@ -331,7 +331,7 @@ def get_hydrograph( simulation_folder,  file_Qobs, outlet_ID):
     list1 -> list, error checking parameters such as nash, rsme etc.
     list2 -> list, Q_simulated
     '''
-
+    import pytopkapi
     import pytopkapi.utils as ut
     from pytopkapi.results_analysis import plot_Qsim_Qobs_Rain as pt
 
@@ -666,6 +666,8 @@ def run_model_with_different_parameters(run_name, simulation_folder,  outlet_ID,
     Returns: a list. [Runname, date_time, nash value,\t, [Q_sim]]
     -------
     """
+    import pytopkapi
+
     fac_L = calibration_parameters[0]
     fac_Ks = calibration_parameters[1]
     fac_n_o = calibration_parameters[2]
@@ -1025,6 +1027,7 @@ def trial():
 
 
 class pytopkapi_run_instance:
+    import pytopkapi
 
     def __init__(self, simulation_name, cell_size, timestep, xy_outlet, yyxx_boundingBox, USGS_gage,
                  list_of_threshold, simulation_folder):

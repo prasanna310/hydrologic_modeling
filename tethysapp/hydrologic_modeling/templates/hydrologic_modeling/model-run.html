@@ -40,7 +40,7 @@
       {% gizmo select_input simulation_names_list %}
 
       <input type="submit" name="input-form" class="btn btn-default">
-      <input type="hidden" name="model_inputs_table_id_from_another_html" value= {{model_inputs_table_id}}>
+      <input type="hidden" name="model_inputs_table_id_from_another_html" value= {{current_model_inputs_table_id}}>
   </form>
 {% endblock %}
 
@@ -49,6 +49,8 @@
 {% block app_content %}
   If the simulation is retreived from the drop down menu, the name of the sim will be:
   <h5> Test Variable: <u><b>{{simulation_loaded_id}}</b></u>  </h5>
+  <h5> Last simulation ID : <u><b>{{current_model_inputs_table_id}}</b></u>  </h5>
+
 
   {% if simulation_name %} <!--- If the input is complete --->
         <h5> Contragulations! <u><b>{{simulation_name}}</b></u> ran successfully!  </h5>
