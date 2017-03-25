@@ -92,18 +92,18 @@
                                       </table>
                                     </div>
 
-                                    <input type="radio" name="domain_radio" value="1" data-toggle="collapse" data-parent="#accordion" data-target="#upload" > Upload ESRI shp files
+                                    <br><input type="radio" name="domain_radio" value="1" data-toggle="collapse" data-parent="#accordion" data-target="#upload" > Upload ESRI shp files
 
                                     <div id="upload" class="collapse" >
                                       <table width="20%">
                                           <tr>
                                               <th> Outlet </th>
-                                              <th><input type="file" name="outlet_shp" title=" " multiple/> </th>
+                                              <th><input type="file" name="outlet_shp" accept=".shp, .shx, .dbf, .prj, .geojson, .json, .js /*" title=" " multiple/> </th>
                                               <!--<th><input type="submit" name="submit" value="Upload" /> </th>-->
                                           </tr>
                                           <tr>
                                               <th> Watershed </th>
-                                              <th><input type="file" name="watershed_shp"  accept="image/*" title="&nbsp;" multiple/> </th>
+                                              <th><input type="file" name="watershed_shp"  accept=".shp, .shx, .dbf, .prj, .geojson, .json, .js /*" title="&nbsp;" multiple/> </th>
                                               <!--<th><input type="submit" name="submit" value="Upload" /> </th>-->
                                           </tr>
                                        </table>
@@ -164,8 +164,9 @@
           Simulation already prepared? Load the previously saved simulation instead.
           {% gizmo select_input simulation_names_list %}
 
-  <input type="submit" name="simulation-load" class="btn btn-default" value="Load simulation" >
-  <input type="hidden" name="load_simulation_name" value= "{{simulation_names_list}}">
+  <input type="submit" name="simulation-load" class="btn btn-default" value="Load simulation" > <!--This line looks pretty useless to me-->
+  <input type="hidden" name="load_simulation_name" value= "{{hs_resource_id_created}}">   <!--This too is kinda useless -->
+
   </form>
 
 {% endblock %}
@@ -237,7 +238,35 @@
                         document.forms["inputs"]["outlet_y"].value= this.getPosition().lat() ;
                     });
 
+
+                    // following three lines are added to try to load geojson
+                    var script = document.createElement("script");
+                    script.src = "{{geojson_domain}}";
+                    aaa = "{{geojson_domain}}"; //del it after testinig
+                    document.getElementsByTagName("head")[0].appendChild(script);
+
+
+
+                //inti closes
                 }
+
+                // on upload shapefile / geojson file, run the function...
+                // following code is trial. Until init is called.
+                 window.geojson_callback = function(results) {
+                     var map = new google.maps.Map(document.getElementById('map'), {
+                     zoom: 9,
+                     center: {lat: 42, lng: -111.3}
+                      });
+
+                    map.data.addGeoJson(results);
+                 }
+
+
+
+
+
+
+
                 window.onload = init;
 
             </script>
@@ -246,6 +275,11 @@
         </head>
         <body>
             <h5>  <strong>Specify the Outlet, and the bounding box that completely contains the watershed</strong></h5>
+            <h3> Test variables</h3>>
+            <p> Error: {{form_error}} </p>
+            <p> geojson file: {{geojson_domain}} </p>
+            <p> Error: {{geojson_domain}} </p>
+
             <div id="mymap"></div>
             <div id="info"></div>
         </body>
@@ -253,7 +287,7 @@
 
 
   {% if validation_status %}
-    <h1> .. </h1>
+    <h1> Successful </h1>
   {% else %}
      <p>There is something wrong with the inputs. Please check for the error:  <strong style="color:#ff0000"> <blink> {{form_error}}</blink></strong>
   {% endif %}

@@ -48,8 +48,11 @@
 
 {% block app_content %}
   If the simulation is retreived from the drop down menu, the name of the sim will be:
-  <h5> Test Variable: <u><b>{{simulation_loaded_id}}</b></u>  </h5>
-  <h5> Last simulation ID : <u><b>{{current_model_inputs_table_id}}</b></u>  </h5>
+
+  <h3> Test Variable: <u><b>{{test_variable}}</b></u>  </h3>
+  <h3> Previous simulation id: <u><b>{{simulation_loaded_id}}</b></u>  </h3>
+  <h3> Last simulation HS- ID : <u><b>{{current_model_inputs_table_id}}</b></u>  </h3>
+  <h3> Test string: <u><b>{{test_string}}</b></u>  </h3>
 
 
   {% if simulation_name %} <!--- If the input is complete --->

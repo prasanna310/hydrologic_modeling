@@ -1,9 +1,7 @@
 # Put your persistent store models in this file
 
-# Put your persistent store models in this file
-
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, Float, Text, Date,  ForeignKey
+from sqlalchemy import Column, Integer, Float, Text, Date,  ForeignKey, DateTime
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import relationship
 
@@ -46,10 +44,15 @@ class model_inputs_table(Base):
     # cell_size = Column(Float)
     # timestep = Column(Float)
 
+    remarks = Column(Text)
+    user_option = Column(Text)
+
+
+
 
     def __init__(self, user_name, simulation_name,simulation_folder,simulation_start_date,simulation_end_date,USGS_gage,
                  outlet_x,outlet_y, box_topY,box_bottomY, box_rightX,box_leftX,
-                 model_engine,other_model_parameters ):
+                 model_engine,other_model_parameters, remarks, user_option  ):
         """
         Constructor for a gage
         """
@@ -74,7 +77,8 @@ class model_inputs_table(Base):
         # self.threshold = threshold
         # self.timeseries_source = timeseries_source
 
-
+        self.remarks = remarks
+        self.user_option = user_option
 
 
 class model_calibration_table(Base):
@@ -85,7 +89,6 @@ class model_calibration_table(Base):
 
     # Columns
     id = Column(Integer, primary_key=True)
-
     model_run_id = Column(Integer, ForeignKey('model_inputs_table.id'))
 
     numeric_parameters = Column(Text)
@@ -121,3 +124,31 @@ class model_calibration_table(Base):
         # self.kc_form = kc_form
 
 
+class model_result_table(Base):
+    '''
+    Example SQLAlchemy DB Model
+    '''
+    __tablename__ = 'model_result_table'
+
+    # Columns
+    id = Column(Integer, primary_key=True)
+    model_calibration_id = Column(Integer, ForeignKey('model_calibration_table.id'))
+
+    datetime = Column(DateTime)
+    UTC_offset = Column(DateTime)
+    simulated_discharge = Column(Float)
+    observed_discharge = Column(Float)
+
+
+    def __init__(self,datetime, UTC_offset, simulated_discharge, observed_discharge ):
+        """
+        Constructor for a gage
+        """
+        self.datetime = datetime
+        self.UTC_offset = UTC_offset
+        self.simulated_discharge = simulated_discharge
+        self.observed_discharge = observed_discharge
+
+
+
+# :TODO metadata table for each of the three tables
