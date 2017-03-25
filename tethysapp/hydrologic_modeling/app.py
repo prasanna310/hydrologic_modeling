@@ -59,7 +59,7 @@ class HydrologicModeling(TethysAppBase):
         """
         # 'init_stores:init_stream_gage_db' --> format same as abc.xyz:function_name
         stores = (PersistentStore(name='hydrologic_modeling_db',
-                                  initializer='init_stores:init_hydrologic_modeling_db',
+                                  initializer='hydrologic_modeling.init_stores.init_hydrologic_modeling_db',
                                   spatial=True
                                   ),
                   )
