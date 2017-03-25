@@ -52,7 +52,7 @@ def model_input(request):
 
     # Query DB for gage objects, all the entries by the user name
     # give the value for thsi variable = 0 if the program is starting for the first time
-    simulation_names_list = app_utils.create_simulation_list_after_querying_db(user_name)
+    simulation_names_list = app_utils.create_simulation_list_after_querying_db(user_name='prasanna')
 
 
     simulation_name = TextInput(display_text='Simulation name', name='simulation_name', initial='simulation-1')
@@ -254,7 +254,7 @@ def model_run(request):
         b = request.POST['load_simulation_name']
 
         test_variable = str(hs_resource_id_created)+"______"+ str(b)
-        current_model_inputs_table_id = hs_resource_id_created
+        # current_model_inputs_table_id = hs_resource_id_created
         print "MSG: Previous simulation is loaded. The name of simulation loaded is: ", hs_resource_id_created
     except:
         model_input_load_request = None
@@ -294,7 +294,7 @@ def model_run(request):
         import HDS_settings
         HDS = HydroDS(username=HDS_settings.USER_NAME, password=HDS_settings.PASSWORD)
         # hs_resource_id, hydrograph_file, zip_files=  call_runpytopkapi(inputs_dictionary) # hydrograph fields: datetime, Qsim, Qobs
-
+        # hs_resource_id_created = hs_resource_id
 
 
         # :TODO write simulation information to db, where simulation_folder= hs_resource_id
@@ -365,7 +365,8 @@ def model_run(request):
 
         # model_inputs_table_id_from_another_html = request.POST['model_inputs_table_id_from_another_html']
         hs_resource_id_from_previous_simulation = request.POST['model_inputs_table_id_from_another_html']
-        current_model_inputs_table_id  =hs_resource_id_from_previous_simulation
+        # current_model_inputs_table_id  =hs_resource_id_from_previous_simulation
+        hs_resource_id_created = hs_resource_id_from_previous_simulation
 
         print 'MSG: Method III initiated. The model id we are looking at is: ', hs_resource_id_from_previous_simulation
 
@@ -485,7 +486,7 @@ def model_run(request):
                'user_name':user_name,
 
                #'Iwillgiveyou_model_inputs_table_id_from_another_html':model_inputs_table_id_from_another_html,
-               "current_model_inputs_table_id":current_model_inputs_table_id, # model_inputs_table_id
+               # "current_model_inputs_table_id":current_model_inputs_table_id, # model_inputs_table_id
 
                "observed_hydrograph_userModified":observed_hydrograph_userModified,
                "observed_hydrograph_loaded":observed_hydrograph_loaded,
