@@ -193,8 +193,11 @@ def generate_param_file(ini_fname, isolated_cells=False):
     tan_beta = np.tan((np.pi/180.0)*hillslope)
     X, Y = compute_cell_coordinates(mask_fname)
 
-    channel_network[channel_network < 255] = 1
-    channel_network[channel_network == 255] = 0
+    # channel_network[channel_network < 255] = 1
+    # channel_network[channel_network == 255] = 0
+    channel_network[channel_network > 0] = 1
+    channel_network[channel_network <= 0] = 0
+
 
     if isolated_cells == True:
         cell_down = -999

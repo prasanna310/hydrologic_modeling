@@ -23,6 +23,14 @@ import app_utils
 
 # :TODO -> make sure db is written after model is ran
 
+# instead of writing arbitrary error, it might be a good idea to use this dictionary in returning errors
+# this dictionary should be in a different file
+errors = {'invalid_date':'Error 1001. Input type invalid',
+          'invalid_outlet':'Error xx. Timeseries source selected not yet ready',
+          'invalid_domain':'Error xx. Domain source selected not yet ready',
+          'invalid_USGS_gage': 'Error xx. USGS gage selected not correct, or not data not available for it',
+          }
+
 @login_required()
 def home(request):
     """
@@ -46,16 +54,17 @@ def model_input(request):
     # give the value for thsi variable = 0 if the program is starting for the first time
     simulation_names_list = app_utils.create_simulation_list_after_querying_db(user_name)
 
+
     simulation_name = TextInput(display_text='Simulation name', name='simulation_name', initial='simulation-1')
     USGS_gage = TextInput(display_text='USGS gage nearby', name='USGS_gage', initial='10172200')
     cell_size = TextInput(display_text='Cell size in meters', name='cell_size', initial='100')
     timestep = TextInput(display_text='Timestep in hrs', name='timestep', initial='6') #, append="hours"
     simulation_start_date_picker = DatePicker(name='simulation_start_date_picker', display_text='Start Date',
-                                              autoclose=True, format='mm-dd-yyyy', start_date='01/01/2011',
-                                              start_view='month', today_button=True, initial='01/01/2014')
+                                              autoclose=True, format='mm-dd-yyyy', start_date='01/01/2010',
+                                              start_view='month', today_button=True, initial='01/01/2010')
     simulation_end_date_picker = DatePicker(name='simulation_end_date_picker', display_text='End Date',
-                                            autoclose=True, format='mm-dd-yyyy', start_date='01/01/2011',
-                                            start_view='month', today_button=True, initial='06/30/2014')
+                                            autoclose=True, format='mm-dd-yyyy', start_date='06/30/2010',
+                                            start_view='month', today_button=True, initial='06/30/2010')
 
     timeseries_source = SelectInput(display_text='Timeseries source',
                 name='timeseries_source',
@@ -86,16 +95,26 @@ def model_input(request):
     bounding_box_hs = TextInput(display_text='', name='bounding_box_hs', initial='')
 
 
-
     form_error = ""
     observed_hydrograph = ""
     test_function_response = ""
+    geojson_files = {}
+    geojson_outlet = 'Default'
+    geojson_domain = 'Default'
     table_id = 0
     validation_status = True
 
+    # when it receives request
     if request.is_ajax and request.method == 'POST':
         try:
-            validation_status, form_error, inputs_dictionary = app_utils.validate_inputs(request)
+            validation_status, form_error, inputs_dictionary, geojson_files = app_utils.validate_inputs(request) # input_dictionary has proper data type. Not everything string
+            # if geojson_files != {}:
+            #     for geojson in geojson_files.keys():
+            #         if geojson == 'geojson_outlet':
+            #             geojson_outlet = geojson_files['geojson_outlet']
+            #         if geojson == 'geojson_domain':
+            #             geojson_domain = geojson_files['geojson_domain']
+
 
             if form_error.startswith("Error 2") or form_error.startswith("Error 3"):  # may not need this part. Because if no shapefile input, will not read it
                 form_error = ""
@@ -108,14 +127,14 @@ def model_input(request):
 
         if not validation_status:
             # useless code. If the file is prepared, we know validatoin status = False
+            import numpy as np
             np.savetxt("/home/prasanna/Documents/a%s.txt"%form_error, np.array([1, 1]))
 
         if validation_status:
             # hydrograpph series is a series (list) object.
             # table_id is the id of the data just written in the database after the successful model run
-            hydrograph_series, table_id = app_utils.run_model_with_input_as_dictionary(inputs_dictionary,False, simulation_folder="")
-
-
+            hydrograph_series = []
+            # hydrograph_series, table_id = app_utils.run_model_with_input_as_dictionary(inputs_dictionary,False, simulation_folder="")
 
 
             observed_hydrograph = TimeSeries(
@@ -142,8 +161,8 @@ def model_input(request):
 
 
     context = {
+
         'test_function_response':test_function_response,
-        'form_error':form_error,
         "observed_hydrograph":observed_hydrograph,
 
         'simulation_name': simulation_name,
@@ -163,9 +182,11 @@ def model_input(request):
         'outlet_hs': outlet_hs,
         'bounding_box_hs': bounding_box_hs,
 
-        'validation_status':validation_status,
-        'form_error':form_error,
-        'model_inputs_table_id':table_id
+        'validation_status': validation_status,
+        'form_error': form_error,
+        'model_inputs_table_id':table_id,
+        'geojson_outlet':geojson_outlet,
+        'geojson_domain':geojson_files,
 
     }
 
@@ -178,24 +199,22 @@ def model_run(request):
     """
     user_name = request.user.username
 
+    # Defaults
+    test_string = "Test_string_default"
+    test_variable = "Test_variable_default"
     fac_L_form= ""
     simulation_name = ""
     outlet_y = ""
     outlet_x = ""
-
     observed_hydrograph = ""
     observed_hydrograph_userModified = ""
     observed_hydrograph_loaded = ""
+    model_run_hidden_form = ''
+    hs_resource_id_created = ''
     simulation_loaded_id  = ""
     current_model_inputs_table_id = 0
-    model_inputs_table_id_from_another_html = 0  # need to make it point to last sim by default
-
-    # :todo some sort of algorith to create a folder name. ini_fname = simulation_name OR may not be required
-    temp_folder_name = 'usr1'
-    ini_fname = 'BlackSmithFork.ini'
-    simulation_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'workspaces', 'user_workspaces',
-                                     temp_folder_name)
-    ini_path = os.path.join(simulation_folder, ini_fname)
+    model_inputs_table_id_from_another_html = 0  #:TODO need to make it point to last sim by default
+    temp_folder = app_utils.generate_uuid_file_path()
 
 
     # gizmo settings
@@ -231,9 +250,12 @@ def model_run(request):
 
     # check to see if the request is from method (2)
     try:
-        model_input_load_request = request.POST['simulation_names_list']
-        current_model_inputs_table_id = model_input_load_request
-        print "MSG: Previous simulation is loaded. The name of simulation loaded is: ", model_input_load_request
+        model_input_load_request = hs_resource_id_created = request.POST['simulation_names_list'] #  from drop down menu
+        b = request.POST['load_simulation_name']
+
+        test_variable = str(hs_resource_id_created)+"______"+ str(b)
+        current_model_inputs_table_id = hs_resource_id_created
+        print "MSG: Previous simulation is loaded. The name of simulation loaded is: ", hs_resource_id_created
     except:
         model_input_load_request = None
 
@@ -245,31 +267,15 @@ def model_run(request):
     except:
         model_run_calib_request = None
 
-    #model_inputs_table_id_from_another_html = current_model_inputs_table_id  # :TODO need to check why this works
+    # model_inputs_table_id_from_another_html = current_model_inputs_table_id  # :TODO need to check why this works
 
     # Method (1), request from model_input-prepare model
     if model_input_prepare_request != None:
         print 'MSG: Method I initiated.'
 
-        # get input set-1, and create hydrograph
-        simulation_name = request.POST['simulation_name']
-        cell_size = request.POST['cell_size']
-        timestep = request.POST['timestep']
-
-        simulation_start_date = request.POST['simulation_start_date_picker']
-        simulation_end_date = request.POST['simulation_end_date_picker']
-        timeseries_source = request.POST['timeseries_source']
-        threshold = request.POST['threshold']
-        USGS_gage = request.POST['USGS_gage']
-
-        outlet_x = request.POST['outlet_x']
-        outlet_y = request.POST['outlet_y']
-        box_topY = request.POST['box_topY']
-        box_bottomY = request.POST['box_bottomY']
-        box_rightX = request.POST['box_rightX']
-        box_leftX = request.POST['box_leftX']
-
-        model_engine = request.POST['model_engine']
+        # # Method (1), STEP (1): get input dictionary from request ( request I)
+        inputs_dictionary = app_utils.create_model_input_dict_from_request(request)
+        test_string =  str("Prepared  Values: ")+str(inputs_dictionary)
 
         print "MSG: Inputs from user read"
 
@@ -282,51 +288,26 @@ def model_run(request):
             pass
 
 
-        # :TODO load all the parameters to the database, and use that information in the block below to retreive
 
-        # ----------------TODO: Can be replaced with function app_utils.run_model_with_input_as_dictionary function too
-        #  write the inputs in a database
-        inputs_dictionary = {"user_name":user_name, "simulation_name": simulation_name,"simulation_folder": simulation_folder,
-                "simulation_start_date": simulation_start_date,"simulation_end_date": simulation_end_date,
-                "USGS_gage": USGS_gage,"outlet_x": outlet_x,"outlet_y": outlet_y,
-                "box_topY": box_topY,"box_bottomY": box_bottomY,"box_rightX": box_rightX,"box_leftX": box_leftX,
-                "timeseries_source": timeseries_source, "threshold":threshold, "model_engine":model_engine,  "cell_size":cell_size, "timestep":timestep}
+        # # Method (1), STEP (2):call_runpytopkapi function
+        from HDS_hydrogate_dev import HydroDS
+        import HDS_settings
+        HDS = HydroDS(username=HDS_settings.USER_NAME, password=HDS_settings.PASSWORD)
+        # hs_resource_id, hydrograph_file, zip_files=  call_runpytopkapi(inputs_dictionary) # hydrograph fields: datetime, Qsim, Qobs
 
-        # step0
-        run_1 = pytopkapi_run_instance(simulation_name=simulation_name, cell_size=cell_size, timestep=timestep,
-                                   xy_outlet= [outlet_x,outlet_y ], yyxx_boundingBox=[box_topY, box_bottomY,box_leftX ,box_rightX],
-                                   USGS_gage=USGS_gage, list_of_threshold= [threshold] , simulation_folder=simulation_folder)
 
-        # step1_create_ini = run_1.prepare_supporting_ini()             # step1
-        # step2_run_model = run_1.run()                                 # step2
-        date_in_datetime, Qsim, error = run_1.get_Qsim_and_error()
 
-        current_model_inputs_table_id = app_utils.write_to_db_input_as_dictionary(inputs_dictionary, simulation_folder)
-        print "MSG: Inputs from 'model_input form' written to db. Model RAN. The model_input_id whcih will be used to modify is: ", current_model_inputs_table_id
+        # :TODO write simulation information to db, where simulation_folder= hs_resource_id
+        # current_model_inputs_table_id = app_utils.write_to_db_input_as_dictionary(inputs_dictionary, simulation_folder)
 
+        # :TODO write hydrographs to the db
+
+
+        # :TODO create hydrograph. Make the create_viewplot_hydrograph work
         # create_viewplot_hydrograph(date_in_datetime, Qsim, error)  # aile kina ho kaam garena
 
-        # preparing timeseries data in the format shown in: http://docs.tethysplatform.org/en/latest/tethys_sdk/gizmos/plot_view.html#time-series
         hydrograph = []
-        date_broken = [[dt.year, dt.month, dt.day, dt.hour, dt.minute] for dt in date_in_datetime]
-        for i in range(len(Qsim)):
-            date = datetime(year=date_broken[i][0], month=date_broken[i][1], day=date_broken[i][2], hour=date_broken[i][3], minute=date_broken[i][4])
-            hydrograph.append([ date, float(Qsim[i])   ])
-        # ------------------------------------------------------------------------------------------------------------#
-
-        observed_hydrograph = TimeSeries(
-        height='500px',
-        width='500px',
-        engine='highcharts',
-        title='Hydrograph ',
-        subtitle= "Simulated and Observed flow for "  + simulation_name,
-        y_axis_title='Discharge',
-        y_axis_units='cumecs',
-        series=[{
-            'name': 'Simulated Flow',
-            'data':hydrograph,
-            }]
-        )
+        # observed_hydrograph = create_viewplot_hydrograph(hydrograph_file)
 
 
 
@@ -336,59 +317,32 @@ def model_run(request):
 
     # Method (2), request from model_input-load simulation
     if model_input_load_request != None:
-        model_run_id = model_input_load_request
+        hs_resource_id = model_input_load_request # :TODO convert the id to "hydroshare resource id"
 
         print 'MSG: Method II initiated.'
 
 
-        # STEP1: Retrieve simulation information from db in a dict
-        inputs_dictionary = app_utils.create_model_input_dict_from_db(model_run_id, user_name )
+        # STEP1: Retrieve simulation information (files stored in HydroShare) from db in a dict
+        inputs_dictionary = app_utils.create_model_input_dict_from_db( hs_resource_id= hs_resource_id,user_name= user_name )
 
-        # # pass the dict to load the result (hydrograph)
-        # hydrograph2, table_id = app_utils.run_model_with_input_as_dictionary(inputs_dictionary,False)
+        test_string = str("Loaded  Values: ")+str(inputs_dictionary)
 
-        # Because in this part we load previous simulation, we just need to read , not RUN the model
+        # STEP2: Because in this part we load previous simulation, Load the model from hydroshare to hydroDS,
+        # STEP2: And from the prepeared model, if the result is not available, run. Otherwise just give the result
+        # hydrograph2, table_id = app_utils.run_model_with_input_as_dictionary(inputs_dictionary, False)
 
 
-        # STEP2: create a run instance, which does not run the model but REFERNCES a run instance.
-        old_run = pytopkapi_run_instance(simulation_name=inputs_dictionary['simulation_name'],
-                                         cell_size=inputs_dictionary['cell_size'],
-                                         timestep=inputs_dictionary['timestep'],
-                                         xy_outlet= [inputs_dictionary['outlet_x'], inputs_dictionary['outlet_y'] ],
-                                         yyxx_boundingBox=[inputs_dictionary['box_topY'], inputs_dictionary['box_bottomY'],inputs_dictionary['box_leftX'] ,inputs_dictionary['box_rightX']],
-                                         USGS_gage=inputs_dictionary['USGS_gage'], list_of_threshold= [inputs_dictionary['threshold']] , simulation_folder=inputs_dictionary['simulation_folder'])
+        #* STEP3: Make sure a string/variable/field remains that contains the id of the model. SO when user modifies it, that model is modifed
 
-        # STEP3: Because we are loading the model, not running it,
-        date_in_datetime_loaded, Qsim_loaded, error_checking_param_loaded = old_run.get_Qsim_and_error()
+        # # STEP4B: Write to db
+        # current_model_inputs_table_id = app_utils.write_to_db_input_as_dictionary(inputs_dictionary,simulation_folder)
+        # print "MSG: Inputs from model_input form written to db. Model RAN already"
 
-        # STEP4: get the dictionary from id, to pass it onto the same html so that we can re-run the rerun! ;)
-        current_model_inputs_table_id = app_utils.write_to_db_input_as_dictionary(inputs_dictionary,simulation_folder)
-        print "MSG: Inputs from model_input form written to db. Model RAN already"
 
         # STEP5: get the revised hydrographs, and plot it
         # preparing timeseries data in the format shown in: http://docs.tethysplatform.org/en/latest/tethys_sdk/gizmos/plot_view.html#time-series
         hydrograph2 = []
-        date_broken = [[dt.year, dt.month, dt.day, dt.hour, dt.minute] for dt in date_in_datetime_loaded]
-        for i in range(len(Qsim_loaded)):
-            date = datetime(year=date_broken[i][0], month=date_broken[i][1], day=date_broken[i][2], hour=date_broken[i][3],
-                            minute=date_broken[i][4])
-            hydrograph2.append([date, float(Qsim_loaded[i])])
-
-        observed_hydrograph_loaded = TimeSeries(
-            height='500px',
-            width='500px',
-            engine='highcharts',
-            title=' Corrected Hydrograph ',
-            subtitle="Simulated and Observed flow for " + simulation_name,
-            y_axis_title='Discharge',
-            y_axis_units='cumecs',
-            series=[{
-                'name': 'Simulated Flow',
-                'data': hydrograph2
-            }]
-        )
-
-
+        observed_hydrograph_loaded = ''
 
 
 
@@ -409,8 +363,11 @@ def model_run(request):
         qc_t0_form = float(request.POST['qc_t0'])
         kc_form = float(request.POST['kc'])
 
-        model_inputs_table_id_from_another_html = request.POST['model_inputs_table_id_from_another_html']
-        print 'MSG: Method III initiated. The model id we are looking at is: ', model_inputs_table_id_from_another_html
+        # model_inputs_table_id_from_another_html = request.POST['model_inputs_table_id_from_another_html']
+        hs_resource_id_from_previous_simulation = request.POST['model_inputs_table_id_from_another_html']
+        current_model_inputs_table_id  =hs_resource_id_from_previous_simulation
+
+        print 'MSG: Method III initiated. The model id we are looking at is: ', hs_resource_id_from_previous_simulation
 
         # # # -------DATABASE STUFFS  <start>----- # #
         # # retreive the model_inputs_table.id of this entry to pass it to the next page (calibration page)
@@ -457,48 +414,41 @@ def model_run(request):
         # following two line should replace the above lines for querring db
         # from .model import model_inputs_table, model_calibration_table
 
-        ## test code, start
-        from .model import  SessionMaker, model_inputs_table
-        session = SessionMaker()
-        for i in range(1, 17):
-            all_rows = session.query(model_inputs_table).filter(model_inputs_table.id == i).all()
-            print "MSG: TRIAL, printing DB querries"
-            for row in all_rows:
-                print row.id, row.simulation_name
-        ### test code, END
+
 
         # create input_dictionary for the last run. Because we are modifying, we need to load the last run
-        inputs_dictionary = app_utils.create_model_input_dict_from_db(model_inputs_table_id_from_another_html, user_name )
-        print 'MSG: Input Dictionary from db of model_input_id= ', model_inputs_table_id_from_another_html, " created for simulation: ", inputs_dictionary['simulation_name']
-
-        # STEP3: create a run instance, which does not run the model but REFERNCES a run instance.
-        old_run = pytopkapi_run_instance(simulation_name=inputs_dictionary['simulation_name'],
-                                         cell_size=inputs_dictionary['cell_size'],
-                                         timestep=inputs_dictionary['timestep'],
-                                         xy_outlet= [inputs_dictionary['outlet_x'], inputs_dictionary['outlet_y'] ],
-                                         yyxx_boundingBox=[inputs_dictionary['box_topY'], inputs_dictionary['box_bottomY'],inputs_dictionary['box_leftX'] ,inputs_dictionary['box_rightX']],
-                                         USGS_gage=inputs_dictionary['USGS_gage'], list_of_threshold= [inputs_dictionary['threshold']] , simulation_folder=inputs_dictionary['simulation_folder'])
-
-        # # # STEP4: run model with changed parameters
-        # date_in_datetime_UserModified, Qsim_UserModified, error_checking_param_UserModified = old_run.run_model_with_different_parameters(calibration_parameters=[fac_L_form,fac_Ks_form,fac_n_o_form, fac_n_c_form, fac_th_s_form ],
-        #                                            numerical_values=[pvs_t0_form, vo_t0_form, qc_t0_form, kc_form ])
-
-        # Step 4 placeholder, JUST READS. SO :TODO Del this step4 and retain above step4
-        date_in_datetime_UserModified, Qsim_UserModified, error_checking_param_UserModified = old_run.get_Qsim_and_error()
-
-        # write to DB, as a fresh simulation.So this helps in identifying this simulation next time user wants to modify
-        # because we are re-writing previous simulations in this step, we use same evth (hence, simulation_folder)a s b4
-        current_model_inputs_table_id = app_utils.write_to_db_input_as_dictionary(inputs_dictionary, inputs_dictionary['simulation_folder'])
+        inputs_dictionary = app_utils.create_model_input_dict_from_db(hs_resource_id = hs_resource_id_from_previous_simulation, user_name= user_name )
+        # print 'MSG: Input Dictionary from db of model_input_id= ', model_inputs_table_id_from_another_html, " created for simulation: ", inputs_dictionary['simulation_name']
+        test_string = str(inputs_dictionary)
+        test_variable = hs_resource_id_from_previous_simulation
+        # # STEP3: create a run instance, which does not run the model but REFERNCES a run instance.
+        # old_run = pytopkapi_run_instance(simulation_name=inputs_dictionary['simulation_name'],
+        #                                  cell_size=inputs_dictionary['cell_size'],
+        #                                  timestep=inputs_dictionary['timestep'],
+        #                                  xy_outlet= [inputs_dictionary['outlet_x'], inputs_dictionary['outlet_y'] ],
+        #                                  yyxx_boundingBox=[inputs_dictionary['box_topY'], inputs_dictionary['box_bottomY'],inputs_dictionary['box_leftX'] ,inputs_dictionary['box_rightX']],
+        #                                  USGS_gage=inputs_dictionary['USGS_gage'], list_of_threshold= [inputs_dictionary['threshold']] , simulation_folder=inputs_dictionary['simulation_folder'])
+        #
+        # # # # STEP4: run model with changed parameters
+        # # date_in_datetime_UserModified, Qsim_UserModified, error_checking_param_UserModified = old_run.run_model_with_different_parameters(calibration_parameters=[fac_L_form,fac_Ks_form,fac_n_o_form, fac_n_c_form, fac_th_s_form ],
+        # #                                            numerical_values=[pvs_t0_form, vo_t0_form, qc_t0_form, kc_form ])
+        #
+        # # Step 4 placeholder, JUST READS. SO :TODO Del this step4 and retain above step4
+        # date_in_datetime_UserModified, Qsim_UserModified, error_checking_param_UserModified = old_run.get_Qsim_and_error()
+        #
+        # # write to DB, as a fresh simulation.So this helps in identifying this simulation next time user wants to modify
+        # # because we are re-writing previous simulations in this step, we use same evth (hence, simulation_folder)a s b4
+        # current_model_inputs_table_id = app_utils.write_to_db_input_as_dictionary(inputs_dictionary, inputs_dictionary['simulation_folder'])
 
 
         # STEP5: get the revised hydrographs, and plot it
         # preparing timeseries data in the format shown in: http://docs.tethysplatform.org/en/latest/tethys_sdk/gizmos/plot_view.html#time-series
         hydrograph3 = []
-        date_broken = [[dt.year, dt.month, dt.day, dt.hour, dt.minute] for dt in date_in_datetime_UserModified]
-        for i in range(len(Qsim_UserModified)):
-            date = datetime(year=date_broken[i][0], month=date_broken[i][1], day=date_broken[i][2], hour=date_broken[i][3],
-                            minute=date_broken[i][4])
-            hydrograph3.append([date, float(Qsim_UserModified[i])])
+        # date_broken = [[dt.year, dt.month, dt.day, dt.hour, dt.minute] for dt in date_in_datetime_UserModified]
+        # for i in range(len(Qsim_UserModified)):
+        #     date = datetime(year=date_broken[i][0], month=date_broken[i][1], day=date_broken[i][2], hour=date_broken[i][3],
+        #                     minute=date_broken[i][4])
+        #     hydrograph3.append([date, float(Qsim_UserModified[i])])
 
         observed_hydrograph_userModified = TimeSeries(
             height='500px',
@@ -540,10 +490,33 @@ def model_run(request):
                "observed_hydrograph_userModified":observed_hydrograph_userModified,
                "observed_hydrograph_loaded":observed_hydrograph_loaded,
                #"simulation_loaded_id":simulation_loaded_id,
+               'test_string':test_string,
+               'test_variable':test_variable,
+               'hs_resource_id_created':hs_resource_id_created,
 
                }
 
     return render(request, 'hydrologic_modeling/model-run.html', context)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def google_map_input(request):

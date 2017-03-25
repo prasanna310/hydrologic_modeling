@@ -1,10 +1,10 @@
 from datetime import datetime
 import subprocess, shlex
-import fiona
 
 import os, sys
 
 try:
+    import fiona
     from osgeo import ogr, osr
 except Exception, e:
     print e
@@ -23,8 +23,8 @@ from tethys_sdk.gizmos import SelectInput
 
 
 
-import sys
-sys.path.append('/utils')
+# import sys
+# sys.path.append('/utils')
 from utils.pytopkapi_utils import *
 
 
@@ -61,6 +61,7 @@ def create_model_input_dict_from_request(request):
 
     inputs_dictionary = {"user_name": request.user.username,
                          "simulation_name": request.POST['simulation_name'],
+                         "simulation_folder":'',
                          "simulation_start_date": request.POST['simulation_start_date_picker'],
                          "simulation_end_date": request.POST['simulation_end_date_picker'],
                          "USGS_gage": int(request.POST['USGS_gage']),
@@ -80,11 +81,16 @@ def create_model_input_dict_from_request(request):
                          "model_engine": request.POST['model_engine'],
 
                          }
+    # modify the input_dictionary based on file (shapefile, geojson) inputs,
+
     return inputs_dictionary
 
-def create_model_input_dict_from_db(current_model_inputs_table_id, user_name ):
+def create_model_input_dict_from_db( user_name=None , hs_resource_id=None, model_input_id=None ):
     """
-    :param model_inputs_table:  primary key id for the model_input table
+    A function that creates input dictionary by querin the db. Accepts either hs_resource_id, or model_input_id to create
+    the input dicitonary.
+    :param model_inputs_table_id:  primary key id for the model_input table
+    :param hs_resource_id:         Hydroshare resource id for the model_input table
     :param user_name:           tethys or hydroshare username
     :return:                    dictionary of input parameters
     """
@@ -98,11 +104,19 @@ def create_model_input_dict_from_db(current_model_inputs_table_id, user_name ):
     # print 'model_input ID for last sim, which will be used for calibration: ', current_model_inputs_table_id
 
     # # If passing to calibration is not our aim, we take the id as user input
-    print 'MSG: model_input ID for which rest of the inputs are being retrieved: ', current_model_inputs_table_id
+    print 'MSG: model_input ID for which rest of the inputs are being retrieved: ', hs_resource_id
+
+    if hs_resource_id != None:
+        all_rows = session.query(model_inputs_table). \
+            filter(and_(model_inputs_table.simulation_folder == hs_resource_id,
+                        model_inputs_table.user_name == user_name)).all()
+
+    if model_input_id != None:
+        all_rows = session.query(model_inputs_table).\
+            filter(and_(model_inputs_table.id== model_input_id, model_inputs_table.user_name == user_name)).all()
 
     # :TODO for a particular user_name also requird. Can be poorly achieved by writing if-clause in for-loop below
-    all_rows = session.query(model_inputs_table).\
-        filter(and_(model_inputs_table.id == current_model_inputs_table_id, model_inputs_table.user_name == user_name)).all()
+
 
     # retrieve the parameters and write to a dictionary
     inputs_dictionary = {}
@@ -129,40 +143,49 @@ def create_model_input_dict_from_db(current_model_inputs_table_id, user_name ):
         inputs_dictionary['cell_size'] = cell_size
         inputs_dictionary['timestep'] = timestep
 
+        inputs_dictionary['remarks'] = row.remarks
+        inputs_dictionary['user_option'] = row.user_option
         inputs_dictionary['model_engine'] = row.model_engine
 
 
     print 'MSG: SUCCESS Querrying the database to create dictionary '
     if inputs_dictionary == {}:
-        print "MSG: ERROR, Dictionary Empty!!! "
+        print "MSG: ERROR, HydroShare resource ID invalid!!! "
 
     return  inputs_dictionary
 
-def create_simulation_list_after_querying_db(user_name):
+def create_simulation_list_after_querying_db(user_name=None, return_hs_resource_id=True, return_model_input_id = False):
     # returns a tethys gizmo or a drop down list, which should be referenced in html with name = 'simulation_names_list'
+    # if return_hs_resource_id == True,
     from .model import engine, SessionMaker, Base, model_inputs_table, model_calibration_table
     from tethys_sdk.gizmos import SelectInput
 
     Base.metadata.create_all(engine)    # Create tables
     session = SessionMaker()            # Make session
 
-    # Query DB for gage objects
+    # Query DB
     simulations_queried = session.query(model_inputs_table).filter(model_inputs_table.user_name==user_name).all() # searches just the id input in URL
 
     simulation_names_list_queried = []
     simulation_names_id = []
+    hs_resourceID = []
 
     for row in simulations_queried:
         simulation_names_list_queried.append(row.simulation_name)
         simulation_names_id.append(row.id)
+        hs_resourceID.append(row.simulation_folder)
 
-    queries = zip(simulation_names_list_queried,simulation_names_id )
+    if return_model_input_id :
+        queries = zip(simulation_names_list_queried,simulation_names_id ) # returns model_input_table_id
+    if return_hs_resource_id :
+        queries = zip(simulation_names_list_queried, hs_resourceID)  # returns hs_resource of model instance
+
 
     simulation_names_list = SelectInput(display_text='Saved Models',
                                      name='simulation_names_list',
                                      multiple=False,
-                                     options= queries  #[ (  simulations_queried[0].id, '1'),  (  simulations_queried[1].simulation_name, '2'  ),  (   simulations_queried[1].user_name, '2'  )]
-                                                          )
+                                     options= queries  )#[ (  simulations_queried[0].id, '1'),  (  simulations_queried[1].simulation_name, '2'  ),  (   simulations_queried[1].user_name, '2'  )]
+
     return simulation_names_list
 
 def get_outlet_xy_from_shp_shx(shp_file, shx_file, simulation_folder='/usr/lib/tethys/src/tethys_apps/tethysapp/my_first_app/workspaces/user_workspaces/usr1/'):
@@ -326,6 +349,42 @@ def run_model_with_input_as_dictionary(inputs_dictionary,write_to_db=True, simul
 
     return hydrograph_series, table_id
 
+def shapefile_to_geojson(path_to_shp):
+    #input: Shapefile
+    #output: geojson that the javascript can plot
+
+    # shapefile to geojson using gdal
+    directory, filename = os.path.split(path_to_shp)
+    path_to_geojson = os.path.join(directory, "watershed.geojson")
+    cmd = '''ogr2ogr -f GeoJSON -t_srs crs:84 %s %s'''%(path_to_geojson, path_to_shp)
+    print cmd
+    os.system(cmd)
+
+
+    # edit geojson
+    def json_to_js_prepend(json_filename):
+        import fileinput
+
+        # STEP1: add ) at the last line
+        geojson_file = file(json_filename, 'a')
+        geojson_file.write(')')
+        geojson_file.close()
+
+        # STEP2: add in the beginning based on http://stackoverflow.com/questions/5914627/prepend-line-to-beginning-of-a-file
+        f = fileinput.input(json_filename, inplace=1)
+        line_to_prepend = 'geojson_callback('
+        for xline in f:
+            if f.isfirstline():
+                print line_to_prepend.rstrip('\r\n') + '\n' + xline,
+            else:
+                print xline,
+
+    json_to_js_prepend(path_to_geojson)
+    return path_to_geojson
+
+
+
+
 def validate_inputs(request):
     """
 
@@ -340,6 +399,7 @@ def validate_inputs(request):
     error_msg = ""
     inputs = {}
     inputs_dictionary = {}
+    geojson_files = {} #:TODO if geosjson, its input should supercede other inputs. So may be write code at last
 
     # All these inputs should go in the validation functions itself, not here in the front
 
@@ -354,7 +414,7 @@ def validate_inputs(request):
 
 
     # # If UEB, TOPNET or RHESSys, print "Not ready yet"
-    # if request.POST['timeseries_source'] != "UEB":
+    # if request.POST['timeseries_source'] != "Daymet":
     #     error_msg = "Time series you selected is not ready yet"
 
     if request.POST['model_engine'] != "TOPKAPI":
@@ -366,7 +426,7 @@ def validate_inputs(request):
     # # From RADIO BOX (not created so far), make sure inputs is read here so no IF required
 
     # # Ask confirmation of shapefile inputs
-    shapefile_radio = False
+    shapefile_radio = True
     if shapefile_radio:
         # get the outlet x,y and the bounding box
         try:
@@ -383,6 +443,8 @@ def validate_inputs(request):
                     outlet_dbf = afile
 
             outlet_x, outlet_y = get_outlet_xy_from_shp_shx(shp_file=outlet_shp, shx_file=outlet_shx)
+            geojson_files['geojson_outlet']  = shapefile_to_geojson(outlet_shp)
+
 
 
         except Exception, e:
@@ -401,7 +463,9 @@ def validate_inputs(request):
                 if afile.name.split(".")[-1] == "dbf":
                     watershed_dbf = afile
 
-            box_rightX, box_bottomY, box_leftX, box_topY = get_box_xyxy_from_shp_shx(shp_file=watershed_shp,shx_file=watershed_shx)
+            # lines below are not being executed
+            # box_rightX, box_bottomY, box_leftX, box_topY = get_box_xyxy_from_shp_shx(shp_file=watershed_shp,shx_file=watershed_shx)
+            geojson_files['geojson_domain'] = shapefile_to_geojson(watershed_shp)
 
 
         except Exception, e:
@@ -454,7 +518,19 @@ def validate_inputs(request):
     else:
         validation_status = False
 
-    return validation_status, error_msg, inputs_dictionary
+    return validation_status, error_msg, inputs_dictionary, geojson_files
+
+def generate_uuid_file_path(file_name=None, root_path= None):
+    if root_path == None:
+        root_path = os.path.join(os.path.dirname(__file__),'workspaces', 'user_workspaces')
+    from uuid import uuid4
+    uuid_path = os.path.join(root_path, uuid4().hex)
+    os.makedirs(uuid_path)
+    file_path = uuid_path
+    if file_name:
+        file_path = os.path.join(uuid_path, file_name)
+    return file_path
+
 
 def write_to_db_input_as_dictionary(inputs_dictionary, simulation_folder=""):
     """

@@ -26,7 +26,7 @@ class HydrologicModeling(TethysAppBase):
 
         url_maps = (UrlMap(name='home',
                            url='hydrologic-modeling',
-                           controller='hydrologic_modeling.controllers.home'),
+                           controller='hydrologic_modeling.controllers.model_input'),
 
                     UrlMap(name='model_input',
                            url=r'hydrologic-modeling/model_input',

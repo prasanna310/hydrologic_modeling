@@ -55,7 +55,7 @@
             <div id="domainInputs" class="panel-collapse collapse">
                 <div class="panel-body">
 
-                                    <input type="radio" name="domain_radio" value="1" data-toggle="collapse" data-parent="#accordion" data-target="#specify" > Specify long lat, or draw on map
+                                    <input type="radio" name="domain_radio" value="1" data-toggle="collapse" data-parent="#accordion" data-target="#specify" checked /> Specify long lat, or draw on map
 
                                     <div id="specify" class="panel-collapse collapse" >
                                       <br> <strong> OUTLET  </strong>
@@ -194,7 +194,7 @@
                     var mapOptions = {
                         center: mapCenter,
                         zoom:9,
-                        mapTypeId: google.maps.MapTypeId.ROADMAP
+                        mapTypeId: 'terrain' //google.maps.MapTypeId.ROADMAP
                     };
                     var map = new google.maps.Map(mapDiv, mapOptions);
 
@@ -202,7 +202,10 @@
                         map:map,
                         position: mapCenter,
                         draggable:true,
-                        label:"Outlet"
+                        label:"Outlet",
+                        scale: 10,
+                        //size : new google.maps.Size(21,34)
+
                     });
 
                     var rectangle = new google.maps.Rectangle({
@@ -211,8 +214,8 @@
                                 new google.maps.LatLng(41.88,-111.8461),
                                 new google.maps.LatLng(41.7215,-111.6208)
                         ),
-                        fillColor:"green",
-                        strokeColor:"red",
+                        fillColor:"grey",
+                        strokeColor:"blue",
                         editable:true,
                         draggable:true
                     });
@@ -222,10 +225,10 @@
                         var NE = bounds.getNorthEast();
                         var SW = bounds.getSouthWest();
 
-                        document.forms["inputs"]["box_topY"].value= SW.lat() ;
-                        document.forms["inputs"]["box_rightX"].value= SW.lng();
-                        document.forms["inputs"]["box_leftX"].value= NE.lng();
-                        document.forms["inputs"]["box_bottomY"].value= NE.lat();
+                        document.forms["inputs"]["box_bottomY"].value= SW.lat() ;
+                        document.forms["inputs"]["box_leftX"].value= SW.lng();
+                        document.forms["inputs"]["box_rightX"].value= NE.lng();
+                        document.forms["inputs"]["box_topY"].value= NE.lat();
 
                     });
 
@@ -242,7 +245,7 @@
 
         </head>
         <body>
-            <h5>  <strong>Specify the outlet, and the bounding box that completely contains the watershed</strong></h5>
+            <h5>  <strong>Specify the Outlet, and the bounding box that completely contains the watershed</strong></h5>
             <div id="mymap"></div>
             <div id="info"></div>
         </body>
