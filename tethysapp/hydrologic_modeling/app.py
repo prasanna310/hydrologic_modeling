@@ -32,6 +32,14 @@ class HydrologicModeling(TethysAppBase):
                            url=r'hydrologic-modeling/model_input',
                            controller='hydrologic_modeling.controllers.model_input'),
 
+                    UrlMap(name='model_run',
+                           url='hydrologic-modeling/model_run',
+                           controller='hydrologic_modeling.controllers.model_run'),
+
+                    UrlMap(name='visualize_shp',
+                           url='hydrologic-modeling/model_input',
+                           controller='hydrologic_modeling.controllers.visualize_shp'),
+
                     # /hydrologic-modeling/test2
                     UrlMap(name='test2',
                            url='hydrologic-modeling/test2',
@@ -45,9 +53,8 @@ class HydrologicModeling(TethysAppBase):
                     UrlMap(name='model_input0',
                            url='hydrologic-modeling/model_input0',
                            controller='hydrologic_modeling.controllers.model_input0'),
-                    UrlMap(name='model_run',
-                           url='hydrologic-modeling/model_run',
-                           controller='hydrologic_modeling.controllers.model_run'),
+
+
         )
 
         return url_maps
