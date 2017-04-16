@@ -52,7 +52,7 @@ def model_input(request):
 
     # Query DB for gage objects, all the entries by the user name
     # give the value for thsi variable = 0 if the program is starting for the first time
-    simulation_names_list = app_utils.create_simulation_list_after_querying_db(user_name='prasanna')
+    simulation_names_list = app_utils.create_simulation_list_after_querying_db(given_user_name=user_name)
 
 
     simulation_name = TextInput(display_text='Simulation name', name='simulation_name', initial='simulation-1')
@@ -104,7 +104,7 @@ def model_input(request):
     table_id = 0
     validation_status = True
 
-    # when it receives request
+    # when it receives request. This is not in effect. Currently, the request is sent to model_run, not model_input.html
     if request.is_ajax and request.method == 'POST':
         try:
             validation_status, form_error, inputs_dictionary, geojson_files = app_utils.validate_inputs(request) # input_dictionary has proper data type. Not everything string
@@ -153,12 +153,6 @@ def model_input(request):
 
 
 
-    # # page content, if no request
-    # try:
-    #     test_function_response = load_shapefile_to_db()
-    # except Exception,e:
-    #     test_function_response = e
-
 
     context = {
 
@@ -173,7 +167,6 @@ def model_input(request):
         'timeseries_source': timeseries_source,
         'threshold': threshold,
         'USGS_gage': USGS_gage,
-
         'model_engine': model_engine,
         'gage_id': id,
         'outlet_x': outlet_x, 'outlet_y': outlet_y,
@@ -182,8 +175,8 @@ def model_input(request):
         'outlet_hs': outlet_hs,
         'bounding_box_hs': bounding_box_hs,
 
-        'validation_status': validation_status,
         'form_error': form_error,
+        'validation_status': validation_status,
         'model_inputs_table_id':table_id,
         'geojson_outlet':geojson_outlet,
         'geojson_domain':geojson_files,
@@ -269,6 +262,12 @@ def model_run(request):
 
     # model_inputs_table_id_from_another_html = current_model_inputs_table_id  # :TODO need to check why this works
 
+
+
+
+
+
+
     # Method (1), request from model_input-prepare model
     if model_input_prepare_request != None:
         print 'MSG: Method I initiated.'
@@ -293,25 +292,40 @@ def model_run(request):
         from HDS_hydrogate_dev import HydroDS
         import HDS_settings
         HDS = HydroDS(username=HDS_settings.USER_NAME, password=HDS_settings.PASSWORD)
-        # hs_resource_id, hydrograph_file, zip_files=  call_runpytopkapi(inputs_dictionary) # hydrograph fields: datetime, Qsim, Qobs
-        # hs_resource_id_created = hs_resource_id
+        # hydrograph_file, zip_files=  call_runpytopkapi(inputs_dictionary) # hydrograph fields: datetime, Qsim, Qobs
+        # hs_resource_id_created = get_hs_resource_id_from_hydrograph(hydrograph_file)
 
+        hydrograph_series, hs_resource_id_created =  app_utils.read_hydrograph_from_txt()
 
-        # :TODO write simulation information to db, where simulation_folder= hs_resource_id
-        # current_model_inputs_table_id = app_utils.write_to_db_input_as_dictionary(inputs_dictionary, simulation_folder)
+        # Writing to model_inputs_table
+        current_model_inputs_table_id = app_utils.write_to_model_input_table(inputs_dictionary=inputs_dictionary, hs_resource_id= hs_resource_id_created)
 
-        # :TODO write hydrographs to the db
+        # Writing to model_calibraiton_table
+        # (Because it is first record of the simulation)
+        # IF the model did not run, or if user just wants the files, we don't write to calibration table
+        current_model_calibration_table_id = app_utils.write_to_model_calibration_table( model_input_table_id=current_model_inputs_table_id)
 
+        # Writing to model_result_table
+        current_model_result_table_id = app_utils.write_to_model_result_table(model_calibration_table_id=current_model_calibration_table_id,
+                                                                              timeseries_discharge_list=hydrograph_series)
 
         # :TODO create hydrograph. Make the create_viewplot_hydrograph work
         # create_viewplot_hydrograph(date_in_datetime, Qsim, error)  # aile kina ho kaam garena
 
-        hydrograph = []
-        # observed_hydrograph = create_viewplot_hydrograph(hydrograph_file)
 
-
-
-
+        observed_hydrograph =  TimeSeries(
+            height='500px',
+            width='500px',
+            engine='highcharts',
+            title=' Corrected Hydrograph ',
+            subtitle="Simulated and Observed flow for " + simulation_name,
+            y_axis_title='Discharge',
+            y_axis_units='cumecs',
+            series=[{
+                'name': 'Simulated Flow',
+                'data': hydrograph_series
+            }]
+        )
 
 
 
@@ -335,7 +349,7 @@ def model_run(request):
         #* STEP3: Make sure a string/variable/field remains that contains the id of the model. SO when user modifies it, that model is modifed
 
         # # STEP4B: Write to db
-        # current_model_inputs_table_id = app_utils.write_to_db_input_as_dictionary(inputs_dictionary,simulation_folder)
+        # current_model_inputs_table_id = app_utils.write_to_model_input_table(inputs_dictionary,simulation_folder)
         # print "MSG: Inputs from model_input form written to db. Model RAN already"
 
 
@@ -343,7 +357,6 @@ def model_run(request):
         # preparing timeseries data in the format shown in: http://docs.tethysplatform.org/en/latest/tethys_sdk/gizmos/plot_view.html#time-series
         hydrograph2 = []
         observed_hydrograph_loaded = ''
-
 
 
 
@@ -439,7 +452,7 @@ def model_run(request):
         #
         # # write to DB, as a fresh simulation.So this helps in identifying this simulation next time user wants to modify
         # # because we are re-writing previous simulations in this step, we use same evth (hence, simulation_folder)a s b4
-        # current_model_inputs_table_id = app_utils.write_to_db_input_as_dictionary(inputs_dictionary, inputs_dictionary['simulation_folder'])
+        # current_model_inputs_table_id = app_utils.write_to_model_input_table(inputs_dictionary, inputs_dictionary['simulation_folder'])
 
 
         # STEP5: get the revised hydrographs, and plot it
@@ -516,8 +529,50 @@ def model_run(request):
 
 
 
+def visualize_shp(request):
+    # when it receives request. This is not in effect. Currently, the request is sent to model_run, not model_input.html
+    geojson_files = {}
+    if request.is_ajax and request.method == 'POST':
+        print "Request Received"
+
+        for afile in request.FILES.getlist('watershed_shp'):
+
+            if afile.name.split(".")[-1] == "shp":
+                watershed_shp = afile
+            if afile.name.split(".")[-1] == "shx":
+                watershed_shx = afile
+            if afile.name.split(".")[-1] == "prj":
+                watershed_prj = afile
+            if afile.name.split(".")[-1] == "dbf":
+                watershed_dbf = afile
 
 
+
+        # lines below are not being executed
+        # box_rightX, box_bottomY, box_leftX, box_topY = get_box_xyxy_from_shp_shx(shp_file=watershed_shp,shx_file=watershed_shx)
+        geojson_files['geojson_domain'] = app_utils.shapefile_to_geojson(watershed_shp)
+        print geojson_files
+
+        # validation_status, form_error, inputs_dictionary, geojson_files = app_utils.validate_inputs(request) # input_dictionary has proper data type. Not everything string
+
+        for geojson in geojson_files.keys():
+            if geojson == 'geojson_outlet':
+                geojson_outlet = geojson_files['geojson_outlet']
+                print geojson_outlet
+            if geojson == 'geojson_domain':
+                geojson_domain = geojson_files['geojson_domain']
+                print geojson_domain
+
+
+
+    context = {
+
+        'geojson_file':geojson_domain
+    }
+
+    render(request, 'hydrologic_modeling/model_input.html', context)
+
+    return
 
 
 def google_map_input(request):
@@ -529,6 +584,7 @@ def google_map_input(request):
 
 def test2(request):
     user_name = request.user.username
+
 
     # Define Gizmo Options
     simulation_name = TextInput(display_text='Simulation name', name='simulation_name', initial='simulation-1')
@@ -581,7 +637,7 @@ def test2(request):
 
         'model_engine': model_engine,
         'gage_id': id,
-        'simulation_names_list': app_utils.create_simulation_list_after_querying_db(user_name),
+        'simulation_names_list': app_utils.create_simulation_list_after_querying_db(given_user_name=user_name),
         'outlet_x': outlet_x, 'outlet_y': outlet_y,
         'north_lat': north_lat, 'east_lon': east_lon, 'west_lon': west_lon, 'south_lat': south_lat,
     }

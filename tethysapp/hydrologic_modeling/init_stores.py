@@ -2,6 +2,7 @@ from .model import engine, SessionMaker, Base, model_inputs_table
 
 # this function is called for the first time a db is created, with first_time=True argument
 # at this time, this should create all the tables, and if there is initial data, this should create those too
+# this function can be initiated by typing in shell:   $tethys syncstores hydrologic_modeling -f # f is for argument first_time=True
 def init_hydrologic_modeling_db(first_time, username='prasanna'):
     """
     An example persistent store initializer function
@@ -9,7 +10,6 @@ def init_hydrologic_modeling_db(first_time, username='prasanna'):
     # Create tables
     Base.metadata.create_all(engine)
 
-    # # :TODO Initiate the table data
     if first_time:
         # Make session
         session = SessionMaker()
@@ -17,7 +17,7 @@ def init_hydrologic_modeling_db(first_time, username='prasanna'):
         # To add value to the db for the first time
         sample_run = model_inputs_table(user_name= username,
                                    simulation_name="Sample_Simulation",
-                                   simulation_folder="10a357a5277a4792b0d901442ed9ff1d",
+                                   hs_resource_id="10a357a5277a4792b0d901442ed9ff1d",
                                    simulation_start_date='01/01/2010',
                                    simulation_end_date='01/01/2011',
                                    USGS_gage="10172200",
@@ -35,6 +35,7 @@ def init_hydrologic_modeling_db(first_time, username='prasanna'):
                                        )
         session.add(sample_run)
         session.commit()
+
 
 
 

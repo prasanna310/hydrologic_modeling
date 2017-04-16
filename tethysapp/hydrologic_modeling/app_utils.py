@@ -62,7 +62,9 @@ def create_model_input_dict_from_request(request):
     inputs_dictionary = {"user_name": request.user.username,
                          "simulation_name": request.POST['simulation_name'],
                          "simulation_folder":'',
-                         "simulation_start_date": request.POST['simulation_start_date_picker'],
+
+
+              "simulation_start_date": request.POST['simulation_start_date_picker'],
                          "simulation_end_date": request.POST['simulation_end_date_picker'],
                          "USGS_gage": int(request.POST['USGS_gage']),
 
@@ -81,9 +83,40 @@ def create_model_input_dict_from_request(request):
                          "model_engine": request.POST['model_engine'],
 
                          }
+
     # modify the input_dictionary based on file (shapefile, geojson) inputs,
 
+    # if the input is hydroshare id
+    if request.POST['outlet_hs']:
+        pass
+    if request.POST['bounding_box_hs']:
+        pass
+
     return inputs_dictionary
+
+
+def read_hydrograph_from_txt(hydrograph_series_fname=None):
+
+
+    if hydrograph_series_fname == None:
+        hydrograph_series_fname = '/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/usr1/abebebsb323bsg1283bg3.txt'
+    hs_resource_id_created = os.path.basename(hydrograph_series_fname).split(".")[0]  # assuming the filename is the hydroshare resource ID
+
+    # df = pd.read_csv(f, names=['year' , 'month' , 'day', 'hour', 'minute', 'q_obs', 'q_sim'])  # parse_dates=[0], infer_datetime_format=True
+    # # df2 = pd.read_csv(f, names=['date','q_obs', 'q_sim'], parse_dates=[0], infer_datetime_format=True)
+    # d = np.array(df['DateTime'])
+    # q_obs = np.array(df['q_obs'])
+    # q_sim = np.array(df['q_sim'])
+    # ar = zip(d, float(q_obs), float(q_sim))
+
+    ar = np.genfromtxt(hydrograph_series_fname, delimiter="\t")
+    hydrograph = []
+    for i in range(len(ar)):
+        date = datetime(year= int(ar[i][0]), month=int(ar[i][1]), day=int(ar[i][2]), hour=int(ar[i][3]),   minute=int(ar[i][4]))
+        hydrograph.append([date, float(ar[i][5]),  float(ar[i][6])])
+
+    return hydrograph, hs_resource_id_created
+
 
 def create_model_input_dict_from_db( user_name=None , hs_resource_id=None, model_input_id=None ):
     """
@@ -108,7 +141,7 @@ def create_model_input_dict_from_db( user_name=None , hs_resource_id=None, model
 
     if hs_resource_id != None:
         all_rows = session.query(model_inputs_table). \
-            filter(and_(model_inputs_table.simulation_folder == hs_resource_id,
+            filter(and_(model_inputs_table.hs_resource_id == hs_resource_id,
                         model_inputs_table.user_name == user_name)).all()
 
     if model_input_id != None:
@@ -125,7 +158,7 @@ def create_model_input_dict_from_db( user_name=None , hs_resource_id=None, model
         inputs_dictionary['id'] = row.id
         inputs_dictionary['user_name'] = row.user_name
         inputs_dictionary['simulation_name'] = row.simulation_name
-        inputs_dictionary['simulation_folder'] = row.simulation_folder
+        inputs_dictionary['simulation_folder'] = row.hs_resource_id
         inputs_dictionary['simulation_start_date'] = row.simulation_start_date
         inputs_dictionary['simulation_end_date'] = row.simulation_end_date
         inputs_dictionary['USGS_gage'] = row.USGS_gage
@@ -154,26 +187,32 @@ def create_model_input_dict_from_db( user_name=None , hs_resource_id=None, model
 
     return  inputs_dictionary
 
-def create_simulation_list_after_querying_db(user_name=None, return_hs_resource_id=True, return_model_input_id = False):
+def create_simulation_list_after_querying_db(given_user_name=None, return_hs_resource_id=True, return_model_input_id = False):
     # returns a tethys gizmo or a drop down list, which should be referenced in html with name = 'simulation_names_list'
     # if return_hs_resource_id == True,
-    from .model import engine, SessionMaker, Base, model_inputs_table, model_calibration_table
+    from .model import engine, SessionMaker, Base, model_inputs_table ,model_calibration_table, model_result_table
     from tethys_sdk.gizmos import SelectInput
 
     Base.metadata.create_all(engine)    # Create tables
     session = SessionMaker()            # Make session
 
-    # Query DB
-    simulations_queried = session.query(model_inputs_table).filter(model_inputs_table.user_name==user_name).all() # searches just the id input in URL
+     # Query DB
+    simulations_queried = session.query(model_inputs_table).filter(model_inputs_table.user_name==given_user_name).all() # searches just the id input in URL
+
+    # print 'Total no of records in model input table is', session.query(model_inputs_table).count()
+    # print 'Total no of records in model calibration table is', session.query(model_calibration_table).count()
+    # print 'Total no of records in model result table is', session.query(model_result_table).count()
 
     simulation_names_list_queried = []
     simulation_names_id = []
     hs_resourceID = []
+    queries = []
 
-    for row in simulations_queried:
-        simulation_names_list_queried.append(row.simulation_name)
-        simulation_names_id.append(row.id)
-        hs_resourceID.append(row.simulation_folder)
+    for record in simulations_queried:
+        simulation_names_list_queried.append(record.simulation_name)
+        simulation_names_id.append(record.id)
+        hs_resourceID.append(record.hs_resource_id)
+
 
     if return_model_input_id :
         queries = zip(simulation_names_list_queried,simulation_names_id ) # returns model_input_table_id
@@ -333,8 +372,8 @@ def run_model_with_input_as_dictionary(inputs_dictionary,write_to_db=True, simul
         date_in_datetime, Qsim, error = run_1.get_Qsim_and_error()
 
         if write_to_db:
-            # write_to_db_input_as_dictionary(inputs_dictionary, simulation_folder)
-            table_id = write_to_db_input_as_dictionary(inputs_dictionary, simulation_folder)
+            # write_to_model_input_table(inputs_dictionary, simulation_folder)
+            table_id = write_to_model_input_table(inputs_dictionary, simulation_folder)
 
         # create_viewplot_hydrograph(date_in_datetime, Qsim, error)  # aile kina ho kaam garena
 
@@ -381,6 +420,7 @@ def shapefile_to_geojson(path_to_shp):
 
     json_to_js_prepend(path_to_geojson)
     return path_to_geojson
+
 
 
 
@@ -532,10 +572,10 @@ def generate_uuid_file_path(file_name=None, root_path= None):
     return file_path
 
 
-def write_to_db_input_as_dictionary(inputs_dictionary, simulation_folder=""):
+def write_to_model_input_table(inputs_dictionary, hs_resource_id=""):
     """
      :param inputs_dictionary:
-    :param simulation_folder:
+    :param hs_resource_id_created:
     :return: table_id of (pk) of the run information added to the dictionary
     """
 
@@ -558,6 +598,10 @@ def write_to_db_input_as_dictionary(inputs_dictionary, simulation_folder=""):
     timestep = float(inputs_dictionary['timestep'])
 
     model_engine = inputs_dictionary['model_engine']
+    
+    # :TODO, take these values from from input_dictionary
+    remarks = ''
+    user_option = ''
 
     # other model parameter is string or text, combining parametes with __ (double underscore)
     other_model_parameters = str(timeseries_source)+ "__"+ str(threshold) + "__"+ str(cell_size) + "__"+ str(timestep)
@@ -570,18 +614,85 @@ def write_to_db_input_as_dictionary(inputs_dictionary, simulation_folder=""):
     session = SessionMaker()            # Make session
 
     # one etnry / row
-    one_run = model_inputs_table(user_name=user_name, simulation_name=simulation_name,simulation_folder=simulation_folder,
+    one_run = model_inputs_table(user_name=user_name, simulation_name=simulation_name,hs_resource_id=hs_resource_id,
             simulation_start_date=simulation_start_date,simulation_end_date=simulation_end_date,USGS_gage=USGS_gage,
                  outlet_x=outlet_x,outlet_y=outlet_y, box_topY=box_topY,box_bottomY=box_bottomY, box_rightX=box_rightX,box_leftX=box_leftX,
-                 model_engine=model_engine, other_model_parameters=other_model_parameters )
+                 model_engine=model_engine, other_model_parameters=other_model_parameters, remarks=remarks, user_option=user_option )
     session.add(one_run)
     session.commit()
+    print "Run details written successfully to model_input_table"
 
     # read the id
     current_model_inputs_table_id = str(len(session.query(model_inputs_table).filter(
         model_inputs_table.user_name == user_name).all()))  # because PK is the same as no of rows, i.e. length
 
     return current_model_inputs_table_id
+
+def write_to_model_calibration_table(model_input_table_id, numeric_parameters_list=None, calibration_parameters_list=None):
+    '''
+    list, which will be converted string separated by __ double underscore
+    :param numeric_parameters_list:   [pvs_t0, vo_t0 , qc_t0, kc] for topkapi
+    :param calib_parameters_list:     [fac_l, fac_ks, fac_n_o, fac_n_c, fac_th_s]
+    :param model_input_table_id:      The foreign key
+    :return:
+    '''
+    if numeric_parameters_list == None:
+        numeric_parameters_list = [90.0,100.0,0,1]
+    if calibration_parameters_list == None:
+        calibration_parameters_list = [1,1,1,1,1]
+
+    # make the exam same list, but change numbers to string
+    numeric_parameters_list = [str(item) for item in numeric_parameters_list]
+    calibration_parameters_list = [str(item) for item in calibration_parameters_list]
+
+    # Database accepts string, so combining parametes with __ (double underscore)
+    numeric_parameters = '__'.join(numeric_parameters_list)
+    calibration_parameters = '__'.join(calibration_parameters_list)
+
+    # :TODO write only when sim_name is different for a user
+    from .model import engine, Base, SessionMaker,  model_calibration_table
+    session = SessionMaker()  # Make session
+
+    # one etnry / row
+    one_run = model_calibration_table(numeric_parameters= numeric_parameters,
+                                      calibration_parameters=calibration_parameters,input_table_id=model_input_table_id)
+    session.add(one_run)
+    session.commit()
+    print "Run details written successfully to model_calibration_table"
+
+    # read the id
+    # current_model_calibration_table_id = str(len(session.query(model_calibration_table).filter(
+    #     model_calibration_table.input_table_id == model_input_table_id).all()))  # because PK is the same as no of rows, i.e. length
+
+    all_row = session.query(model_calibration_table).filter(model_calibration_table.input_table_id == model_input_table_id).all()
+    current_model_calibration_table_id  = all_row[0].id # this query will only give one row. For that row, give id
+
+
+    return current_model_calibration_table_id
+
+def write_to_model_result_table(model_calibration_table_id, timeseries_discharge_list):
+    '''
+    :param: model_calibration_table_id:     The foriegn ID to reference the model_calibration_table
+    :param timeseries_discharge_list:       [   [datetime.datetime(2015, 1, 1, 0, 0), 2.0, 3.1],  [datetime.datetime(2015, 1, 2, 0, 0),2.35, 3.5]   ]
+    :return:
+    '''
+    from .model import  SessionMaker,  model_result_table
+    session = SessionMaker()
+
+    # one_timestep =  [datetime.datetime(2015, 1, 1, 0, 0), 2.0, 3.1]       # example
+    for one_timestep in timeseries_discharge_list:
+        # one etnry / row
+        one_run = model_result_table(date_time=one_timestep[0], simulated_discharge=one_timestep[1],
+                                     observed_discharge=one_timestep[2], model_calibration_id =model_calibration_table_id)
+        session.add(one_run)
+    session.commit()
+    print "Run details written successfully to model_results_table"
+    return
+
+
+
+
+
 # # UN-USED or INCOMPLETE functions
 def call_subprocess(cmdString, debugString):
     cmdargs = shlex.split(cmdString)

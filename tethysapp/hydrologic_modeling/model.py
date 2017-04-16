@@ -14,9 +14,6 @@ Base = declarative_base()
 
 
 class model_inputs_table(Base):
-    '''
-    Example SQLAlchemy DB Model
-    '''
     __tablename__ = 'model_inputs_table'
 
     # Columns
@@ -25,7 +22,7 @@ class model_inputs_table(Base):
 
     user_name = Column(Text)
     simulation_name = Column(Text)
-    simulation_folder = Column(Text)
+    hs_resource_id = Column(Text)
     simulation_start_date = Column(Date)
     simulation_end_date = Column(Date)
     USGS_gage = Column(Integer)
@@ -50,15 +47,12 @@ class model_inputs_table(Base):
 
 
 
-    def __init__(self, user_name, simulation_name,simulation_folder,simulation_start_date,simulation_end_date,USGS_gage,
+    def __init__(self, user_name, simulation_name,hs_resource_id,simulation_start_date,simulation_end_date,USGS_gage,
                  outlet_x,outlet_y, box_topY,box_bottomY, box_rightX,box_leftX,
                  model_engine,other_model_parameters, remarks, user_option  ):
-        """
-        Constructor for a gage
-        """
         self.user_name = user_name
         self.simulation_name = simulation_name
-        self.simulation_folder = simulation_folder
+        self.hs_resource_id = hs_resource_id
         self.simulation_start_date_picker = simulation_start_date
         self.simulation_end_date_picker = simulation_end_date
         self.USGS_gage = USGS_gage
@@ -82,14 +76,12 @@ class model_inputs_table(Base):
 
 
 class model_calibration_table(Base):
-    '''
-    Example SQLAlchemy DB Model
-    '''
+
     __tablename__ = 'model_calibration_table'
 
     # Columns
     id = Column(Integer, primary_key=True)
-    model_run_id = Column(Integer, ForeignKey('model_inputs_table.id'))
+    input_table_id = Column(Integer, ForeignKey('model_inputs_table.id'),  nullable=False)
 
     numeric_parameters = Column(Text)
     calibration_parameters = Column(Text)
@@ -106,12 +98,11 @@ class model_calibration_table(Base):
     # kc_form = Column(Float)
 
 
-    def __init__(self,numeric_parameters, calibration_parameters ):
-        """
-        Constructor for a gage
-        """
+    def __init__(self,numeric_parameters, calibration_parameters, input_table_id ):
+
         self.numeric_parameters = numeric_parameters
         self.calibration_parameters = calibration_parameters
+        self.input_table_id = input_table_id
 
         # self.fac_Ks_form = fac_Ks_form
         # self.fac_n_o_form = fac_n_o_form
@@ -125,29 +116,28 @@ class model_calibration_table(Base):
 
 
 class model_result_table(Base):
-    '''
-    Example SQLAlchemy DB Model
-    '''
+
     __tablename__ = 'model_result_table'
 
     # Columns
     id = Column(Integer, primary_key=True)
-    model_calibration_id = Column(Integer, ForeignKey('model_calibration_table.id'))
+    model_calibration_id = Column(Integer, ForeignKey('model_calibration_table.id'),  nullable=False)
 
     datetime = Column(DateTime)
-    UTC_offset = Column(DateTime)
+    # UTC_offset = Column(DateTime)
     simulated_discharge = Column(Float)
     observed_discharge = Column(Float)
 
 
-    def __init__(self,datetime, UTC_offset, simulated_discharge, observed_discharge ):
+    def __init__(self,date_time, simulated_discharge, observed_discharge, model_calibration_id ,UTC_offset=None ):
         """
         Constructor for a gage
         """
-        self.datetime = datetime
-        self.UTC_offset = UTC_offset
+        self.date_time = date_time
+        # self.UTC_offset = UTC_offset
         self.simulated_discharge = simulated_discharge
         self.observed_discharge = observed_discharge
+        self.model_calibration_id = model_calibration_id
 
 
 
