@@ -1,4 +1,4 @@
-__author__ = 'Pabitra' # edits: Prasanna
+__author__ = 'Pabitra'
 
 """"
 HydroGate Python Client for accessing CI-WATER HydroDS Data and Computational Web Services
@@ -2657,13 +2657,13 @@ class HydroDS(object):
 
 
     ##################################START OF TOPKAPI FUNCTIONS ################################
-    def reclassifyrasterwithlut(self, input_raster, LUT, output_raster,delimiter,  save_as=None):
+    def reclassifyrasterwithlut(self, input_raster, LUT=u'http://129.123.9.159:20199/files/data/user_6/LUT_NLCD2n.csv',  output_raster='reclassified_raster.tif',delimiter=',',  save_as=None):
 
         if save_as:
             self._validate_file_save_as(save_as)
 
         url = self._get_dataservice_specific_url('reclassifyrasterwithlut')
-        payload = {"input_raster": input_raster, 'LUT': LUT, 'delimiter':delimiter}
+        payload = {"input_raster": input_raster, 'LUT':LUT, 'delimiter':delimiter}
         self._is_file_name_valid(output_raster, ext='.tif')
         payload['output_raster'] = output_raster
 
@@ -2671,31 +2671,181 @@ class HydroDS(object):
         return self._process_dataservice_response(response, save_as)
 
 
-    def runpytopkapi(self,user_name, simulation_name, simulation_start_date, simulation_end_date, USGS_gage, outlet_x, outlet_y,
-				box_topY, box_bottomY, box_rightX, box_leftX, timeseries_source, threshold, cell_size, model_engine,
-				timestep, output_zip,  save_as=None):
+    def runpytopkapi(self,user_name, simulation_name, simulation_start_date, simulation_end_date, USGS_gage, timestep,threshold,
+                     mask_fname,overland_manning_fname,hillslope_fname, dem_fname, channel_network_fname, flowdir_fname,
+            pore_size_dist_fname, bubbling_pressure_fname, resid_moisture_content_fname, sat_moisture_content_fname, conductivity_fname, soil_depth_fname,
+                     # rain_fname, et_fname, runoff_fname,
+            output_zip='pytopkpai_model_files.zip',  save_as=None):
 
-		if save_as:
-			self._validate_file_save_as(save_as)
-		
-		url = self._get_dataservice_specific_url('runpytopkapi')
-		payload = {'user_name':user_name, 'simulation_name':simulation_name, 'simulation_start_date':simulation_start_date, 
-		'simulation_end_date':simulation_end_date, 'USGS_gage':USGS_gage, 'outlet_x':outlet_x, 'outlet_y':outlet_y,
-				'box_topY':box_topY, 'box_bottomY':box_bottomY, 'box_rightX':box_rightX, 'box_leftX':box_leftX, 
-				'timeseries_source':timeseries_source, 'threshold':threshold, 'cell_size':cell_size, 'model_engine':model_engine,
-				'timestep':timestep}
-		self._is_file_name_valid(output_zip, ext='.zip')
-		payload['output_zip'] = output_zip
-		
-		response = self._make_data_service_request(url=url, params=payload)
-		return self._process_dataservice_response(response, save_as)
+      if save_as:
+         self._validate_file_save_as(save_as)
+
+      url = self._get_dataservice_specific_url('runpytopkapi')
+      payload = {'user_name':user_name, 'simulation_name':simulation_name, 'simulation_start_date':simulation_start_date,
+                    'simulation_end_date':simulation_end_date, 'USGS_gage':USGS_gage, 'timestep':timestep,'threshold':threshold,
+                   'hillslope_fname': hillslope_fname, 'dem_fname': dem_fname, 'channel_network_fname': channel_network_fname, 'overland_manning_fname':overland_manning_fname,
+                   'mask_fname': mask_fname, 'flowdir_fname': flowdir_fname,  'pore_size_dist_fname': pore_size_dist_fname,
+                   'bubbling_pressure_fname': bubbling_pressure_fname, 'resid_moisture_content_fname': resid_moisture_content_fname,
+                   'sat_moisture_content_fname': sat_moisture_content_fname,'conductivity_fname':conductivity_fname,'soil_depth_fname':soil_depth_fname,
+                   # 'rain_fname':rain_fname, 'et_fname':et_fname, 'runoff_fname':runoff_fname ,
+                   'output_zip' : output_zip }
+
+      self._is_file_name_valid(output_zip, ext='.zip')
+      payload['output_zip'] = output_zip
+
+      response = self._make_data_service_request(url=url, params=payload)
+      return self._process_dataservice_response(response, save_as)
+
+    def runpytopkapi2(self, user_name, simulation_name, simulation_start_date, simulation_end_date, USGS_gage, timestep,
+                     threshold,
+                      outlet_y, outlet_x, box_topY, box_bottomY, box_rightX, box_leftX, timeseries_source,
+                      cell_size, model_engine,
+                     output_zip='pytopkpai_model_files.zip', save_as=None):
+
+        if save_as:
+            self._validate_file_save_as(save_as)
+
+        url = self._get_dataservice_specific_url('runpytopkapi2')
+        payload = {'user_name': user_name, 'simulation_name': simulation_name,
+                   'simulation_start_date': simulation_start_date,
+                   'simulation_end_date': simulation_end_date, 'USGS_gage': USGS_gage, 'timestep': timestep,
+                   'threshold': threshold,
+                   'outlet_y': outlet_y,'outlet_x': outlet_x, 'box_topY':box_topY,'box_bottomY': box_bottomY,'box_rightX': box_rightX, 'box_leftX':box_leftX, 'timeseries_source':timeseries_source,
+                   'cell_size': cell_size, 'model_engine':model_engine,
+
+                   'output_zip': output_zip}
+
+        self._is_file_name_valid(output_zip, ext='.zip')
+        payload['output_zip'] = output_zip
+
+        response = self._make_data_service_request(url=url, params=payload)
+        return self._process_dataservice_response(response, save_as)
+
+    def runpytopkapi3(self, user_name, simulation_name, simulation_start_date, simulation_end_date, USGS_gage,
+                     timestep, threshold,
+                     mask_fname, overland_manning_fname, hillslope_fname, dem_fname, channel_network_fname,
+                     flowdir_fname,
+                     pore_size_dist_fname, bubbling_pressure_fname, resid_moisture_content_fname,
+                     sat_moisture_content_fname, conductivity_fname, soil_depth_fname,
+                     # rain_fname, et_fname, runoff_fname,
+                     output_txt='pytopkpai_model_files_metadata.txt', save_as=None):
+
+        if save_as:
+            self._validate_file_save_as(save_as)
+
+        url = self._get_dataservice_specific_url('runpytopkapi3')
+        payload = {'user_name': user_name, 'simulation_name': simulation_name,
+                   'simulation_start_date': simulation_start_date,
+                   'simulation_end_date': simulation_end_date, 'USGS_gage': USGS_gage, 'timestep': timestep,
+                   'threshold': threshold,
+                   'hillslope_fname': hillslope_fname, 'dem_fname': dem_fname,
+                   'channel_network_fname': channel_network_fname, 'overland_manning_fname': overland_manning_fname,
+                   'mask_fname': mask_fname, 'flowdir_fname': flowdir_fname,
+                   'pore_size_dist_fname': pore_size_dist_fname,
+                   'bubbling_pressure_fname': bubbling_pressure_fname,
+                   'resid_moisture_content_fname': resid_moisture_content_fname,
+                   'sat_moisture_content_fname': sat_moisture_content_fname,
+                   'conductivity_fname': conductivity_fname, 'soil_depth_fname': soil_depth_fname,
+                   # 'rain_fname':rain_fname, 'et_fname':et_fname, 'runoff_fname':runoff_fname ,
+                   'output_txt': output_txt}
+
+        self._is_file_name_valid(output_txt, ext='.txt')
+        payload['output_txt'] = output_txt
+
+        response = self._make_data_service_request(url=url, params=payload)
+        return self._process_dataservice_response(response, save_as)
+
+    def runpytopkapi4(self, user_name, simulation_name, simulation_start_date, simulation_end_date, USGS_gage,
+                     timestep, threshold,
+                     mask_fname, overland_manning_fname, hillslope_fname, dem_fname, channel_network_fname,
+                     flowdir_fname,
+                     pore_size_dist_fname, bubbling_pressure_fname, resid_moisture_content_fname,
+                     sat_moisture_content_fname, conductivity_fname, soil_depth_fname,
+                     # rain_fname, et_fname, runoff_fname,
+                      output_hs_rs_id_txt='pytopkpai_model_files_metadata.txt', output_q_sim_txt= 'output_q_sim.txt', save_as=None):
+
+        if save_as:
+            self._validate_file_save_as(save_as)
+
+        url = self._get_dataservice_specific_url('runpytopkapi4')
+        payload = {'user_name': user_name, 'simulation_name': simulation_name,
+                   'simulation_start_date': simulation_start_date.replace('-','/'),
+                   'simulation_end_date': simulation_end_date.replace('-','/'),
+                   'USGS_gage': USGS_gage, 'timestep': timestep,
+                   'threshold': threshold,
+                   'hillslope_fname': hillslope_fname, 'dem_fname': dem_fname,
+                   'channel_network_fname': channel_network_fname, 'overland_manning_fname': overland_manning_fname,
+                   'mask_fname': mask_fname, 'flowdir_fname': flowdir_fname,
+                   'pore_size_dist_fname': pore_size_dist_fname,
+                   'bubbling_pressure_fname': bubbling_pressure_fname,
+                   'resid_moisture_content_fname': resid_moisture_content_fname,
+                   'sat_moisture_content_fname': sat_moisture_content_fname,
+                   'conductivity_fname': conductivity_fname, 'soil_depth_fname': soil_depth_fname,
+                   # 'rain_fname':rain_fname, 'et_fname':et_fname, 'runoff_fname':runoff_fname ,
+                   # 'output_hs_rs_id_txt': output_hs_rs_id_txt
+                   }
+
+        self._is_file_name_valid(output_hs_rs_id_txt, ext='.txt')
+        payload['output_hs_rs_id_txt'] = output_hs_rs_id_txt
+        payload['output_q_sim_txt'] = output_q_sim_txt
+
+
+        response = self._make_data_service_request(url=url, params=payload)
+        return self._process_dataservice_response(response, save_as)
+
+
+    def modifypytopkapi(self,  fac_l, fac_ks, fac_n_o, fac_n_c,fac_th_s,
+                pvs_t0 ,vo_t0 ,qc_t0 ,kc,
+                hs_res_id, output_hs_rs_id_txt='pytopkpai_model_files_metadata.txt', output_q_sim_txt= 'output_q_sim.txt',
+                save_as=None):
+
+        if save_as:
+            self._validate_file_save_as(save_as)
+
+        url = self._get_dataservice_specific_url('modifypytopkapi')
+        payload = {
+            'fac_l':fac_l, 'fac_ks':fac_ks, 'fac_n_o':fac_n_o, 'fac_n_c':fac_n_c, 'fac_th_s':fac_th_s,
+            'pvs_t0':pvs_t0, 'vo_t0':vo_t0, 'qc_t0':qc_t0, 'kc':kc,
+            'hs_res_id': hs_res_id,
+            'output_hs_rs_id_txt':'pytopkpai_model_files_metadata.txt',
+            'output_q_sim_txt' : 'output_q_sim.txt'
+                   }
+
+        self._is_file_name_valid(output_hs_rs_id_txt, ext='.txt')
+        payload['output_hs_rs_id_txt'] = output_hs_rs_id_txt
+        payload['output_q_sim_txt'] = output_q_sim_txt
+
+
+        response = self._make_data_service_request(url=url, params=payload)
+        return self._process_dataservice_response(response, save_as)
+
+    def loadpytopkapi(self,
+                      hs_res_id, output_hs_rs_id_txt='pytopkpai_model_files_metadata.txt',
+                      output_q_sim_txt= 'output_q_sim_retreived.txt',
+                        save_as=None):
+
+        if save_as:
+            self._validate_file_save_as(save_as)
+
+        url = self._get_dataservice_specific_url('loadpytopkapi')
+        payload = {
+            'hs_res_id': hs_res_id,
+            'output_hs_rs_id_txt':output_hs_rs_id_txt,
+            'output_q_sim_txt' : output_q_sim_txt
+                   }
+
+        self._is_file_name_valid(output_hs_rs_id_txt, ext='.txt')
+
+        response = self._make_data_service_request(url=url, params=payload)
+        return self._process_dataservice_response(response, save_as)
+
 
     def delineatewatershedtogetcompleterasterset(self, input_raster_url_path, threshold, output_raster, output_outlet_shapefile,
                             epsg_code=None, outlet_point_x=None, outlet_point_y=None,
                             input_outlet_shapefile_url_path=None,
                            output_fill_raster='fel.tif', output_slope_raster='sd8.tif', output__flow_direction_raster='p.tif',
                            output_contributing_area_raster='ad8.tif', output_strahler_order_raster='ssa.tif',
-                           output_stream_raster='src.tif'
+                           output_stream_raster='src.tif' #, output_mannings_n_stream_raster = 'n_stream.tif'
                            ,save_as=None):
 
         if save_as:
@@ -2748,6 +2898,7 @@ class HydroDS(object):
                        'output_fill_raster': output_fill_raster, 'output_slope_raster': output_slope_raster,
                        'output__flow_direction_raster': output__flow_direction_raster, 'output_contributing_area_raster': output_contributing_area_raster,
                        'output_strahler_order_raster': output_strahler_order_raster, 'output_stream_raster': output_stream_raster,
+                       # 'output_mannings_n_stream_raster':output_mannings_n_stream_raster
                        }
 
         else:
@@ -2760,8 +2911,8 @@ class HydroDS(object):
         response = self._make_data_service_request(url=url, params=payload)
         return self._process_dataservice_response(response, save_as)
 
-    def downloadsoildataforpytopkapi(self,input_watershed_raster_url_path,output_f_raster,output_k_raster,output_dth1_raster,
-                     output_dth2_raster,output_psif_raster,output_sd_raster,output_tran_raster,
+    def downloadsoildataforpytopkapi(self,input_watershed_raster_url_path,output_f_raster='f.tif',output_k_raster='ko.tif',output_dth1_raster='dth1.tif',
+                     output_dth2_raster='dth2.tif',output_psif_raster='psif.tif',output_sd_raster='sd.tif',output_tran_raster='trans.tif',
                                      output_bubbling_pressure_file='BBL.tif', output_pore_size_distribution_file="PSD.tif",
                                      output_residual_soil_moisture_file='RSM.tif', output_saturated_soil_moisture_file='SSM.tif',output_ksat_rawls_file='ksat_rawls.tif',
                                      save_as=None):

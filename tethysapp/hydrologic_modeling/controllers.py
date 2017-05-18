@@ -57,14 +57,14 @@ def model_input(request):
 
     simulation_name = TextInput(display_text='Simulation name', name='simulation_name', initial='simulation-1')
     USGS_gage = TextInput(display_text='USGS gage nearby', name='USGS_gage', initial='10172200')
-    cell_size = TextInput(display_text='Cell size in meters', name='cell_size', initial='100')
-    timestep = TextInput(display_text='Timestep in hrs', name='timestep', initial='6') #, append="hours"
+    cell_size = TextInput(display_text='Cell size in meters', name='cell_size', initial='300')
+    timestep = TextInput(display_text='Timestep in hrs', name='timestep', initial='24') #, append="hours"
     simulation_start_date_picker = DatePicker(name='simulation_start_date_picker', display_text='Start Date',
-                                              autoclose=True, format='mm-dd-yyyy', start_date='01/01/2010',
-                                              start_view='month', today_button=True, initial='01/01/2010')
+                                              autoclose=True, format='mm-dd-yyyy', start_date='10-01-2010',
+                                              start_view='month', today_button=True, initial='10-01-2010')
     simulation_end_date_picker = DatePicker(name='simulation_end_date_picker', display_text='End Date',
-                                            autoclose=True, format='mm-dd-yyyy', start_date='06/30/2010',
-                                            start_view='month', today_button=True, initial='06/30/2010')
+                                            autoclose=True, format='mm-dd-yyyy', start_date='10-15-2010',
+                                            start_view='month', today_button=True, initial='10-15-2010')
 
     timeseries_source = SelectInput(display_text='Timeseries source',
                 name='timeseries_source',
@@ -80,16 +80,16 @@ def model_input(request):
                 initial=['TOPKAPI'],
                 original=['TOPKAPI'])
 
-    threshold = TextInput(display_text='Stream threshold', name='threshold', initial='25')
+    threshold = TextInput(display_text='Stream threshold', name='threshold', initial='100')
 
     # html form to django form
-    outlet_x = TextInput(display_text='Longitude', name='outlet_x', initial='-111.7915')
-    outlet_y = TextInput(display_text='Latitude', name='outlet_y', initial=' 41.74025')
+    outlet_x = TextInput(display_text='Longitude', name='outlet_x', initial='-111.7836')
+    outlet_y = TextInput(display_text='Latitude', name='outlet_y', initial=' 41.744')
 
-    box_topY = TextInput(display_text='North Y', name='box_topY', initial='41.7215')
-    box_rightX = TextInput(display_text='East X', name='box_rightX', initial='-111.8461')
-    box_leftX = TextInput(display_text='West X', name='box_leftX', initial='-111.6208')
-    box_bottomY = TextInput(display_text='South Y', name='box_bottomY', initial='41.88')
+    box_topY = TextInput(display_text='North Y', name='box_topY', initial='42.128')
+    box_rightX = TextInput(display_text='East X', name='box_rightX', initial='-111.438')
+    box_leftX = TextInput(display_text='West X', name='box_leftX', initial='-111.822')
+    box_bottomY = TextInput(display_text='South Y', name='box_bottomY', initial='41.686')
 
     outlet_hs = TextInput(display_text='', name='outlet_hs', initial='')
     bounding_box_hs = TextInput(display_text='', name='bounding_box_hs', initial='')
@@ -207,7 +207,7 @@ def model_run(request):
     simulation_loaded_id  = ""
     current_model_inputs_table_id = 0
     model_inputs_table_id_from_another_html = 0  #:TODO need to make it point to last sim by default
-    temp_folder = app_utils.generate_uuid_file_path()
+    # temp_folder = app_utils.generate_uuid_file_path()
 
 
     # gizmo settings
@@ -232,14 +232,12 @@ def model_run(request):
     # 2) model_input, load model
     # 3) model_run, calibrate and change the result seen. i.e. passes to itself
 
-
     # check to see if the request is from method (1)
     try:
         model_input_prepare_request = request.POST['simulation_name']
         print "MSG: Preparing model simulation, simulation name is: ", model_input_prepare_request
     except:
         model_input_prepare_request = None
-
 
     # check to see if the request is from method (2)
     try:
@@ -252,7 +250,6 @@ def model_run(request):
     except:
         model_input_load_request = None
 
-
     # check to see if the request is from method (3)
     try:
         model_run_calib_request = request.POST['fac_L']
@@ -264,10 +261,6 @@ def model_run(request):
 
 
 
-
-
-
-
     # Method (1), request from model_input-prepare model
     if model_input_prepare_request != None:
         print 'MSG: Method I initiated.'
@@ -275,9 +268,9 @@ def model_run(request):
         # # Method (1), STEP (1): get input dictionary from request ( request I)
         inputs_dictionary = app_utils.create_model_input_dict_from_request(request)
         test_string =  str("Prepared  Values: ")+str(inputs_dictionary)
-
         print "MSG: Inputs from user read"
 
+        # read shp. Not sure if this is needed
         try:
             outlet_shp = request.FILES['outlet_shp']
             watershed_shp = request.FILES['watershed_shp']
@@ -287,21 +280,31 @@ def model_run(request):
             pass
 
 
-
         # # Method (1), STEP (2):call_runpytopkapi function
-        from HDS_hydrogate_dev import HydroDS
-        import HDS_settings
-        HDS = HydroDS(username=HDS_settings.USER_NAME, password=HDS_settings.PASSWORD)
-        # hydrograph_file, zip_files=  call_runpytopkapi(inputs_dictionary) # hydrograph fields: datetime, Qsim, Qobs
-        # hs_resource_id_created = get_hs_resource_id_from_hydrograph(hydrograph_file)
 
-        hydrograph_series, hs_resource_id_created =  app_utils.read_hydrograph_from_txt()
+        ######### START: need to get two variables: i) hs_resource_id_created, and ii) hydrograph series ###############
+        response_hs_file, response_hydrograph_file =  app_utils.call_runpytopkapi(inputs_dictionary= inputs_dictionary)
+
+        # # pseudo response ,to save time
+        # response_hs_file, response_hydrograph_file = u'/usr/lib/tethys/src/tethys_apps/tethysapp/hydrologic_modeling/workspaces/user_workspaces/a2a7a22de29f42eea4eed2d4465e7721/pytopkpai_model_files_metadata.txt', u'/usr/lib/tethys/src/tethys_apps/tethysapp/hydrologic_modeling/workspaces/user_workspaces/a2a7a22de29f42eea4eed2d4465e7721/output_q_sim.txt'
+
+        hydrograph_series =  app_utils.read_hydrograph_from_txt(response_hydrograph_file)
+        print 'The hydrograph series is: ', hydrograph_series
+
+        with open(response_hs_file, 'r') as f:
+            hs_resource_id_created =  str(f.readlines()[0])
+            print hs_resource_id_created
+        ######### END : need to get two variables: i) hs_resource_id_created, and ii) hydrograph series ###############
+
+
+
+
+
 
         # Writing to model_inputs_table
         current_model_inputs_table_id = app_utils.write_to_model_input_table(inputs_dictionary=inputs_dictionary, hs_resource_id= hs_resource_id_created)
 
-        # Writing to model_calibraiton_table
-        # (Because it is first record of the simulation)
+        # Writing to model_calibraiton_table (Because it is first record of the simulation)
         # IF the model did not run, or if user just wants the files, we don't write to calibration table
         current_model_calibration_table_id = app_utils.write_to_model_calibration_table( model_input_table_id=current_model_inputs_table_id)
 
@@ -314,18 +317,13 @@ def model_run(request):
 
 
         observed_hydrograph =  TimeSeries(
-            height='500px',
-            width='500px',
-            engine='highcharts',
-            title=' Corrected Hydrograph ',
+            height='500px',width='500px', engine='highcharts',title=' Simulated Hydrograph ',
             subtitle="Simulated and Observed flow for " + simulation_name,
-            y_axis_title='Discharge',
-            y_axis_units='cumecs',
+            y_axis_title='Discharge',y_axis_units='cumecs',
             series=[{
                 'name': 'Simulated Flow',
                 'data': hydrograph_series
-            }]
-        )
+            }])
 
 
 
@@ -334,27 +332,56 @@ def model_run(request):
         hs_resource_id = model_input_load_request # :TODO convert the id to "hydroshare resource id"
 
         print 'MSG: Method II initiated.'
-
+        print 'MSG: Model run for HydroShare resource ID ', hs_resource_id , " is being retreived.."
 
         # STEP1: Retrieve simulation information (files stored in HydroShare) from db in a dict
         inputs_dictionary = app_utils.create_model_input_dict_from_db( hs_resource_id= hs_resource_id,user_name= user_name )
 
         test_string = str("Loaded  Values: ")+str(inputs_dictionary)
 
+
+
+
+        ######### START: need to get two variables: i) hs_resource_id_created, and ii) hydrograph series ##############
+
+        response_hs_file, response_hydrograph_file =  app_utils.loadpytopkapi(hs_res_id=hs_resource_id, out_folder='')
+
+        # # pseudo response ,to save time
+        # response_hs_file, response_hydrograph_file = u'/usr/lib/tethys/src/tethys_apps/tethysapp/hydrologic_modeling/workspaces/user_workspaces/a2a7a22de29f42eea4eed2d4465e7721/pytopkpai_model_files_metadata.txt', u'/usr/lib/tethys/src/tethys_apps/tethysapp/hydrologic_modeling/workspaces/user_workspaces/a2a7a22de29f42eea4eed2d4465e7721/output_q_sim.txt'
+
+        hydrograph_series =  app_utils.read_hydrograph_from_txt(response_hydrograph_file)
+        print 'The hydrograph series is: ', hydrograph_series
+
+        with open(response_hs_file, 'r') as f:
+            hs_resource_id_created =  str(f.readlines()[0])
+            print hs_resource_id_created
+        ######### END : need to get two variables: i) hs_resource_id_created, and ii) hydrograph series ##############
+
+
+
+        observed_hydrograph =  TimeSeries(
+            height='500px',width='500px', engine='highcharts',title=' Simulated Hydrograph ',
+            subtitle="Simulated and Observed flow for " + simulation_name,
+            y_axis_title='Discharge',y_axis_units='cumecs',
+            series=[{
+                'name': 'Simulated Flow',
+                'data': hydrograph_series
+            }])
+
+
+
+
+
         # STEP2: Because in this part we load previous simulation, Load the model from hydroshare to hydroDS,
         # STEP2: And from the prepeared model, if the result is not available, run. Otherwise just give the result
         # hydrograph2, table_id = app_utils.run_model_with_input_as_dictionary(inputs_dictionary, False)
-
-
         #* STEP3: Make sure a string/variable/field remains that contains the id of the model. SO when user modifies it, that model is modifed
-
         # # STEP4B: Write to db
         # current_model_inputs_table_id = app_utils.write_to_model_input_table(inputs_dictionary,simulation_folder)
         # print "MSG: Inputs from model_input form written to db. Model RAN already"
-
-
         # STEP5: get the revised hydrographs, and plot it
         # preparing timeseries data in the format shown in: http://docs.tethysplatform.org/en/latest/tethys_sdk/gizmos/plot_view.html#time-series
+
         hydrograph2 = []
         observed_hydrograph_loaded = ''
 
@@ -382,6 +409,32 @@ def model_run(request):
         hs_resource_id_created = hs_resource_id_from_previous_simulation
 
         print 'MSG: Method III initiated. The model id we are looking at is: ', hs_resource_id_from_previous_simulation
+
+
+
+
+
+        ######### START: need to get two variables: i) hs_resource_id_created, and ii) hydrograph series ###############
+
+        response_hs_file, response_hydrograph_file =  app_utils.modifypytopkapi(hs_res_id=hs_resource_id_created, out_folder='',
+                                                        fac_l=fac_L_form, fac_ks=fac_Ks_form, fac_n_o=fac_n_o_form,
+                                                        fac_n_c=fac_n_c_form, fac_th_s=fac_th_s_form,
+                                                        pvs_t0=pvs_t0_form, vo_t0=vo_t0_form, qc_t0=qc_t0_form,
+                                                        kc=kc_form )
+
+        hydrograph_series =  app_utils.read_hydrograph_from_txt(response_hydrograph_file)
+        print 'The hydrograph series is: ', hydrograph_series
+
+        with open(response_hs_file, 'r') as f:
+            hs_resource_id_created =  str(f.readlines()[0])
+            print hs_resource_id_created
+
+        ######### END : need to get two variables: i) hs_resource_id_created, and ii) hydrograph series ###############
+
+
+
+
+
 
         # # # -------DATABASE STUFFS  <start>----- # #
         # # retreive the model_inputs_table.id of this entry to pass it to the next page (calibration page)
@@ -474,7 +527,7 @@ def model_run(request):
             y_axis_units='cumecs',
             series=[{
                 'name': 'Simulated Flow',
-                'data': hydrograph3
+                'data': hydrograph_series
             }]
         )
 
