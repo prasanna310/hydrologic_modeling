@@ -40,7 +40,7 @@
       {% gizmo select_input simulation_names_list %}
 
       <input type="submit" name="input-form" class="btn btn-default">
-      <input type="hidden" name="model_inputs_table_id_from_another_html" value= {{current_model_inputs_table_id}}>
+      <input type="hidden" name="model_inputs_table_id_from_another_html" value= {{hs_resource_id_created}}>
   </form>
 {% endblock %}
 
@@ -53,9 +53,13 @@
   <h3> Previous simulation id: <u><b>{{simulation_loaded_id}}</b></u>  </h3>
   <h3> Last simulation HS- ID : <u><b>{{current_model_inputs_table_id}}</b></u>  </h3>
   <h3> Test string: <u><b>{{test_string}}</b></u>  </h3>
+  <h3> Ths_resource_id_created: <u><b>{{hs_resource_id_created}}</b></u>  </h3>
 
 
-  {% if simulation_name %} <!--- If the input is complete --->
+
+
+
+  {% if simulation_name != None %} <!--- If the input is complete --->
         <h5> Contragulations! <u><b>{{simulation_name}}</b></u> ran successfully!  </h5>
 
       Here is the simulated discharge for the outlet you picked. <b>(long: {{outlet_lon}} , lat: {{outlet_lat}}) </b>
