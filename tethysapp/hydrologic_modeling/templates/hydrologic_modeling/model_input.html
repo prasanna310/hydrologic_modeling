@@ -7,7 +7,7 @@
 {% block app_navigation %}
 
     <h3>Inputs for the model </h3>
-    <p id="test_para">Prepare the hydrologic model by entering the inputs (in the three steps) below. The error is:  {{form_error}} </p>
+    <p id="test_para">Prepare the hydrologic model by entering the inputs (in the three steps) below. </p>
 
 
   <form id ="inputs"  method="post" action="{% url 'hydrologic_modeling:model_run' %}" enctype="multipart/form-data">
@@ -106,7 +106,7 @@
                                           <form id ="input_shp"  method="post" action="{% url 'hydrologic_modeling:visualize_shp' %}" enctype="multipart/form-data">
                                               <tr>
                                                   <!--<th> Watershed </th>-->
-                                                  <th><input type="file" name="watershed_shp"  accept=".shp, .shx, .dbf, .prj,/*" title="&nbsp;" multiple/> </th>
+                                                  <th><input type="file" name="watershed_shp"  accept=".shp, .shx, .dbf, .prj, .tif/*" title="&nbsp;" multiple/> </th>
                                               </tr>
 
                                               <tr>
@@ -181,43 +181,67 @@
         </div>
     </div>
 
-  <input type="submit" name="input-form" class="btn btn-default" value="Simulate Watershed">
+
+          <a style="color:blue;" data-toggle="collapse" data-target="#download_request_form"> Only interested in input files? Click here! </a>
+          <div class="collapse" id="download_request_form">
+              <p style="color:red;">Make sure the 'domain', and the 'start and end dates' are correct </p>
+              <input type="radio" name="download_choice" value="geospatial"> Download geospatial files <br>
+              <input type="radio" name="download_choice" value="soil" > Download geospatial, and soil files<br>
+              <input type="radio" name="download_choice" value="forcing" > Download geospatial, and forcing files<br>
+
+          </div>
+
+
+      <input type="submit" name="input-form" class="btn btn-default" value="Send Request">
+
+
+
 
   </form>
 
- <!--Load previous simulation instead of preparing one-->
+  <hr>
   <form id ="load_simulation"  method="post" action="{% url 'hydrologic_modeling:model_run' %}" enctype="form-data">
     {% csrf_token %}
 
         <hr>
-          Simulation already prepared? Load the previously saved simulation instead.
-          {% gizmo select_input simulation_names_list %}
+          Simulation already prepared? Load the previously saved simulation from the dropdown menu, or enter the HydroShare resource ID containing simulations files.
+            {% gizmo select_input simulation_names_list %}
+
+      <a style="color:grey;" data-toggle="collapse" data-target="#hs_res_id_for_model"> Enter HydroShare resource id instead</a>
+      <div class="collapse" id="hs_res_id_for_model">{% gizmo text_input existing_sim_res_id %}  </div>
+
 
   <input type="submit" name="simulation-load" class="btn btn-default" value="Load simulation" > <!--This line looks pretty useless to me-->
   <input type="hidden" name="load_simulation_name" value= "{{hs_resource_id_created}}">   <!--This too is kinda useless, because hs_resource_id is not know in this html -->
 
   </form>
 
+<hr>
+
+
+
 {% endblock %}
 
 
 {% block app_content %}
     {% gizmo plot_view observed_hydrograph %}
-    <!--<p> Spatial testing: {{test_function_response}} </p>-->
+    {% gizmo highcharts_plot_view observed_hydrograph2 %}
+    {% gizmo plot_view observed_hydrograph2 %}
 
 
         <html lang="en">
         <head>
             <meta charset="UTF-8">
-            <title>Trying google maps</title>
+            <title>Domain information from google maps</title>
 
-            <style> #mymap {width:90%; height:600px;} </style>
+            <style> #mymap {width:95%; height:800px;} </style>
               <script async defer
                       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCJVwfz-TJWiZCvLmgYHv2yHYc8vagp7V0&callback=initMap"
                       type="text/javascript"></script>
 
 
             <script>
+
                 function  init() {
                     var mapDiv = document.getElementById("mymap");
                     var mapCenter = new google.maps.LatLng(41.74025, -111.7915);
@@ -260,6 +284,18 @@
                         document.forms["inputs"]["box_rightX"].value= NE.lng();
                         document.forms["inputs"]["box_topY"].value= NE.lat();
 
+
+                        // :TODO Area of bounding box, and if its > -- km2, give prompt
+                        var di_along_long = 6371* (SW.lng() - NE.lng())*3.14/180 ;
+                        var di_along_lat = 6371* Math.cos((NE.lat()+ SW.lat())/2*3.14/180.0) * (NE.lat() - SW.lat())*3.14/180  ;
+                        var bb_area = parseInt( Math.abs( di_along_long * di_along_lat) ) ;  // im km2
+
+                        if (bb_area > 500) {
+                            var total_no_of_cells = parseInt( bb_area / Math.pow(document.forms["inputs"]["cell_size"].value/1000.0,2) );
+
+                            document.getElementById('prompt').innerHTML = 'Total drainage area in km2= ' + bb_area+ ' Total no of cells= ' +  total_no_of_cells  ;
+                        }
+
                     });
 
                     google.maps.event.addListener(marker, "dragend", function(event){
@@ -273,8 +309,6 @@
 //                    script.src = "{{geojson_domain}}";
 //                    aaa = "{{geojson_domain}}"; //del it after testinig
 //                    document.getElementsByTagName("head")[0].appendChild(script);
-
-
 
                 //inti closes
                 }
@@ -291,19 +325,14 @@
 //                 }
 
 
-
-
-
-
-
                 window.onload = init;
-
             </script>
 
 
         </head>
         <body>
             <h5>  <strong>Specify the outlet, and the bounding box that completely contains the watershed</strong></h5>
+            <p id="prompt"> This is testing area for prompt.. </p>
             <!--<h3> Test variables</h3>-->
             <!--<p> Variable1, Error: {{form_error}} </p>-->
             <!--<p> Variable2, geojson file: {{geojson_domain}} </p>-->
@@ -341,7 +370,18 @@
   {{ block.super }}
   <!--<script src="main.js" type="text/javascript"></script>-->
   <script>
-          function showMap() {
+      function mToDegree(distance_in_m, avg_lat){
+
+                    var R = 6371000; // in meters
+                    // var avg_lat = (document.forms["inputs"]["box_topY"].value + document.forms["inputs"]["box_bottomY"].value)/2 * 3.14/180;
+                    //var lon = (document.forms["inputs"]["box_rightX"].value +document.forms["inputs"]["box_leftX"].value) /2 * 3.14/180;
+                    var angle_along_lat =Math.abs(   distance_in_m / R * 180 /3.14 );
+                    var angle_along_lon =Math.abs(    distance_in_m / (R * Math.cos(avg_lat))* 180 /3.14 );
+                    return [angle_along_lon, angle_along_lat];
+                }
+
+
+    function showMap() {
          var map = new google.maps.Map(document.getElementById('mymap'), {
          zoom: 9,
          center: {lat: 42, lng: -111.3}
@@ -385,14 +425,19 @@
 
                 }
             }
-            // Manage extent of the map
-                        document.forms["inputs"]["box_bottomY"].value= ymin ;
-                        document.forms["inputs"]["box_leftX"].value=xmin;
-                        document.forms["inputs"]["box_rightX"].value= xmax;
-                        document.forms["inputs"]["box_topY"].value= ymax;
+            // Manage extent of the map, after the geojson is uploaded
+                        var cell = document.forms["inputs"]["cell_size"].value;
+                        xy = new Array();
+                        xy = mToDegree(cell, document.forms["inputs"]["box_bottomY"].value );
+                        var buffer  = 3;
+                        document.forms["inputs"]["box_bottomY"].value= ymin - buffer*xy[1] ;
+                        document.forms["inputs"]["box_leftX"].value=xmin - buffer*xy[0] ;
+                        document.forms["inputs"]["box_rightX"].value= xmax + buffer*xy[0] ;
+                        document.forms["inputs"]["box_topY"].value= ymax + buffer*xy[1];
 
                         var new_center = new google.maps.LatLng( (ymin+ymax)/2 ,(xmin+xmax)/2);
                         map.panTo(new_center);
+                        //google.maps.event.trigger(rectangle, 'bounds_changed');
 
                     var marker2 = new google.maps.Marker({
                         map:map,
@@ -408,11 +453,13 @@
                         document.forms["inputs"]["outlet_y"].value= this.getPosition().lat() ;
                     });
 
-                        var rectangle2 = new google.maps.Rectangle({
+
+
+                    var rectangle2 = new google.maps.Rectangle({
                         map: map,
                         bounds: new google.maps.LatLngBounds (
-                                new google.maps.LatLng(ymax,xmin),
-                                new google.maps.LatLng(ymin,xmax)
+                                new google.maps.LatLng(ymax+ buffer*xy[1],xmin- buffer*xy[0]),
+                                new google.maps.LatLng(ymin- buffer*xy[1],xmax+ buffer*xy[0])
                         ),
                         fillColor:"grey",
                         strokeColor:"blue",
@@ -441,7 +488,6 @@
 
     function loadFileAsText()
     {
-
         document.getElementById('test_para').innerHTML = 'we have entered the function'
         var fileToLoad = document.getElementById("watershed_geojson").files[0]; //this could be outlet_geojson too
 
@@ -455,6 +501,21 @@
 
         };
 
+
+
     }
+
+
+    function populateDownloadForm()
+    {
+          document.getElementsByName('cell_size2').value = document.getElementsByName('cell_size');
+
+
+//cell_size threshold  box_topY  box_leftX  box_rightX box_bottomY
+
+    }
+
   </script>
 {% endblock %}
+
+

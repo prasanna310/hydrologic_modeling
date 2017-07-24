@@ -174,7 +174,7 @@ class hydroshare():
         try:
             self.hs = HydroShare(auth=auth)
             self.hs.getUserInfo()
-            display(HTML('<b style="color:green;">Successfully established a connection with HydroShare</b>'))
+            # display(HTML('<b style="color:green;">Successfully established a connection with HydroShare</b>'))
      
         except HydroShareHTTPException as e:
             display(HTML('<p style="color:red;"><b>Failed to establish a connection with HydroShare.  Please check that you provided the correct credentials</b><br>%s </p>' % e))

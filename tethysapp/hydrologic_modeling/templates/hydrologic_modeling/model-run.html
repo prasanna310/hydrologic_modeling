@@ -52,13 +52,31 @@
   <h3> Test Variable: <u><b>{{test_variable}}</b></u>  </h3>
   <h3> Previous simulation id: <u><b>{{simulation_loaded_id}}</b></u>  </h3>
   <h3> Last simulation HS- ID : <u><b>{{current_model_inputs_table_id}}</b></u>  </h3>
-  <h3> Test string: <u><b>{{test_string}}</b></u>  </h3>
-  <h3> Ths_resource_id_created: <u><b>{{hs_resource_id_created}}</b></u>  </h3>
+  <!--<h3> Test string: <u><b>{{test_string}}</b></u>  </h3>-->
+  <h3> The_resource_id_created: <u><b>{{hs_resource_id_created}}</b></u>  </h3>
+
+
+  <!--If the user wants to download only  -->
+  {% if download_status %}
+            <h2> Congratulations! Files were created successfully! </h2>
+            <hr>
+                <p> The created geospatial and forcing files can be accessed temporarily by using this link: </p>
+<!--<a href="{{download_link}}"> {{download_link}}</a>-->
+                <p> The HydroShare ID for the resource that contains the created files are <strong>{{hs_res_created}}</strong>  </p>
+                <p> The dictionary that contains links to all the files created is: <strong>{{download_link}}</strong>  </p>
+
+          {% else %}
+                <h2>Please wait.....</h2>
+                <hr>
+                <p> The request is being processed. Please wait while the input files (geospatial, and forcing files) for the region selected are being created</p>
+                <p> Test string : {{test_string}}</p>
+  {% endif %}
 
 
 
 
 
+  <!--if the user creates a simulation.. :TODO need to have 'and' clause for no download case in the if statement below-->
   {% if simulation_name != None %} <!--- If the input is complete --->
         <h5> Contragulations! <u><b>{{simulation_name}}</b></u> ran successfully!  </h5>
 
@@ -66,10 +84,16 @@
         <br>
 
       {% gizmo plot_view observed_hydrograph %}
+      {% gizmo plot_view observed_hydrograph2 %}
+
       {% gizmo plot_view line_plot_view %}
 
    {% endif %}
 
+
+
+
+  <!--if the user modifies a simulation.. -->
   {% if fac_L_form != "" %} <!--- If the input is complete --->
       <h5> Contragulations <b>{{user_name}}</b>! Parameters were changed successfully!  </h5>
             Using the calibratoin parameters provided, the graph was updated for the ll-input id: {{Iwillgiveyou_model_inputs_table_id_from_another_html}}

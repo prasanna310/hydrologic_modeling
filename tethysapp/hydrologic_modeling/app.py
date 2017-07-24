@@ -36,6 +36,12 @@ class HydrologicModeling(TethysAppBase):
                            url='hydrologic-modeling/model_run',
                            controller='hydrologic_modeling.controllers.model_run'),
 
+                    UrlMap(name='download_request',
+                           url='hydrologic-modeling/download_request',
+                           controller='hydrologic_modeling.controllers.download_request'),
+
+
+
                     UrlMap(name='visualize_shp',
                            url='hydrologic-modeling/model_input',
                            controller='hydrologic_modeling.controllers.visualize_shp'),
