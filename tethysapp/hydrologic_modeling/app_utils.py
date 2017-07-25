@@ -228,7 +228,10 @@ def read_hydrograph_from_txt(hydrograph_fname):
 def read_data_from_json(json_fname):
     with open(json_fname) as json_file:
         data = json.load(json_file)
-        hs_resource_id_created = data['hs_res_id_created']
+        try:
+            hs_resource_id_created = data['hs_res_id_created']
+        except:
+            hs_resource_id_created = None
 
         yr_mon_day_hr_min_discharge_list = data['runs'][-1]['simulated_discharge']  # of the last run
         hydrograph_series_sim = []
@@ -733,53 +736,73 @@ def create_hs_resources_from_hydrodslinks(list_of_hydrods_links, hs_usr_name, hs
 
 
 
-def loadpytopkapi(hs_res_id, out_folder="",
-                  output_hs_rs_id_txt='pytopkpai_model_files_metadata.txt',output_q_sim_txt='output_q_sim_retreived.txt'):
+def loadpytopkapi(hs_res_id, out_folder=""):
+            # output_hs_rs_id_txt='pytopkpai_model_files_metadata.txt',output_q_sim_txt='output_q_sim_retreived.txt',  output_response_txt = 'output_response_json.txt'
+
 
     if out_folder == '':
         out_folder = generate_uuid_file_path()
 
-    run_model_call = HDS.loadpytopkapi(hs_res_id= hs_res_id, output_hs_rs_id_txt=output_hs_rs_id_txt,output_q_sim_txt=output_q_sim_txt)
+    run_model_call = HDS.loadpytopkapi(hs_res_id= hs_res_id)
 
-    hs_txt_file = run_model_call['output_hs_rs_id_txt']
-    temp_file_hs = out_folder + '/' + os.path.basename(hs_txt_file)
-    HDS.download_file(hs_txt_file, temp_file_hs)
+    # hs_txt_file = run_model_call['output_hs_rs_id_txt']
+    # temp_file_hs = out_folder + '/' + os.path.basename(hs_txt_file)
+    # HDS.download_file(hs_txt_file, temp_file_hs)
+    #
+    # hydrograph_txt_file = run_model_call['output_q_sim_txt']
+    # temp_file_qsim = out_folder + '/' + os.path.basename(hydrograph_txt_file)
+    # HDS.download_file(hydrograph_txt_file, temp_file_qsim)
+    #
+    # print 'Temp location for HS metadata file location is ', temp_file_hs
+    # print 'Temp location for Simulated Q file location is ', temp_file_qsim
+    #
+    # return temp_file_hs, temp_file_qsim
 
-    hydrograph_txt_file = run_model_call['output_q_sim_txt']
-    temp_file_qsim = out_folder + '/' + os.path.basename(hydrograph_txt_file)
-    HDS.download_file(hydrograph_txt_file, temp_file_qsim)
+    if out_folder == "":
+        out_folder  = generate_uuid_file_path()
 
-    print 'Temp location for HS metadata file location is ', temp_file_hs
-    print 'Temp location for Simulated Q file location is ', temp_file_qsim
+    responseJSON = run_model_call['output_response_txt']
+    temp_file = out_folder + '/' + os.path.basename(responseJSON)
+    HDS.download_file(responseJSON, temp_file)
 
-    return temp_file_hs, temp_file_qsim
+    print run_model_call
+
+    return out_folder + '/' + os.path.basename(responseJSON)  # ,      out_folder + '/' + os.path.basename(hydrograph_txt_file)
 
 
 def modifypytopkapi(hs_res_id, out_folder="",  fac_l=1.0, fac_ks=1.0, fac_n_o=1.0, fac_n_c=1.0,fac_th_s=1.0,
-                    pvs_t0=80.0 ,vo_t0=0.0 ,qc_t0=0.0 ,kc=1.0,
-                    output_hs_rs_id_txt='pytopkpai_model_files_metadata.txt', output_q_sim_txt= 'output_q_sim.txt'):
-
-    if out_folder == '':
-        out_folder = generate_uuid_file_path()
+                    pvs_t0=80.0 ,vo_t0=0.0 ,qc_t0=0.0 ,kc=1.0 ): #, output_response_txt = 'output_response_json.txt'):
 
     run_model_call = HDS.modifypytopkapi(fac_l=fac_l, fac_ks=fac_ks, fac_n_o=fac_n_o, fac_n_c=fac_n_c,fac_th_s=fac_th_s,
-                                         pvs_t0=pvs_t0 ,vo_t0 =vo_t0 ,qc_t0=qc_t0 ,kc = kc, hs_res_id=hs_res_id,
-                                         output_hs_rs_id_txt=output_hs_rs_id_txt,
-                                         output_q_sim_txt=output_q_sim_txt)
+                                         pvs_t0=pvs_t0 ,vo_t0 =vo_t0 ,qc_t0=qc_t0 ,kc = kc, hs_res_id=hs_res_id  )
+
+    print 'run_model_call =', run_model_call
+
+    # hs_txt_file = run_model_call['output_hs_rs_id_txt']
+    # temp_file_hs = out_folder + '/' + os.path.basename(hs_txt_file)
+    # HDS.download_file(hs_txt_file, temp_file_hs)
+    #
+    # hydrograph_txt_file = run_model_call['output_q_sim_txt']
+    # temp_file_qsim = out_folder + '/' + os.path.basename(hydrograph_txt_file)
+    # HDS.download_file(hydrograph_txt_file, temp_file_qsim)
+    #
+    # print 'Temp location for HS metadata file location is ', temp_file_hs
+    # print 'Temp location for Simulated Q file location is ', temp_file_qsim
+    #
+    # return temp_file_hs, temp_file_qsim
+
+
+    if out_folder == "":
+        out_folder  = generate_uuid_file_path()
+
+    responseJSON = run_model_call['output_response_txt']
+    temp_file = out_folder + '/' + os.path.basename(responseJSON)
+    HDS.download_file(responseJSON, temp_file)
+
     print run_model_call
 
-    hs_txt_file = run_model_call['output_hs_rs_id_txt']
-    temp_file_hs = out_folder + '/' + os.path.basename(hs_txt_file)
-    HDS.download_file(hs_txt_file, temp_file_hs)
+    return out_folder + '/' + os.path.basename(responseJSON)  # ,      out_folder + '/' + os.path.basename(hydrograph_txt_file)
 
-    hydrograph_txt_file = run_model_call['output_q_sim_txt']
-    temp_file_qsim = out_folder + '/' + os.path.basename(hydrograph_txt_file)
-    HDS.download_file(hydrograph_txt_file, temp_file_qsim)
-
-    print 'Temp location for HS metadata file location is ', temp_file_hs
-    print 'Temp location for Simulated Q file location is ', temp_file_qsim
-
-    return temp_file_hs, temp_file_qsim
 
 
 def call_runpytopkapi(inputs_dictionary, out_folder=''):

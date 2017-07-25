@@ -203,10 +203,14 @@ def model_run(request):
     outlet_y = ""
     outlet_x = ""
     observed_hydrograph = ""
-    observed_hydrograph_userModified = ""
-    observed_hydrograph_loaded = ""
-
     observed_hydrograph2 = ''
+
+    observed_hydrograph_userModified = ""
+    observed_hydrograph_userModified2 = ""
+
+    observed_hydrograph_loaded = ""
+    observed_hydrograph_loaded2 = ""
+
 
     model_run_hidden_form = ''
     hs_resource_id_created = ''
@@ -459,26 +463,17 @@ def model_run(request):
 
         ######### START: need to get two variables: i) hs_resource_id_created, and ii) hydrograph series ##############
 
-        response_hs_file, response_hydrograph_file =  app_utils.loadpytopkapi(hs_res_id=hs_resource_id, out_folder='')
-
-        # # pseudo response ,to save time
-        # response_hs_file, response_hydrograph_file = u'/usr/lib/tethys/src/tethys_apps/tethysapp/hydrologic_modeling/workspaces/user_workspaces/a2a7a22de29f42eea4eed2d4465e7721/pytopkpai_model_files_metadata.txt', u'/usr/lib/tethys/src/tethys_apps/tethysapp/hydrologic_modeling/workspaces/user_workspaces/a2a7a22de29f42eea4eed2d4465e7721/output_q_sim.txt'
+        response_JSON_file =  app_utils.loadpytopkapi(hs_res_id=hs_resource_id, out_folder='')
 
 
-        try:
-            hydrograph_series_sim = app_utils.read_hydrograph_from_txt(response_hydrograph_file)
-        except:
-            hydrograph_series_sim, hydrograph_series_obs = app_utils.read_both_hydrograph_from_txt(
-                response_hydrograph_file)
+        json_data = app_utils.read_data_from_json(response_JSON_file)
 
-        with open(response_hs_file, 'r') as f:
-            hs_resource_id_created =  str(f.readlines()[0])
-            print hs_resource_id_created
-        ######### END : need to get two variables: i) hs_resource_id_created, and ii) hydrograph series ##############
+        hs_resource_id_created =hs_resource_id  #json_data['hs_res_id_created']
+        hydrograph_series_obs = json_data['hydrograph_series_obs']
+        hydrograph_series_sim = json_data['hydrograph_series_sim']
+        print hydrograph_series_sim
 
-
-
-        observed_hydrograph =  TimeSeries(
+        observed_hydrograph_loaded =  TimeSeries(
             height='500px',width='500px', engine='highcharts',title=' Simulated Hydrograph ',
             subtitle="Simulated and Observed flow for " + simulation_name,
             y_axis_title='Discharge',y_axis_units='cfs',
@@ -487,7 +482,14 @@ def model_run(request):
                 'data': hydrograph_series_sim
             }])
 
-
+        observed_hydrograph_loaded2 =  TimeSeries(
+            height='500px',width='500px', engine='highcharts',title=' Observed (actual) Hydrograph ',
+            subtitle="Simulated and Observed flow for " + simulation_name,
+            y_axis_title='Discharge',y_axis_units='cfs',
+            series=[{
+                'name': 'Simulated Flow',
+                'data': hydrograph_series_obs
+            }])
 
 
 
@@ -501,8 +503,8 @@ def model_run(request):
         # STEP5: get the revised hydrographs, and plot it
         # preparing timeseries data in the format shown in: http://docs.tethysplatform.org/en/latest/tethys_sdk/gizmos/plot_view.html#time-series
 
-        hydrograph2 = []
-        observed_hydrograph_loaded = ''
+        # hydrograph2 = []
+        # observed_hydrograph_loaded = ''
 
 
 
@@ -554,7 +556,7 @@ def model_run(request):
 
         json_data = app_utils.read_data_from_json(response_JSON_file)
 
-        hs_resource_id_created = json_data['hs_res_id_created']
+        hs_resource_id_created =  hs_resource_id_created # json_data['hs_res_id_created']
         hydrograph_series_obs = json_data['hydrograph_series_obs']
         hydrograph_series_sim = json_data['hydrograph_series_sim']
         print hydrograph_series_sim
@@ -663,6 +665,19 @@ def model_run(request):
             }]
         )
 
+        observed_hydrograph_userModified2 = TimeSeries(
+            height='500px', width='500px', engine='highcharts', title=' Observed (Actual) Hydrograph ',
+            subtitle="Simulated and Observed flow for " + simulation_name,
+            y_axis_title='Discharge', y_axis_units='cfs',
+            series=[{
+                'name': 'Simulated Flow',
+                'data': hydrograph_series_obs
+            }])
+
+
+
+
+
         # # STEP6: write the calibration and numerical parameters to the database
         # calibrated_model_info = model_calibration_table(current_model_inputs_table_id, fac_L_form, fac_Ks_form,
         #                                                 fac_n_o_form, fac_n_c_form, fac_th_s_form,
@@ -675,7 +690,9 @@ def model_run(request):
     context = {'simulation_name':simulation_name,
                'outlet_y': outlet_y,
                'outlet_x': outlet_x,
+
                'observed_hydrograph':observed_hydrograph,
+               'observed_hydrograph2': observed_hydrograph2,
 
                'fac_L': fac_L, 'fac_Ks': fac_Ks, 'fac_n_o': fac_n_o, "fac_n_c": fac_n_c, "fac_th_s": fac_th_s,
                'pvs_t0': pvs_t0,  'vo_t0': vo_t0, 'qc_t0': qc_t0,   "kc": kc,
@@ -687,7 +704,11 @@ def model_run(request):
                # "current_model_inputs_table_id":current_model_inputs_table_id, # model_inputs_table_id
 
                "observed_hydrograph_userModified":observed_hydrograph_userModified,
+               "observed_hydrograph_userModified2": observed_hydrograph_userModified2,
+
                "observed_hydrograph_loaded":observed_hydrograph_loaded,
+               "observed_hydrograph_loaded2": observed_hydrograph_loaded2,
+
                #"simulation_loaded_id":simulation_loaded_id,
                'test_string':test_string,
                'test_variable':test_variable,
@@ -699,7 +720,7 @@ def model_run(request):
                'hs_res_created': hs_res_created,
                'dict_files_created': files_created_dict,
 
-               'observed_hydrograph2':observed_hydrograph2,
+
 
                }
 

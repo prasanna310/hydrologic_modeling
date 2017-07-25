@@ -8,79 +8,21 @@
 <!--Model inputs user form-->
 <div id='form-container' class='' style="">
 
-    <form id='user-form' method="post" action="{% url 'hydrologic_modeling:test1' %}" enctype="multipart/form-data">
+    <form id='user-form' method="post" action="{% url 'hydrologic_modeling:test2' %}" enctype="multipart/form-data">
         {% csrf_token %}
 
-        <div id="model domain">
-                  {% gizmo text_input simulation_name %}
 
-          <table style="width:100%">
-              <tr>
-                    <th> {% gizmo text_input cell_size %} </th>
-                    <th> {% gizmo text_input timestep %} </th>
-              </tr>
-
-          </table>
-
-            <p id='box_title' class="form-subtitle"> Bounding Box (US continent only)</p>
-            <table  style="margin-top:20px">
-
-                <tr>
-                    <td/>
-                    <td >{% gizmo text_input north_lat %}</td>
-                    <td/>
-                </tr>
-                <tr>
-                    <td width="200px">{% gizmo text_input west_lon %}</td>
-                    <td width="200px"/>
-                    <td width="200px">{% gizmo text_input east_lon %}</td>
-                </tr>
-                    <td/>
-                    <td >{% gizmo text_input south_lat %}</td>
-                    <td/>
-                </tr>
-            </table>
-
-            <p id='point_title' class="form-subtitle">Watershed Outlet Point (Optional)</p>
-            <table style="margin-top:20px">
-                <tr>
-                    <td>{% gizmo text_input outlet_x %}</td>
-                    <td width="10px"/>
-                    <td>{% gizmo text_input outlet_y %}</td>
-                </tr>
-            </table>
-
-
-            </div>
-
-           <table >
-              <tr>
-                    <th> {% gizmo date_picker simulation_start_date_picker %} </th>
-                    <th>  {% gizmo date_picker simulation_end_date_picker %} </th>
-              </tr>
-              <tr>
-                    <td>{% gizmo select_input timeseries_source %}</td>
-                    <td>{% gizmo select_input model_engine %} </td>
-              </tr>
-          </table>
-
-
-          {% gizmo text_input USGS_gage %}
-          {% gizmo text_input threshold %}
-
-
-
-          Optionally, upload .shp file geometry <br>
+          Convert your shapefile to geojson <br>
           <table >
               <tr>
                   <th> Outlet </th>
-                  <th><input type="file" name="outlet_shp" multiple> </th>
+                  <th><input type="file" name="outlet_upload" multiple> </th>
                   <!--<th><input type="submit" name="Upload" value="Upload" /> </th>-->
               </tr>
 
               <tr>
                   <th> Watershed </th>
-                  <th><input type="file" name="watershed_shp" multiple> </th>
+                  <th><input type="file" name="watershed_upload" multiple> </th>
                   <!--<th><input type="submit" name="Upload" value="Upload" /> </th>-->
               </tr>
 
@@ -92,27 +34,12 @@
             <p id="response-result"></p>
         </div>
 
-        <input id='submit-model-input-btn' type="submit" value="Prepare the Model" name='input-form' >
+        <input id='submit-model-input-btn' type="submit" value="Submit" name='input-form' >
 
 
     </form>
 
 
-
-    <div id="wait" class="modal fade" role="dialog" data-backdrop="static" data-keyboard="false">
-        <div class="modal-dialog">
-            <!-- Modal content-->
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title">Please wait for form processing..</h4>
-                </div>
-                <div class="modal-body">
-                    <img align="middle" src="{% static 'hydrologic_modeling/images/waiting.gif' %}" width="550px" height="20px"/>
-                </div>
-            </div>
-            <!--End modal content-->
-        </div>
-    </div>
 
 
 </div>
@@ -121,11 +48,17 @@
 {%endblock%}
 
 {% block app_content%}
+{% load tethys_gizmos %}
+
+{% gizmo  plot_view observed_hydrograph %}
+{% gizmo  plot_view observed_hydrograph2 %}
+{% gizmo  plot_view area_range_plot_object %}
+
 <!--Google map-->
 <div id='map-container' >
     <!-- app intro-->
     <div id='title' style="margin-bottom:5px">
-        <h5 style="color:#0073e6">Input Data Preparation</h5>
+        <h5 style="color:#0073e6">Test string1: {{test_string1}} </h5>
 
         <p >
             The model input package includes different forcing dataset and model parameter files,

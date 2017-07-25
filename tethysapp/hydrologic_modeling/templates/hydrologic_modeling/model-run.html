@@ -78,7 +78,7 @@
 
   <!--if the user creates a simulation.. :TODO need to have 'and' clause for no download case in the if statement below-->
   {% if simulation_name != None %} <!--- If the input is complete --->
-        <h5> Contragulations! <u><b>{{simulation_name}}</b></u> ran successfully!  </h5>
+        <h5> Congratulations! <u><b>{{simulation_name}}</b></u> ran successfully!  </h5>
 
       Here is the simulated discharge for the outlet you picked. <b>(long: {{outlet_lon}} , lat: {{outlet_lat}}) </b>
         <br>
@@ -95,21 +95,23 @@
 
   <!--if the user modifies a simulation.. -->
   {% if fac_L_form != "" %} <!--- If the input is complete --->
-      <h5> Contragulations <b>{{user_name}}</b>! Parameters were changed successfully!  </h5>
+      <h5> Congratulations <b>{{user_name}}</b>! Parameters were changed successfully!  </h5>
             Using the calibratoin parameters provided, the graph was updated for the ll-input id: {{Iwillgiveyou_model_inputs_table_id_from_another_html}}
 
 
             {% gizmo plot_view observed_hydrograph_userModified %}
+            {% gizmo plot_view observed_hydrograph_userModified2 %}
 
 
    {% endif %}
 
   {% if simulation_loaded_id != "" %} <!--- If the input is complete --->
-      <h5> Contragulations <b>{{user_name}}</b>! Parameters were changed successfully!  </h5>
+      <h5> Congratulations <b>{{user_name}}</b>! Parameters were changed successfully!  </h5>
             Using the calibratoin parameters provided, the graph was updated for the ll-input id: {{Iwillgiveyou_model_inputs_table_id_from_another_html}}
 
 
             {% gizmo plot_view observed_hydrograph_loaded %}
+            {% gizmo plot_view observed_hydrograph_loaded2 %}
 
 
    {% endif %}
