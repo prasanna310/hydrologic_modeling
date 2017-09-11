@@ -57,7 +57,7 @@
             <div id="domainInputs" class="panel-collapse collapse">
                 <div class="panel-body">
 
-                                    <input type="radio" name="domain_radio" value="1" data-toggle="collapse" data-parent="#accordion" data-target="#specify" checked /> Specify long lat, or draw on map
+                                    <input type="radio"  name="domain_radio" value="1" data-toggle="collapse" data-parent="#accordion" data-target="#specify" checked /> Specify long lat, or draw on map
 
                                     <div id="specify" class="panel-collapse collapse" >
                                       <br> <strong> OUTLET  </strong>
@@ -66,8 +66,8 @@
 
 
                                           <tr>
-                                                <th> {% gizmo text_input outlet_x %} </th>
-                                                <th> {% gizmo text_input outlet_y %} </th>
+                                                <th onChange="init()"> {% gizmo text_input outlet_x %} </th>
+                                                <th onChange="init()"> {% gizmo text_input outlet_y %} </th>
                                           </tr>
 
                                         </table>
@@ -106,7 +106,7 @@
                                           <form id ="input_shp"  method="post" action="{% url 'hydrologic_modeling:visualize_shp' %}" enctype="multipart/form-data">
                                               <tr>
                                                   <!--<th> Watershed </th>-->
-                                                  <th><input type="file" name="watershed_shp"  accept=".shp, .shx, .dbf, .prj, .tif/*" title="&nbsp;" multiple/> </th>
+                                                  <th><input type="file" name="watershed_upload"  accept=".shp, .shx, .dbf, .prj, .tif, .tiff/*" title="&nbsp;" multiple/> </th>
                                               </tr>
 
                                               <tr>
@@ -244,7 +244,8 @@
 
                 function  init() {
                     var mapDiv = document.getElementById("mymap");
-                    var mapCenter = new google.maps.LatLng(41.74025, -111.7915);
+//                    var mapCenter = new google.maps.LatLng(41.74025, -111.7915);
+                    var mapCenter = new google.maps.LatLng(document.forms["inputs"]["outlet_y"].value, document.forms["inputs"]["outlet_x"].value);
                     var mapOptions = {
                         center: mapCenter,
                         zoom:9,
@@ -256,7 +257,7 @@
                         map:map,
                         position: mapCenter,
                         draggable:true,
-                        label:"Outlet",
+                        label: "Outlet",
                         scale: 10,
                         //size : new google.maps.Size(21,34)
 
@@ -265,14 +266,22 @@
                     var rectangle = new google.maps.Rectangle({
                         map: map,
                         bounds: new google.maps.LatLngBounds (
-                                new google.maps.LatLng(41.88,-111.8461),
-                                new google.maps.LatLng(41.7215,-111.6208)
+//                                new google.maps.LatLng(41.88,-111.8461),
+//                                new google.maps.LatLng(41.7215,-111.6208)
+                                new google.maps.LatLng(document.forms["inputs"]["box_topY"].value ,document.forms["inputs"]["box_leftX"].value ),
+                                new google.maps.LatLng(document.forms["inputs"]["box_bottomY"].value ,document.forms["inputs"]["box_rightX"].value )
+
                         ),
                         fillColor:"grey",
                         strokeColor:"blue",
                         editable:true,
                         draggable:true
                     });
+
+
+
+                    //map.data.loadGeoJson("usgsgages" );  //https://usgsgages.000webhostapp.com/googletryjson.json
+
 
                     google.maps.event.addListener(rectangle, "bounds_changed", function(){
                         var bounds = rectangle.getBounds();
@@ -303,26 +312,10 @@
                         document.forms["inputs"]["outlet_y"].value= this.getPosition().lat() ;
                     });
 
-
-//                    // following three lines are added to try to load geojson
-//                    var script = document.createElement("script");
-//                    script.src = "{{geojson_domain}}";
-//                    aaa = "{{geojson_domain}}"; //del it after testinig
-//                    document.getElementsByTagName("head")[0].appendChild(script);
-
                 //inti closes
                 }
-//
-//                // on upload shapefile / geojson file, run the function...
-//                // following code is trial. Until init is called.
-//                 window.geojson_callback = function(results) {
-//                     var map = new google.maps.Map(document.getElementById('mymap'), {
-//                     zoom: 9,
-//                     center: {lat: 42, lng: -111.3}
-//                      });
-//
-//                    map.data.addGeoJson(results);
-//                 }
+
+
 
 
                 window.onload = init;
@@ -384,12 +377,12 @@
     function showMap() {
          var map = new google.maps.Map(document.getElementById('mymap'), {
          zoom: 9,
-         center: {lat: 42, lng: -111.3}
+         center: {lat: document.forms["inputs"]["outlet_y"].value, lng: document.forms["inputs"]["outlet_x"].value}
           });
 
-    //            var script = document.createElement("script");
-    //            script.src = "wshed_with_var.geojson";
-    //            document.getElementsByTagName("head")[0].appendChild(script);
+//                var script = document.createElement("script");
+//                script.src = "usgs_gages_json.json";
+//                document.getElementsByTagName("head")[0].appendChild(script);
     }
 
 
@@ -453,8 +446,6 @@
                         document.forms["inputs"]["outlet_y"].value= this.getPosition().lat() ;
                     });
 
-
-
                     var rectangle2 = new google.maps.Rectangle({
                         map: map,
                         bounds: new google.maps.LatLngBounds (
@@ -478,42 +469,38 @@
                         document.forms["inputs"]["box_topY"].value= NE.lat();
 
                     });
-
-
-
 //            document.getElementById('test_para').innerHTML = xmin.toString() + xmax.toString() + ymin.toString() + ymax.toString() ;
-
     }
 
 
-    function loadFileAsText()
-    {
-        document.getElementById('test_para').innerHTML = 'we have entered the function'
-        var fileToLoad = document.getElementById("watershed_geojson").files[0]; //this could be outlet_geojson too
-
-        var fileReader = new FileReader();
-        fileReader.readAsText(fileToLoad, "UTF-8");
-
-        fileReader.onload = function(fileLoadedEvent)
-        {
-            var textFromFileLoaded = fileLoadedEvent.target.result;
-            window.geojson_callback(JSON.parse(textFromFileLoaded));
-
-        };
-
-
-
-    }
-
-
-    function populateDownloadForm()
-    {
-          document.getElementsByName('cell_size2').value = document.getElementsByName('cell_size');
+//    function loadFileAsText()
+//    {
+//        document.getElementById('test_para').innerHTML = 'we have entered the function'
+//        var fileToLoad = document.getElementById("watershed_geojson").files[0]; //this could be outlet_geojson too
+//
+//        var fileReader = new FileReader();
+//        fileReader.readAsText(fileToLoad, "UTF-8");
+//
+//        fileReader.onload = function(fileLoadedEvent)
+//        {
+//            var textFromFileLoaded = fileLoadedEvent.target.result;
+//            window.geojson_callback(JSON.parse(textFromFileLoaded));
+//
+//        };
+//
+//
+//
+//    }
 
 
-//cell_size threshold  box_topY  box_leftX  box_rightX box_bottomY
+//    function populateDownloadForm()
+//    {
+//          document.getElementsByName('cell_size2').value = document.getElementsByName('cell_size');
+////cell_size threshold  box_topY  box_leftX  box_rightX box_bottomY
+//    }
 
-    }
+
+
 
   </script>
 {% endblock %}
