@@ -58,6 +58,18 @@ def create_hydrograph(date_in_datetime, Qsim, simulation_name, error):
     )
     return observed_hydrograph
 
+def create_1d(timeseries_list, label, unit):
+    from tethys_sdk.gizmos import TimeSeries
+    timeseries_obj = TimeSeries(
+        height='300px', width='500px', engine='highcharts', title=label,
+        subtitle="Simulated and Observed flow  ",
+        y_axis_title='Value', y_axis_units=unit,
+        series=[{
+            'name': label,
+            'data': timeseries_list
+        }])
+    return  timeseries_obj
+
 def create_model_input_dict_from_request(request):
     # from the user input forms in model_input page, the request is converted to a dictionary of inputs
     print request.user.username
@@ -67,6 +79,8 @@ def create_model_input_dict_from_request(request):
 
 
     test_string = 'None'
+    wshed_tif_fname = None
+
     wshed_shp_fname = None
     outlet_shp_fname = None
 
@@ -80,7 +94,7 @@ def create_model_input_dict_from_request(request):
 
                         "simulation_start_date": request.POST['simulation_start_date_picker'],
                          "simulation_end_date": request.POST['simulation_end_date_picker'],
-                         "USGS_gage": int(request.POST['USGS_gage']),
+                         "USGS_gage": str(request.POST['USGS_gage']),
 
                          "outlet_y": round(  float(request.POST['outlet_y']),6),
                          "outlet_x": round( float(request.POST['outlet_x']),6),
@@ -129,7 +143,7 @@ def create_model_input_dict_from_request(request):
                 watershed_files['prj'] = tmp_file
             if os.path.split(tmp_file)[-1].split(".")[-1] =='tif' or os.path.split(tmp_file)[-1].split(".")[-1]=='tiff':
                 watershed_files['tif'] = tmp_file
-            if os.path.split(tmp_file)[-1][-3:] not in ['shp', 'shx', 'dbf', 'prj', 'tif', 'iff']:
+            if os.path.split(tmp_file)[-1][-3:] not in ['shp', 'shx', 'dbf', 'prj', 'tif', 'tiff']:
                 os.remove(tmp_file)
 
         if 'shp' and 'shx' in watershed_files:
@@ -188,10 +202,10 @@ def create_model_input_dict_from_request(request):
         inputs_dictionary['outlet_x'] ,inputs_dictionary['outlet_y'] = round(lon,6),  round(lat, 6)
 
     if 'tif' in  watershed_files:
-        try:
-            lon_e, lat_s, lon_w, lat_n = get_box_from_tif(watershed_files['tif'])
-        except:
-            pass
+        print 'tiff file detected'
+        lon_e, lat_s, lon_w, lat_n = get_box_from_tif(watershed_files['tif'])
+        print  lon_e, lat_s, lon_w, lat_n
+
 
     return inputs_dictionary
 
@@ -226,6 +240,7 @@ def read_hydrograph_from_txt(hydrograph_fname):
     # return hydrograph_series, hs_resource_id_created
 
 def read_data_from_json(json_fname):
+
     with open(json_fname) as json_file:
         data = json.load(json_file)
         try:
@@ -236,6 +251,11 @@ def read_data_from_json(json_fname):
         yr_mon_day_hr_min_discharge_list = data['runs'][-1]['simulated_discharge']  # of the last run
         hydrograph_series_sim = []
         hydrograph_series_obs = []
+        eta = []
+        vs = []
+        vc = []
+        vo = []
+
         for yr, mon, day, hr, min, q in yr_mon_day_hr_min_discharge_list:
             date = datetime.datetime(year=int(yr), month=int(mon),   day=int(day), hour=int(hr), minute=int(min) )
             hydrograph_series_sim.append([date, float(q)])
@@ -248,7 +268,29 @@ def read_data_from_json(json_fname):
                 date = datetime.datetime(year=int(yr), month=int(mon), day=int(day), hour=int(hr), minute=int(min))
                 hydrograph_series_obs.append([date, float(q)])
 
-    return  {'hs_res_id_created':hs_resource_id_created, 'hydrograph_series_obs':hydrograph_series_obs, 'hydrograph_series_sim':hydrograph_series_sim }
+        if 'et_a' in data['runs'][-1]:
+            yr_mon_day_hr_min_eta = data['runs'][-1]['et_a']
+            for yr, mon, day, hr, min, val in yr_mon_day_hr_min_eta:
+                date = datetime.datetime(year=int(yr), month=int(mon), day=int(day), hour=int(hr), minute=int(min))
+                eta.append([date, float(val)])
+        if 'vc' in data['runs'][-1]:
+            yr_mon_day_hr_min_eta = data['runs'][-1]['vc']
+            for yr, mon, day, hr, min, val in yr_mon_day_hr_min_eta:
+                date = datetime.datetime(year=int(yr), month=int(mon), day=int(day), hour=int(hr), minute=int(min))
+                vc.append([date, float(val)])
+        if 'vs' in data['runs'][-1]:
+            yr_mon_day_hr_min_eta = data['runs'][-1]['vs']
+            for yr, mon, day, hr, min, val in yr_mon_day_hr_min_eta:
+                date = datetime.datetime(year=int(yr), month=int(mon), day=int(day), hour=int(hr), minute=int(min))
+                vs.append([date, float(val)])
+        if 'vo' in data['runs'][-1]:
+            yr_mon_day_hr_min_eta = data['runs'][-1]['vo']
+            for yr, mon, day, hr, min, val in yr_mon_day_hr_min_eta:
+                date = datetime.datetime(year=int(yr), month=int(mon), day=int(day), hour=int(hr), minute=int(min))
+                vo.append([date, float(val)])
+
+    return  {'hs_res_id_created':hs_resource_id_created, 'hydrograph_series_obs':hydrograph_series_obs, 'hydrograph_series_sim':hydrograph_series_sim ,
+             'eta':eta, 'vs':vs, 'vo':vo, 'vc':vc}
 
 
 def read_both_hydrograph_from_txt(hydrograph_fname):
@@ -488,6 +530,7 @@ def get_box_xyxy_from_shp(shp_file, simulation_folder='/usr/lib/tethys/src/tethy
 
 
 def get_box_from_tif(tif_fname, simulation_folder=None):
+    #gdalwarp infile.tif outfile.tif -t_srs "+proj=longlat +ellps=WGS84"
     minx=  None
     miny = None
     maxx = None
@@ -502,8 +545,8 @@ def get_box_from_tif(tif_fname, simulation_folder=None):
         miny = gt[3] + width * gt[4] + height * gt[5]
         maxx = gt[0] + width * gt[1] + height * gt[2]
         maxy = gt[3]
-    except:
-        pass
+    except Exception, e:
+        print 'error: Tiff files contents is not supported. Try another Tiff file', e
 
     return maxx, miny, minx, maxy
 
@@ -734,29 +777,32 @@ def create_hs_resources_from_hydrodslinks(list_of_hydrods_links, hs_usr_name, hs
                                    abstract=hs_abstract, keywords=hs_keywords)
     # print('Finished TOPNET input setup')
 
+def plot_multiseries_hydrograph(obs_q=None, sim_q=None):
 
+    multi_timeseries_plot = TimeSeries(
+        height='500px',
+        width='500px',
+        engine='highcharts',
+        title='Multiple Timeseries Plot',
+        y_axis_title='Snow depth',
+        y_axis_units='m',
+        series=[{
+            'name': 'Observed',
+            'data': obs_q  # I switched these so that the shorter series was in front of the larger
+        }, {
+            'name': 'Simulated',
+            'data': sim_q
+        }]
+    )
+
+    return multi_timeseries_plot
 
 def loadpytopkapi(hs_res_id, out_folder=""):
             # output_hs_rs_id_txt='pytopkpai_model_files_metadata.txt',output_q_sim_txt='output_q_sim_retreived.txt',  output_response_txt = 'output_response_json.txt'
 
 
-    if out_folder == '':
-        out_folder = generate_uuid_file_path()
-
     run_model_call = HDS.loadpytopkapi(hs_res_id= hs_res_id)
 
-    # hs_txt_file = run_model_call['output_hs_rs_id_txt']
-    # temp_file_hs = out_folder + '/' + os.path.basename(hs_txt_file)
-    # HDS.download_file(hs_txt_file, temp_file_hs)
-    #
-    # hydrograph_txt_file = run_model_call['output_q_sim_txt']
-    # temp_file_qsim = out_folder + '/' + os.path.basename(hydrograph_txt_file)
-    # HDS.download_file(hydrograph_txt_file, temp_file_qsim)
-    #
-    # print 'Temp location for HS metadata file location is ', temp_file_hs
-    # print 'Temp location for Simulated Q file location is ', temp_file_qsim
-    #
-    # return temp_file_hs, temp_file_qsim
 
     if out_folder == "":
         out_folder  = generate_uuid_file_path()
@@ -777,19 +823,6 @@ def modifypytopkapi(hs_res_id, out_folder="",  fac_l=1.0, fac_ks=1.0, fac_n_o=1.
                                          pvs_t0=pvs_t0 ,vo_t0 =vo_t0 ,qc_t0=qc_t0 ,kc = kc, hs_res_id=hs_res_id  )
 
     print 'run_model_call =', run_model_call
-
-    # hs_txt_file = run_model_call['output_hs_rs_id_txt']
-    # temp_file_hs = out_folder + '/' + os.path.basename(hs_txt_file)
-    # HDS.download_file(hs_txt_file, temp_file_hs)
-    #
-    # hydrograph_txt_file = run_model_call['output_q_sim_txt']
-    # temp_file_qsim = out_folder + '/' + os.path.basename(hydrograph_txt_file)
-    # HDS.download_file(hydrograph_txt_file, temp_file_qsim)
-    #
-    # print 'Temp location for HS metadata file location is ', temp_file_hs
-    # print 'Temp location for Simulated Q file location is ', temp_file_qsim
-    #
-    # return temp_file_hs, temp_file_qsim
 
 
     if out_folder == "":
@@ -813,6 +846,158 @@ def call_runpytopkapi(inputs_dictionary, out_folder=''):
 
     valid_simulation_name = ''.join(e for e in inputs_dictionary['simulation_name'] if e.isalnum())
     epsgCode = 102003 # North America Albers Equal Area Conic
+
+
+    unprojected_shapefile = {u'output_shape_file_name': u'http://129.123.9.159:20199/files/data/user_6/Outlet.zip'}
+    project_shapefile_result = {u'output_shape_file': u'http://129.123.9.159:20199/files/data/user_6/OutletProj.zip'}
+    watershed_files = {u'output_contributing_area_raster': u'http://129.123.9.159:20199/files/data/user_6/ad8.tif',
+                       u'output_outlet_shapefile': u'http://129.123.9.159:20199/files/data/user_6/corrected_outlet.zip',
+                       u'output_stream_raster': u'http://129.123.9.159:20199/files/data/user_6/src.tif',
+                       u'output_raster': u'http://129.123.9.159:20199/files/data/user_6/mask.tif',
+                       u'output_fill_raster': u'http://129.123.9.159:20199/files/data/user_6/fel.tif',
+                       u'output_slope_raster': u'http://129.123.9.159:20199/files/data/user_6/sd8.tif',
+                       u'output_flow_direction_raster': u'http://129.123.9.159:20199/files/data/user_6/p.tif'}
+    slope_raster = {u'output_raster': u'http://129.123.9.159:20199/files/data/user_6/slope.tif'}
+    soil_files = {u'output_dth2_file': u'http://129.123.9.159:20199/files/data/user_6/dth2.tif',
+                  u'output_dth1_file': u'http://129.123.9.159:20199/files/data/user_6/dth1.tif',
+                  u'output_hydrogrp_file': u'http://129.123.9.159:20199/files/data/user_6/hydrogrp.tif',
+                  u'output_psif_file': u'http://129.123.9.159:20199/files/data/user_6/psif.tif',
+                  u'output_ksat_ssurgo_min_file': u'http://129.123.9.159:20199/files/data/user_6/ksat_ssurgo_min.tif',
+                  u'output_ksat_LUT_file': u'http://129.123.9.159:20199/files/data/user_6/ksat_LUT.tif',
+                  u'output_residual_soil_moisture_file': u'http://129.123.9.159:20199/files/data/user_6/RSM.tif',
+                  u'output_ksat_ssurgo_wtd_file': u'http://129.123.9.159:20199/files/data/user_6/ksat_ssurgo_wtd.tif',
+                  u'output_saturated_soil_moisture_file': u'http://129.123.9.159:20199/files/data/user_6/SSM.tif',
+                  u'output_pore_size_distribution_file': u'http://129.123.9.159:20199/files/data/user_6/PSD.tif',
+                  u'output_sd_file': u'http://129.123.9.159:20199/files/data/user_6/sd.tif',
+                  u'output_bubbling_pressure_file': u'http://129.123.9.159:20199/files/data/user_6/BBL.tif'}
+    subset_NLCD_result = {u'output_raster': u'http://129.123.9.159:20199/files/data/user_6/nlcdProj100.0.tif'}
+    reclassify_nlcd = {u'output_raster': u'http://129.123.9.159:20199/files/data/user_6/reclassified_raster.tif'}
+    rain_et = {u'output_et_reference_fname': u'http://129.123.9.159:20199/files/data/user_6/output_et.nc',
+               u'output_rain_fname': u'http://129.123.9.159:20199/files/data/user_6/output_ppt.nc'}
+
+
+    # Clip Static DEM (i.e. DEM that is in HydroDS) to the domain given & Project, and Resample it
+    subsetDEM_request = HDS.subset_raster(input_raster='nedWesternUS.tif', left=inputs_dictionary['box_leftX'],top=inputs_dictionary['box_topY'], right=inputs_dictionary['box_rightX'], bottom=inputs_dictionary['box_bottomY'], output_raster= 'DEM84.tif')
+    DEM_resample_request = HDS.project_resample_raster(input_raster_url_path=subsetDEM_request['output_raster'],cell_size_dx=int(inputs_dictionary['cell_size']), cell_size_dy=int(inputs_dictionary['cell_size']), epsg_code=epsgCode, output_raster='DEM84'+str( int(inputs_dictionary['cell_size']))+'.tif', resample='bilinear')
+    #DEM_resample_request = HDS.project_resample_raster(input_raster_url_path='http://129.123.9.159:20199/files/data/user_6/loganSample100m.tif',cell_size_dx=int(inputs_dictionary['cell_size']), cell_size_dy=int(inputs_dictionary['cell_size']), epsg_code=epsgCode, output_raster='DEM84'+str( int(inputs_dictionary['cell_size']))+'.tif', resample='bilinear')
+
+
+    # Create outlet shapefile from the point value
+    outlet_shapefile_result = HDS.create_outlet_shapefile(point_x=inputs_dictionary['outlet_x'], point_y=inputs_dictionary['outlet_y'],output_shape_file_name= 'Outlet.shp'); print 'unprojected shapefile=', outlet_shapefile_result
+    project_shapefile_result = HDS.project_shapefile(outlet_shapefile_result['output_shape_file_name'],'OutletProj.shp', epsg_code=epsgCode); print 'project_shapefile_result =', project_shapefile_result
+
+    # Get complete raster set
+    watershed_files = HDS.delineatewatershedtogetcompleterasterset(input_raster_url_path= DEM_resample_request['output_raster'],
+                           threshold=inputs_dictionary['threshold'], output_raster='mask.tif', output_outlet_shapefile='corrected_outlet.shp',
+                           input_outlet_shapefile_url_path=project_shapefile_result['output_shape_file'], )
+
+    print "watershed_files =", watershed_files
+
+    # # clip all the files to mask
+    # clip_hds_file_dict(watershed_files,watershed_files['output_raster'] )
+
+    slope_raster = HDS.create_raster_slope(input_raster_url_path=watershed_files['output_fill_raster'], output_raster= 'slope.tif'); print 'slope_raster =', slope_raster
+
+
+    soil_data_mask = watershed_files['output_raster']
+    # soil_files = HDS.downloadsoildataforpytopkapi3(input_watershed_raster_url_path=  soil_data_mask); print  'soil_files =', soil_files #,     #'http://129.123.9.159:20199/files/data/user_6/watershed_mukey.tif',
+    soil_files = HDS.downloadsoildataforpytopkapi4(input_watershed_raster_url_path=  soil_data_mask); print  'soil_files =', soil_files #,     #'http://129.123.9.159:20199/files/data/user_6/watershed_mukey.tif',
+
+
+    subset_NLCD_result = HDS.project_clip_raster(input_raster='nlcd2011CONUS.tif',ref_raster_url_path=watershed_files['output_raster'], output_raster='nlcdProj' + str(inputs_dictionary['cell_size']) + '.tif');  print 'subset_NLCD_result=', subset_NLCD_result
+    LUT_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'utils' ,'LUT_NLCD2n.csv')
+    LUT_overland = HDS.upload_file(LUT_location);  reclassify_nlcd = HDS.reclassifyrasterwithlut(LUT=LUT_overland, input_raster=subset_NLCD_result['output_raster']);  print 'reclassify_nlcd =', reclassify_nlcd
+
+
+    if inputs_dictionary['timeseries_source'].lower() =='daymet':
+        rain_et = HDS.calculaterainETfromdaymet(input_raster=watershed_files['output_raster'], input_dem=watershed_files['output_fill_raster'],
+                                                startDate=inputs_dictionary['simulation_start_date'],endDate=inputs_dictionary['simulation_end_date'], cell_size=inputs_dictionary['cell_size'],
+                                                output_et_reference_fname='output_et.nc', output_rain_fname='output_ppt.nc', save_as=None)
+
+    if inputs_dictionary['timeseries_source'].lower() == 'ueb':
+        rain_et['output_rain_fname'] = 'http://129.123.9.159:20199/files/data/user_6/SWIT.nc'
+        rain_et['output_et_reference_fname'] = watershed_files['output_raster'] #:TODO, need to think what to do for ET if UEB
+    print 'rain_et =', rain_et
+
+
+    run_model_call = HDS.runpytopkapi5(user_name=inputs_dictionary['user_name'],
+                                       simulation_name=valid_simulation_name, #inputs_dictionary['simulation_name'],
+                                       simulation_start_date=inputs_dictionary['simulation_start_date'],
+                                       simulation_end_date=inputs_dictionary['simulation_end_date'],
+                                       USGS_gage=inputs_dictionary['USGS_gage'],
+                                       threshold=inputs_dictionary['threshold'],
+
+                                       # channel_manning_fname=watershed_files['output_mannings_n_stream_raster'],
+                                       overland_manning_fname=reclassify_nlcd['output_raster'],
+
+                                       hillslope_fname=watershed_files['output_slope_raster'],
+                                       # slope_raster['output_raster'], because sd8 is tan of angle, whereas slope is in degree
+                                       dem_fname=watershed_files['output_fill_raster'],
+                                       channel_network_fname=watershed_files['output_stream_raster'],
+                                       mask_fname=watershed_files['output_raster'],
+                                       flowdir_fname=watershed_files['output_flow_direction_raster'],
+
+                                       pore_size_dist_fname=soil_files['output_pore_size_distribution_file'],
+                                       bubbling_pressure_fname=soil_files['output_bubbling_pressure_file'],
+                                       resid_moisture_content_fname=soil_files['output_residual_soil_moisture_file'],
+                                       sat_moisture_content_fname=soil_files['output_saturated_soil_moisture_file'],
+                                       conductivity_fname=soil_files['output_ksat_ssurgo_wtd_file'],  # only change is here, based on downloadsoildataforpytopkapi3 or 4
+                                       # soil_files['output_ksat_rawls_file'],
+                                       soil_depth_fname=  watershed_files['output_raster'],                                          # soil_files['output_sd_file'],
+
+                                       timestep=inputs_dictionary['timestep'],
+                                       output_response_txt="pytopkpai_response.txt",
+                                       rain_fname= rain_et['output_rain_fname'],
+                                       et_fname= rain_et['output_et_reference_fname']
+                                       )
+
+    if out_folder == "":
+        out_folder  = generate_uuid_file_path()
+
+    responseJSON = run_model_call['output_response_txt']
+    temp_file = out_folder + '/' + os.path.basename(responseJSON)
+    HDS.download_file(responseJSON, temp_file)
+
+    print run_model_call
+
+    return out_folder + '/' + os.path.basename(responseJSON)  # ,      out_folder + '/' + os.path.basename(hydrograph_txt_file)
+
+def call_runpytopkapi_backup(inputs_dictionary, out_folder=''):
+    """
+    :param inputs_dictionary:  Dictionary. Inputs from Tethys, or user requesting the service
+    :return: Timeseries file- hydrograph, or list of input files if the user only wants input files
+    """
+
+    valid_simulation_name = ''.join(e for e in inputs_dictionary['simulation_name'] if e.isalnum())
+    epsgCode = 102003 # North America Albers Equal Area Conic
+
+
+    unprojected_shapefile = {u'output_shape_file_name': u'http://129.123.9.159:20199/files/data/user_6/Outlet.zip'}
+    project_shapefile_result = {u'output_shape_file': u'http://129.123.9.159:20199/files/data/user_6/OutletProj.zip'}
+    watershed_files = {u'output_contributing_area_raster': u'http://129.123.9.159:20199/files/data/user_6/ad8.tif',
+                       u'output_outlet_shapefile': u'http://129.123.9.159:20199/files/data/user_6/corrected_outlet.zip',
+                       u'output_stream_raster': u'http://129.123.9.159:20199/files/data/user_6/src.tif',
+                       u'output_raster': u'http://129.123.9.159:20199/files/data/user_6/mask.tif',
+                       u'output_fill_raster': u'http://129.123.9.159:20199/files/data/user_6/fel.tif',
+                       u'output_slope_raster': u'http://129.123.9.159:20199/files/data/user_6/sd8.tif',
+                       u'output_flow_direction_raster': u'http://129.123.9.159:20199/files/data/user_6/p.tif'}
+    slope_raster = {u'output_raster': u'http://129.123.9.159:20199/files/data/user_6/slope.tif'}
+    soil_files = {u'output_dth2_file': u'http://129.123.9.159:20199/files/data/user_6/dth2.tif',
+                  u'output_dth1_file': u'http://129.123.9.159:20199/files/data/user_6/dth1.tif',
+                  u'output_hydrogrp_file': u'http://129.123.9.159:20199/files/data/user_6/hydrogrp.tif',
+                  u'output_psif_file': u'http://129.123.9.159:20199/files/data/user_6/psif.tif',
+                  u'output_ksat_ssurgo_min_file': u'http://129.123.9.159:20199/files/data/user_6/ksat_ssurgo_min.tif',
+                  u'output_ksat_LUT_file': u'http://129.123.9.159:20199/files/data/user_6/ksat_LUT.tif',
+                  u'output_residual_soil_moisture_file': u'http://129.123.9.159:20199/files/data/user_6/RSM.tif',
+                  u'output_ksat_ssurgo_wtd_file': u'http://129.123.9.159:20199/files/data/user_6/ksat_ssurgo_wtd.tif',
+                  u'output_saturated_soil_moisture_file': u'http://129.123.9.159:20199/files/data/user_6/SSM.tif',
+                  u'output_pore_size_distribution_file': u'http://129.123.9.159:20199/files/data/user_6/PSD.tif',
+                  u'output_sd_file': u'http://129.123.9.159:20199/files/data/user_6/sd.tif',
+                  u'output_bubbling_pressure_file': u'http://129.123.9.159:20199/files/data/user_6/BBL.tif'}
+    subset_NLCD_result = {u'output_raster': u'http://129.123.9.159:20199/files/data/user_6/nlcdProj100.0.tif'}
+    reclassify_nlcd = {u'output_raster': u'http://129.123.9.159:20199/files/data/user_6/reclassified_raster.tif'}
+    rain_et = {u'output_et_reference_fname': u'http://129.123.9.159:20199/files/data/user_6/output_et.nc',
+               u'output_rain_fname': u'http://129.123.9.159:20199/files/data/user_6/output_ppt.nc'}
 
 
     # Clip Static DEM (i.e. DEM that is in HydroDS) to the domain given & Project, and Resample it
@@ -842,7 +1027,7 @@ def call_runpytopkapi(inputs_dictionary, out_folder=''):
 
 
     subset_NLCD_result = HDS.project_clip_raster(input_raster='nlcd2011CONUS.tif',ref_raster_url_path=watershed_files['output_raster'], output_raster='nlcdProj' + str(inputs_dictionary['cell_size']) + '.tif');  print 'subset_NLCD_result=', subset_NLCD_result
-    LUT_location = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'LUT_NLCD2n.csv')
+    LUT_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'utils' ,'LUT_NLCD2n.csv')
     LUT_overland = HDS.upload_file(LUT_location);  reclassify_nlcd = HDS.reclassifyrasterwithlut(LUT=LUT_overland, input_raster=subset_NLCD_result['output_raster']);  print 'reclassify_nlcd =', reclassify_nlcd
 
     rain_et = HDS.calculaterainETfromdaymet(input_raster=watershed_files['output_raster'], input_dem=watershed_files['output_fill_raster'],
@@ -850,81 +1035,6 @@ def call_runpytopkapi(inputs_dictionary, out_folder=''):
                                             output_et_reference_fname='output_et.nc', output_rain_fname='output_ppt.nc', save_as=None)
     print 'rain_et =', rain_et
 
-
-
-    # project_shapefile_result = {u'output_shape_file': u'http://129.123.9.159:20199/files/data/user_6/OutletProj.zip'}
-    # watershed_files = {u'output_contributing_area_raster': u'http://129.123.9.159:20199/files/data/user_6/ad8.tif',
-    #                    u'output_stream_raster': u'http://129.123.9.159:20199/files/data/user_6/src.tif',
-    #                    u'output_outlet_shapefile': u'http://129.123.9.159:20199/files/data/user_6/corrected_outlet.zip',
-    #                    u'output_raster': u'http://129.123.9.159:20199/files/data/user_6/mask.tif',
-    #                    u'output_fill_raster': u'http://129.123.9.159:20199/files/data/user_6/fel.tif',
-    #                    u'output_slope_raster': u'http://129.123.9.159:20199/files/data/user_6/sd8.tif',
-    #                    u'output_flow_direction_raster': u'http://129.123.9.159:20199/files/data/user_6/p.tif'}
-    # slope_raster = {u'output_raster': u'http://129.123.9.159:20199/files/data/user_6/slope.tif'}
-    # soil_files = {u'output_psif_file': u'http://129.123.9.159:20199/files/data/user_6/psif.tif',
-    #               u'output_dth1_file': u'http://129.123.9.159:20199/files/data/user_6/dth1.tif',
-    #               u'output_ksat_hz_file': u'http://129.123.9.159:20199/files/data/user_6/ksat_hz.tif',
-    #               u'output_dth2_file': u'http://129.123.9.159:20199/files/data/user_6/dth2.tif',
-    #               u'output_ksat_rawls_file': u'http://129.123.9.159:20199/files/data/user_6/ksat_rawls.tif',
-    #               u'output_residual_soil_moisture_file': u'http://129.123.9.159:20199/files/data/user_6/RSM.tif',
-    #               u'output_saturated_soil_moisture_file': u'http://129.123.9.159:20199/files/data/user_6/SSM.tif',
-    #               u'output_pore_size_distribution_file': u'http://129.123.9.159:20199/files/data/user_6/PSD.tif',
-    #               u'output_sd_file': u'http://129.123.9.159:20199/files/data/user_6/sd.tif',
-    #               u'output_bubbling_pressure_file': u'http://129.123.9.159:20199/files/data/user_6/BBL.tif'}
-    #
-    # # LUT based soil files
-    # soil_files = {u'output_dth2_file': u'http://129.123.9.159:20199/files/data/user_6/dth2.tif',
-    #               u'output_dth1_file': u'http://129.123.9.159:20199/files/data/user_6/dth1.tif',
-    #               u'output_hydrogrp_file': u'http://129.123.9.159:20199/files/data/user_6/hydrogrp.tif',
-    #               u'output_psif_file': u'http://129.123.9.159:20199/files/data/user_6/psif.tif',
-    #               u'output_residual_soil_moisture_file': u'http://129.123.9.159:20199/files/data/user_6/RSM.tif',
-    #               u'output_ksat_ssurgo_min_file': u'http://129.123.9.159:20199/files/data/user_6/ksat_ssurgo_min.tif',
-    #               u'output_ksat_LUT_file': u'http://129.123.9.159:20199/files/data/user_6/ksat_LUT.tif',
-    #               u'output_ksat_ssurgo_wtd_file': u'http://129.123.9.159:20199/files/data/user_6/ksat_ssurgo_wtd.tif',
-    #               u'output_saturated_soil_moisture_file': u'http://129.123.9.159:20199/files/data/user_6/SSM.tif',
-    #               u'output_pore_size_distribution_file': u'http://129.123.9.159:20199/files/data/user_6/PSD.tif',
-    #               u'output_sd_file': u'http://129.123.9.159:20199/files/data/user_6/sd.tif',
-    #               u'output_bubbling_pressure_file': u'http://129.123.9.159:20199/files/data/user_6/BBL.tif'}
-    #
-    # subset_NLCD_result = {u'output_raster': u'http://129.123.9.159:20199/files/data/user_6/nlcdProj300.0.tif'}
-    # reclassify_nlcd = {u'output_raster': u'http://129.123.9.159:20199/files/data/user_6/reclassified_raster.tif'}
-    #
-    # subset_NLCD_result = {u'output_raster': u'http://129.123.9.159:20199/files/data/user_6/nlcdProj300.0.tif'}
-    # reclassify_nlcd = {u'output_raster': u'http://129.123.9.159:20199/files/data/user_6/reclassified_raster.tif'}
-    # rain_et = {u'output_et_reference_fname': u'http://129.123.9.159:20199/files/data/user_6/output_et.nc',
-    #            u'output_rain_fname': u'http://129.123.9.159:20199/files/data/user_6/output_ppt.nc'}
-
-
-    # run_model_call = HDS.runpytopkapi5(user_name=inputs_dictionary['user_name'],
-    #                                    simulation_name=inputs_dictionary['simulation_name'],
-    #                                    simulation_start_date=inputs_dictionary['simulation_start_date'],
-    #                                    simulation_end_date=inputs_dictionary['simulation_end_date'],
-    #                                    USGS_gage=inputs_dictionary['USGS_gage'],
-    #                                    threshold=inputs_dictionary['threshold'],
-    #
-    #                                    # channel_manning_fname=watershed_files['output_mannings_n_stream_raster'],
-    #                                    overland_manning_fname=reclassify_nlcd['output_raster'],
-    #
-    #                                    hillslope_fname=watershed_files['output_slope_raster'],
-    #                                    # slope_raster['output_raster'], because sd8 is tan of angle, whereas slope is in degree
-    #                                    dem_fname=watershed_files['output_fill_raster'],
-    #                                    channel_network_fname=watershed_files['output_stream_raster'],
-    #                                    mask_fname=watershed_files['output_raster'],
-    #                                    flowdir_fname=watershed_files['output_flow_direction_raster'],
-    #
-    #                                    pore_size_dist_fname=soil_files['output_pore_size_distribution_file'],
-    #                                    bubbling_pressure_fname=soil_files['output_bubbling_pressure_file'],
-    #                                    resid_moisture_content_fname=soil_files['output_residual_soil_moisture_file'],
-    #                                    sat_moisture_content_fname=soil_files['output_saturated_soil_moisture_file'],
-    #                                    conductivity_fname=soil_files['output_ksat_hz_file'],
-    #                                    # soil_files['output_ksat_rawls_file'],
-    #                                    soil_depth_fname=soil_files['output_sd_file'],
-    #
-    #                                    timestep=inputs_dictionary['timestep'],
-    #                                    output_response_txt="pytopkpai_response.txt",
-    #                                    rain_fname=rain_et['output_rain_fname'],
-    #                                    et_fname=rain_et['output_et_reference_fname']
-    #                                    )
 
 
     run_model_call = HDS.runpytopkapi5(user_name=inputs_dictionary['user_name'],
@@ -969,7 +1079,6 @@ def call_runpytopkapi(inputs_dictionary, out_folder=''):
 
     return out_folder + '/' + os.path.basename(responseJSON)  # ,      out_folder + '/' + os.path.basename(hydrograph_txt_file)
 
-
 def download_geospatial_and_forcing_files(inputs_dictionary, download_request='geospatial', out_folder=''):
     """
     :param inputs_dictionary:  Dictionary. Inputs from Tethys, or user requesting the service
@@ -1013,7 +1122,7 @@ def download_geospatial_and_forcing_files(inputs_dictionary, download_request='g
 
 
     subset_NLCD_result = HDS.project_clip_raster(input_raster='nlcd2011CONUS.tif',ref_raster_url_path=watershed_files['output_raster'], output_raster='nlcdProj' + str(inputs_dictionary['cell_size']) + '.tif');  print 'subset_NLCD_result', subset_NLCD_result
-    LUT_location = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'LUT_NLCD2n.csv')
+    LUT_location = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'utils' ,'LUT_NLCD2n.csv')
     LUT_overland = HDS.upload_file(LUT_location);  reclassify_nlcd = HDS.reclassifyrasterwithlut(LUT=LUT_overland, input_raster=subset_NLCD_result['output_raster']);  print 'reclassify_nlcd =', reclassify_nlcd
     prepared_file['nlcd'] = subset_NLCD_result
     prepared_file['mannings_n_overland'] = reclassify_nlcd
@@ -1346,9 +1455,15 @@ def run_topnet(inputs_dictionary):
         list_of_outfiles_dict.append(streamflow)
 
     except Exception, error_returned:
-        print "Error encountered", error_returned
 
-    # :TODO either the entire process is complete or not, 1) save prepared file to HydroShare, 2) display the error, 3) display links to file        
+        file = open("/home/prasanna/Desktop/error_auto.html", 'w')
+        file.write(str(error_returned))
+
+        file.close()
+        stop
+
+
+            # :TODO either the entire process is complete or not, 1) save prepared file to HydroShare, 2) display the error, 3) display links to file
     create_hs_resources_from_hydrodslinks(list_of_hydrods_links='', hs_usr_name='', hs_paswd='')
 
 

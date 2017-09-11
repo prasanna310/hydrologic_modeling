@@ -56,23 +56,23 @@ def model_input(request):
     simulation_names_list = app_utils.create_simulation_list_after_querying_db(given_user_name=user_name)
 
 
-    simulation_name = TextInput(display_text='Simulation name', name='simulation_name', initial='simulation-1')
+    simulation_name = TextInput(display_text='Simulation name', name='simulation_name', initial='Logan_sample')
     USGS_gage = TextInput(display_text='USGS gage nearby', name='USGS_gage', initial='10109000')
     cell_size = TextInput(display_text='Cell size in meters', name='cell_size', initial='300')
     timestep = TextInput(display_text='Timestep in hrs', name='timestep', initial='24') #, append="hours"
     simulation_start_date_picker = DatePicker(name='simulation_start_date_picker', display_text='Start Date',
                                               autoclose=True, format='mm-dd-yyyy', start_date='10-15-2005',
-                                              start_view='year', today_button=True, initial='10-01-2010')
+                                              start_view='year', today_button=True, initial='01-01-2010')
     simulation_end_date_picker = DatePicker(name='simulation_end_date_picker', display_text='End Date',
                                             autoclose=True, format='mm-dd-yyyy', start_date='10-15-2005',
-                                            start_view='year', today_button=False, initial='10-15-2010')
+                                            start_view='year', today_button=False, initial='12-30-2011')
 
     timeseries_source = SelectInput(display_text='Timeseries source',
                 name='timeseries_source',
                 multiple=False,
                 options=[('User File', 'user_file'), ('UEB', 'UEB'), ('Daymet', 'Daymet')],
-                initial=['User File'],
-                original=['User File'])
+                initial=['Daymet'],
+                original=['Daymet'])
 
     model_engine = SelectInput(display_text='Choose Model',
                 name='model_engine',
@@ -83,14 +83,34 @@ def model_input(request):
 
     threshold = TextInput(display_text='Stream threshold in km2', name='threshold', initial='25')
 
-    # html form to django form
+    # html form to django form (for LOGAN WATERSHED)
     outlet_x = TextInput(display_text='Longitude', name='outlet_x', initial='-111.7836')
-    outlet_y = TextInput(display_text='Latitude', name='outlet_y', initial=' 41.744')
+    outlet_y = TextInput(display_text='Latitude', name='outlet_y', initial='41.744')
 
     box_topY = TextInput(display_text='North Y', name='box_topY', initial='42.128')
     box_rightX = TextInput(display_text='East X', name='box_rightX', initial='-111.438')
     box_leftX = TextInput(display_text='West X', name='box_leftX', initial='-111.822')
     box_bottomY = TextInput(display_text='South Y', name='box_bottomY', initial='41.686')
+
+    # (NEW FOR LOGAN WATERSHED)
+    # outlet_x = TextInput(display_text='Longitude', name='outlet_x', initial='-111.7915') #41.74025, -111.7915
+    # outlet_y = TextInput(display_text='Latitude', name='outlet_y', initial='41.74025')
+
+    box_topY = TextInput(display_text='North Y', name='box_topY', initial='41.90')
+    box_rightX = TextInput(display_text='East X', name='box_rightX', initial='-111.54')
+    box_leftX = TextInput(display_text='West X', name='box_leftX', initial='-111.85')
+    box_bottomY = TextInput(display_text='South Y', name='box_bottomY', initial='41.72')
+
+
+    # FOR PLUNGE
+    outlet_x = TextInput(display_text='Longitude', name='outlet_x', initial='-117.141284')
+    outlet_y = TextInput(display_text='Latitude', name='outlet_y', initial='34.12128')
+
+    box_topY = TextInput(display_text='North Y', name='box_topY', initial='34.2336')
+    box_rightX = TextInput(display_text='East X', name='box_rightX', initial='-117.048046')
+    box_leftX = TextInput(display_text='West X', name='box_leftX', initial='-117.168289')
+    box_bottomY = TextInput(display_text='South Y', name='box_bottomY', initial='34.10883')
+
 
     outlet_hs = TextInput(display_text='', name='outlet_hs', initial='')
     bounding_box_hs = TextInput(display_text='', name='bounding_box_hs', initial='')
@@ -202,15 +222,26 @@ def model_run(request):
     simulation_name = ""
     outlet_y = ""
     outlet_x = ""
+
+    hydrograph_series_obs = None
+    hydrograph_series_sim = None
+    hydrograph_opacity =0.2
     observed_hydrograph = ""
     observed_hydrograph2 = ''
+    observed_hydrograph3 = ''
 
     observed_hydrograph_userModified = ""
     observed_hydrograph_userModified2 = ""
+    observed_hydrograph_userModified3 = ""
 
     observed_hydrograph_loaded = ""
     observed_hydrograph_loaded2 = ""
+    observed_hydrograph_loaded3 = ''
 
+    eta_ts_obj = ''
+    vo_ts_obj = ''
+    vc_ts_obj = ""
+    vs_ts_obj = ''
 
     model_run_hidden_form = ''
     hs_resource_id_created = ''
@@ -223,7 +254,7 @@ def model_run(request):
     download_response = {}
     download_status = download_response['download_status'] = None #False
     download_link = download_response['download_link'] = 'http://link.to.zipped.files'
-    hs_res_created = download_response['hs_res_created'] = '60hfg60606fgdf06dg'
+    hs_res_created = download_response['hs_res_created'] = '60hfg6060TRIAL6fgdf06dg'
     files_created_dict = 'No dict created'
     download_choice = None
 
@@ -234,8 +265,8 @@ def model_run(request):
     fac_n_c = TextInput(display_text='fac_n_c', name='fac_n_c', initial=1.0)
     fac_th_s = TextInput(display_text='fac_th_s', name='fac_th_s', initial=1.0)
 
-    pvs_t0 = TextInput(display_text='pvs_t0', name='pvs_t0', initial=90.0)
-    vo_t0 = TextInput(display_text='vo_t0', name='vo_t0', initial=100.0)
+    pvs_t0 = TextInput(display_text='pvs_t0', name='pvs_t0', initial=50.0)
+    vo_t0 = TextInput(display_text='vo_t0', name='vo_t0', initial=10.0)
     qc_t0 = TextInput(display_text='qc_t0', name='qc_t0', initial=1.0)
     kc = TextInput(display_text='kc', name='kc', initial=1.0)
 
@@ -256,6 +287,7 @@ def model_run(request):
     except:
         model_input_prepare_request = None
 
+
     # check to see if the request is from method (2)
     try:
         # for the input text
@@ -269,7 +301,6 @@ def model_run(request):
                 model_input_load_request = hs_resource_id_created = request.POST['simulation_names_list']
                 test_variable = str(hs_resource_id_created)+"______"
                 print "MSG: Previous simulation is loaded. The name of simulation loaded is: ", hs_resource_id_created
-
 
         # for the drop down list
         except:
@@ -291,9 +322,6 @@ def model_run(request):
     except:
         model_run_calib_request = None
 
-    # model_inputs_table_id_from_another_html = current_model_inputs_table_id  # :TODO need to check why this works
-
-
 
     # Method (1), request from model_input-prepare model
     if model_input_prepare_request != None:
@@ -314,8 +342,6 @@ def model_run(request):
             test_string =  'RHESSys was chosen'
             print test_string
         else:
-
-
             # Check if user wants to just download the file
             try:
                 download_choice = request.POST['download_choice']
@@ -362,6 +388,7 @@ def model_run(request):
                 # # Method (1), STEP (1): get input dictionary from request ( request I)
                 inputs_dictionary = app_utils.create_model_input_dict_from_request(request)
                 test_string =  str("Prepared  Values: ")+str(inputs_dictionary)
+                simulation_name = inputs_dictionary['simulation_name']
                 print "MSG: Inputs from user read"
 
                 # read shp. Not sure if this is needed
@@ -377,51 +404,47 @@ def model_run(request):
                 # # Method (1), STEP (2):call_runpytopkapi function
 
                 ######### START: need to get two variables: i) hs_resource_id_created, and ii) hydrograph series ###############
-                response_JSON_file =  app_utils.call_runpytopkapi(inputs_dictionary= inputs_dictionary)
-                # response_JSON_file = '/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/86322bbe458f4de8a522684559ef3c81/pytopkpai_response.txt'
-                # response_JSON_file = '/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/f4e7c42de80a4c31b35be7309c7e6a5b/pytopkpai_response2.txt'
+                #response_JSON_file =  app_utils.call_runpytopkapi(inputs_dictionary= inputs_dictionary)
+                response_JSON_file = '/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/42240e0efd2148ec90c327a17530ee32/pytopkpai_responseJSON.txt'
 
                 json_data = app_utils.read_data_from_json(response_JSON_file)
 
                 hs_resource_id_created = json_data['hs_res_id_created']
                 hydrograph_series_obs = json_data['hydrograph_series_obs']
                 hydrograph_series_sim = json_data['hydrograph_series_sim']
-                print hydrograph_series_sim
+                eta =  json_data['eta']
+                vo = json_data['vo']
+                vc = json_data['vc']
+                vs = json_data['vs']
+
+                print '*****************', hs_resource_id_created
+                # print [i[-1] for i in hydrograph_series_sim]
+                # hydrograph_series_obs = np.nan_to_num(hydrograph_series_obs).tolist()
+
+                # replace nan values to 0 because Tethys timeseries cannot display nan
+                hydrograph_series_obs = [[item[0], 0] if np.isnan(item[-1]) else item for item in hydrograph_series_obs]
 
 
-                # try:
-                #     hydrograph_series_sim =  app_utils.read_hydrograph_from_txt(response_hydrograph_file)
-                # except:
-                #     hydrograph_series_sim, hydrograph_series_obs  = app_utils.read_both_hydrograph_from_txt(response_hydrograph_file)
-                #
-                # # print 'The hydrograph series is: ', hydrograph_series
-                #
-                # with open(response_hs_file, 'r') as f:
-                #     hs_resource_id_created =  str(f.readlines()[0])
-                #     print hs_resource_id_created
-                # ######### END : need to get two variables: i) hs_resource_id_created, and ii) hydrograph series ###############
-                #
-
-
-                # Writing to model_inputs_table
-                current_model_inputs_table_id = app_utils.write_to_model_input_table(inputs_dictionary=inputs_dictionary, hs_resource_id= hs_resource_id_created)
-
-                # Writing to model_calibraiton_table (Because it is first record of the simulation)
-                # IF the model did not run, or if user just wants the files, we don't write to calibration table
-                current_model_calibration_table_id = app_utils.write_to_model_calibration_table( model_input_table_id=current_model_inputs_table_id)
-
-                # Writing to model_result_table
-                current_model_result_table_id = app_utils.write_to_model_result_table(model_calibration_table_id=current_model_calibration_table_id,
-                                                                                      timeseries_discharge_list=hydrograph_series_sim)
-
-                # :TODO create hydrograph. Make the create_viewplot_hydrograph work
-                # create_viewplot_hydrograph(date_in_datetime, Qsim, error)  # aile kina ho kaam garena
+                try:
+                    # Writing to model_inputs_table
+                    print '******************WARNING*********** Writing to database disabled'
+                    # current_model_inputs_table_id = app_utils.write_to_model_input_table(inputs_dictionary=inputs_dictionary, hs_resource_id= hs_resource_id_created)
+                    #
+                    # # Writing to model_calibraiton_table (Because it is first record of the simulation)
+                    # # IF the model did not run, or if user just wants the files, we don't write to calibration table
+                    # current_model_calibration_table_id = app_utils.write_to_model_calibration_table( model_input_table_id=current_model_inputs_table_id)
+                    #
+                    # # Writing to model_result_table
+                    # current_model_result_table_id = app_utils.write_to_model_result_table(model_calibration_table_id=current_model_calibration_table_id,
+                    #                                                                       timeseries_discharge_list=hydrograph_series_sim)
+                except Exception, e:
+                    print "Error ---> Writing to DB"
 
 
 
                 observed_hydrograph=  TimeSeries(
-                    height='500px',width='500px', engine='highcharts',title=' Simulated Hydrograph ',
-                    subtitle="Simulated and Observed flow for " + simulation_name,
+                    height='300px',width='500px', engine='highcharts',title=' Simulated Hydrograph ',
+                    subtitle="Simulated and Observed flow  " ,
                     y_axis_title='Discharge',y_axis_units='cfs',
                     series=[{
                         'name': 'Simulated Flow',
@@ -429,67 +452,102 @@ def model_run(request):
                     }])
 
                 observed_hydrograph2 = TimeSeries(
-                    height='500px', width='500px', engine='highcharts', title=' Observed (Actual) Hydrograph ',
-                    subtitle="Simulated and Observed flow for " + simulation_name,
+                    height='300px', width='500px', engine='highcharts', title=' Observed (Actual) Hydrograph ',
+                    subtitle="Simulated and Observed flow  " ,
                     y_axis_title='Discharge', y_axis_units='cfs',
                     series=[
                             {'name': 'Observed Flow',
-                             'data': hydrograph_series_obs}
-                            ]
-                )
+                             'data':  hydrograph_series_obs
+                             }])
 
+                observed_hydrograph3 = TimeSeries(
+                    height='300px',
+                    width='500px',
+                    engine='highcharts',
+                    title="Simulated and Observed flow  ",
+                    y_axis_title='Discharge ',
+                    y_axis_units='cfs',
+                    series=[{
+                        'name': 'Simulated Hydrograph',
+                        'data': hydrograph_series_sim,
+                        'fillOpacity': hydrograph_opacity,
+                    }, {
+                        'name': 'Observed Hydrograph',
+                        'data': hydrograph_series_obs,
+                        'fillOpacity': hydrograph_opacity,
+                    }])
 
+                eta_ts_obj =app_utils.create_1d(timeseries_list=eta, label='ETa', unit='mm/day')
+                vc_ts_obj = app_utils.create_1d(timeseries_list=vc, label='Vc', unit='...')
+                vs_ts_obj = app_utils.create_1d(timeseries_list=vs, label='Vs', unit='...')
+                vo_ts_obj = app_utils.create_1d(timeseries_list=vo, label='Vo', unit='...')
 
 
     # Method (2), request from model_input-load simulation
     if model_input_load_request != None:
-        hs_resource_id = model_input_load_request # :TODO convert the id to "hydroshare resource id"
+        hs_resource_id = model_input_load_request
 
         print 'MSG: Method II initiated.'
         print 'MSG: Model run for HydroShare resource ID ', hs_resource_id , " is being retreived.."
 
-        # try:
-        #     hs_resource_id = request.POST('existing_sim_res_id')
-        # except:
-        #     pass
 
-        # STEP1: Retrieve simulation information (files stored in HydroShare) from db in a dict
-        inputs_dictionary = app_utils.create_model_input_dict_from_db( hs_resource_id= hs_resource_id,user_name= user_name )
-
-        test_string = str("Loaded  Values: ")+str(inputs_dictionary)
-
+        # # STEP1: Retrieve simulation information (files stored in HydroShare) from db in a dict
+        # inputs_dictionary = app_utils.create_model_input_dict_from_db( hs_resource_id= hs_resource_id,user_name= user_name )
+        # test_string = str("Loaded  Values: ")+str(inputs_dictionary)
 
 
 
         ######### START: need to get two variables: i) hs_resource_id_created, and ii) hydrograph series ##############
 
         response_JSON_file =  app_utils.loadpytopkapi(hs_res_id=hs_resource_id, out_folder='')
-
-
         json_data = app_utils.read_data_from_json(response_JSON_file)
 
         hs_resource_id_created =hs_resource_id  #json_data['hs_res_id_created']
-        hydrograph_series_obs = json_data['hydrograph_series_obs']
+        print 'Showing results for ', hs_resource_id_created
+
         hydrograph_series_sim = json_data['hydrograph_series_sim']
-        print hydrograph_series_sim
+        hydrograph_series_obs = json_data['hydrograph_series_obs']
+
+        print '*****************', hs_resource_id_created
+        print [i[-1] for i in hydrograph_series_sim]
 
         observed_hydrograph_loaded =  TimeSeries(
             height='500px',width='500px', engine='highcharts',title=' Simulated Hydrograph ',
-            subtitle="Simulated and Observed flow for " + simulation_name,
+            subtitle="Simulated and Observed flow  " ,
             y_axis_title='Discharge',y_axis_units='cfs',
             series=[{
                 'name': 'Simulated Flow',
-                'data': hydrograph_series_sim
+                'data':  hydrograph_series_sim
             }])
 
         observed_hydrograph_loaded2 =  TimeSeries(
-            height='500px',width='500px', engine='highcharts',title=' Observed (actual) Hydrograph ',
-            subtitle="Simulated and Observed flow for " + simulation_name,
+            height='500px',width='500px', engine='highcharts',title='Observed (actual) Hydrograph ',
+            subtitle="Simulated and Observed flow  " ,
             y_axis_title='Discharge',y_axis_units='cfs',
             series=[{
                 'name': 'Simulated Flow',
                 'data': hydrograph_series_obs
             }])
+
+        observed_hydrograph_loaded3 = TimeSeries(
+            height='500px',
+            width='500px',
+            engine='highcharts',
+            title= "Simulated and Observed flow  " ,
+            y_axis_title='Discharge (cfs)',
+            y_axis_units='m',
+            series=[{
+                'name': 'Simulated Hydrograph',
+                'data': hydrograph_series_sim,
+                'fillOpacity': hydrograph_opacity,
+            }, {
+                'name': 'Observed Hydrograph',
+                'data': hydrograph_series_obs,
+                'fillOpacity': hydrograph_opacity,
+            }]
+        )
+
+
 
 
 
@@ -510,8 +568,6 @@ def model_run(request):
 
     # Method (3), request from model_run, change calibration parameters
     if model_run_calib_request != None :
-        # get input set-2, and redraw the hydrographs
-        # :TODO Establising connection of inputs from input-set-1 to this block
 
         fac_L_form = float(request.POST['fac_L'])
         fac_Ks_form = float(request.POST['fac_Ks'])
@@ -532,43 +588,22 @@ def model_run(request):
         print 'MSG: Method III initiated. The model id we are looking at is: ', hs_resource_id_from_previous_simulation
 
 
-
-
-
         ######### START: need to get two variables: i) hs_resource_id_created, and ii) hydrograph series ###############
-
         response_JSON_file =  app_utils.modifypytopkapi(hs_res_id=hs_resource_id_created, out_folder='',
                                                         fac_l=fac_L_form, fac_ks=fac_Ks_form, fac_n_o=fac_n_o_form,
                                                         fac_n_c=fac_n_c_form, fac_th_s=fac_th_s_form,
                                                         pvs_t0=pvs_t0_form, vo_t0=vo_t0_form, qc_t0=qc_t0_form,
                                                         kc=kc_form )
 
-        # try:
-        #     hydrograph_series_sim = app_utils.read_hydrograph_from_txt(response_hydrograph_file)
-        # except:
-        #     hydrograph_series_sim, hydrograph_series_obs = app_utils.read_both_hydrograph_from_txt(
-        #         response_hydrograph_file)
-        # with open(response_hs_file, 'r') as f:
-        #     hs_resource_id_created =  str(f.readlines()[0])
-        #     print hs_resource_id_created
-
-
-
         json_data = app_utils.read_data_from_json(response_JSON_file)
 
         hs_resource_id_created =  hs_resource_id_created # json_data['hs_res_id_created']
-        hydrograph_series_obs = json_data['hydrograph_series_obs']
         hydrograph_series_sim = json_data['hydrograph_series_sim']
-        print hydrograph_series_sim
+        hydrograph_series_obs = json_data['hydrograph_series_obs']
 
-
-
-        ######### END : need to get two variables: i) hs_resource_id_created, and ii) hydrograph series ###############
-
-
-
-
-
+        print '*****************', hs_resource_id_created
+        print [i[-1] for i in hydrograph_series_sim]
+        ######### END :  ###############
 
         # # # -------DATABASE STUFFS  <start>----- # #
         # # retreive the model_inputs_table.id of this entry to pass it to the next page (calibration page)
@@ -612,51 +647,13 @@ def model_run(request):
         #     inputs_dictionary['model_engine'] = row.model_engine
 
 
-        # following two line should replace the above lines for querring db
-        # from .model import model_inputs_table, model_calibration_table
-
-
-
-        # create input_dictionary for the last run. Because we are modifying, we need to load the last run
-        inputs_dictionary = app_utils.create_model_input_dict_from_db(hs_resource_id = hs_resource_id_from_previous_simulation, user_name= user_name )
-        # print 'MSG: Input Dictionary from db of model_input_id= ', model_inputs_table_id_from_another_html, " created for simulation: ", inputs_dictionary['simulation_name']
-        test_string = str(inputs_dictionary)
-        test_variable = hs_resource_id_from_previous_simulation
-        # # STEP3: create a run instance, which does not run the model but REFERNCES a run instance.
-        # old_run = pytopkapi_run_instance(simulation_name=inputs_dictionary['simulation_name'],
-        #                                  cell_size=inputs_dictionary['cell_size'],
-        #                                  timestep=inputs_dictionary['timestep'],
-        #                                  xy_outlet= [inputs_dictionary['outlet_x'], inputs_dictionary['outlet_y'] ],
-        #                                  yyxx_boundingBox=[inputs_dictionary['box_topY'], inputs_dictionary['box_bottomY'],inputs_dictionary['box_leftX'] ,inputs_dictionary['box_rightX']],
-        #                                  USGS_gage=inputs_dictionary['USGS_gage'], list_of_threshold= [inputs_dictionary['threshold']] , simulation_folder=inputs_dictionary['simulation_folder'])
-        #
-        # # # # STEP4: run model with changed parameters
-        # # date_in_datetime_UserModified, Qsim_UserModified, error_checking_param_UserModified = old_run.run_model_with_different_parameters(calibration_parameters=[fac_L_form,fac_Ks_form,fac_n_o_form, fac_n_c_form, fac_th_s_form ],
-        # #                                            numerical_values=[pvs_t0_form, vo_t0_form, qc_t0_form, kc_form ])
-        #
-        # # Step 4 placeholder, JUST READS. SO :TODO Del this step4 and retain above step4
-        # date_in_datetime_UserModified, Qsim_UserModified, error_checking_param_UserModified = old_run.get_Qsim_and_error()
-        #
-        # # write to DB, as a fresh simulation.So this helps in identifying this simulation next time user wants to modify
-        # # because we are re-writing previous simulations in this step, we use same evth (hence, simulation_folder)a s b4
-        # current_model_inputs_table_id = app_utils.write_to_model_input_table(inputs_dictionary, inputs_dictionary['simulation_folder'])
-
-
-        # STEP5: get the revised hydrographs, and plot it
-        # preparing timeseries data in the format shown in: http://docs.tethysplatform.org/en/latest/tethys_sdk/gizmos/plot_view.html#time-series
-        hydrograph3 = []
-        # date_broken = [[dt.year, dt.month, dt.day, dt.hour, dt.minute] for dt in date_in_datetime_UserModified]
-        # for i in range(len(Qsim_UserModified)):
-        #     date = datetime(year=date_broken[i][0], month=date_broken[i][1], day=date_broken[i][2], hour=date_broken[i][3],
-        #                     minute=date_broken[i][4])
-        #     hydrograph3.append([date, float(Qsim_UserModified[i])])
 
         observed_hydrograph_userModified = TimeSeries(
             height='500px',
             width='500px',
             engine='highcharts',
             title=' Corrected Hydrograph ',
-            subtitle="Simulated and Observed flow for " + simulation_name,
+            subtitle="Simulated and Observed flow " ,
             y_axis_title='Discharge',
             y_axis_units='cfs',
             series=[{
@@ -667,15 +664,39 @@ def model_run(request):
 
         observed_hydrograph_userModified2 = TimeSeries(
             height='500px', width='500px', engine='highcharts', title=' Observed (Actual) Hydrograph ',
-            subtitle="Simulated and Observed flow for " + simulation_name,
+            subtitle="Simulated and Observed flow " ,
             y_axis_title='Discharge', y_axis_units='cfs',
             series=[{
-                'name': 'Simulated Flow',
+                'name': 'Observed Flow',
                 'data': hydrograph_series_obs
             }])
 
+        observed_hydrograph_userModified3 = TimeSeries(
+            height='500px',
+            width='500px',
+            engine='highcharts',
+            title= "Simulated and Observed flow " ,
+            y_axis_title='Discharge ',
+            y_axis_units='cfs',
+            series=[{
+                'name': 'Simulated Hydrograph',
+                'data': hydrograph_series_sim
+            }, {
+                'name': 'Observed Hydrograph',
+                'data': hydrograph_series_obs
+            }]
+        )
+
+        # create input_dictionary for the last run. Because we are modifying, we need to load the last run
+        inputs_dictionary = app_utils.create_model_input_dict_from_db(hs_resource_id = hs_resource_id_from_previous_simulation, user_name= user_name )
+
+        # print 'MSG: Input Dictionary from db of model_input_id= ', model_inputs_table_id_from_another_html, " created for simulation: ", inputs_dictionary['simulation_name']
+        test_string = str(inputs_dictionary)
+        test_variable = hs_resource_id_from_previous_simulation
 
 
+        # following two line should replace the above lines for querring db
+        # from .model import model_inputs_table, model_calibration_table
 
 
         # # STEP6: write the calibration and numerical parameters to the database
@@ -691,8 +712,6 @@ def model_run(request):
                'outlet_y': outlet_y,
                'outlet_x': outlet_x,
 
-               'observed_hydrograph':observed_hydrograph,
-               'observed_hydrograph2': observed_hydrograph2,
 
                'fac_L': fac_L, 'fac_Ks': fac_Ks, 'fac_n_o': fac_n_o, "fac_n_c": fac_n_c, "fac_th_s": fac_th_s,
                'pvs_t0': pvs_t0,  'vo_t0': vo_t0, 'qc_t0': qc_t0,   "kc": kc,
@@ -703,14 +722,26 @@ def model_run(request):
                #'Iwillgiveyou_model_inputs_table_id_from_another_html':model_inputs_table_id_from_another_html,
                # "current_model_inputs_table_id":current_model_inputs_table_id, # model_inputs_table_id
 
+               'observed_hydrograph': observed_hydrograph,
+               'observed_hydrograph3': observed_hydrograph3,
+               'observed_hydrograph2': observed_hydrograph2,
+
+
                "observed_hydrograph_userModified":observed_hydrograph_userModified,
                "observed_hydrograph_userModified2": observed_hydrograph_userModified2,
+               "observed_hydrograph_userModified3": observed_hydrograph_userModified3,
 
                "observed_hydrograph_loaded":observed_hydrograph_loaded,
                "observed_hydrograph_loaded2": observed_hydrograph_loaded2,
+               "observed_hydrograph_loaded3": observed_hydrograph_loaded3,
+
+               'eta_ts_obj': eta_ts_obj,
+               'vs_ts_obj': vs_ts_obj,
+               'vc_ts_obj': vc_ts_obj,
+               'vo_ts_obj': vo_ts_obj,
 
                #"simulation_loaded_id":simulation_loaded_id,
-               'test_string':test_string,
+               'test_string':str(type(observed_hydrograph)), #test_string
                'test_variable':test_variable,
                'hs_resource_id_created':hs_resource_id_created,
 
@@ -719,9 +750,6 @@ def model_run(request):
                'download_link': download_link,
                'hs_res_created': hs_res_created,
                'dict_files_created': files_created_dict,
-
-
-
                }
 
     return render(request, 'hydrologic_modeling/model-run.html', context)
@@ -908,72 +936,8 @@ def test2(request):
         lon_e, lat_s, lon_w, lat_n = app_utils.get_box_from_tif(watershed_files['tif'])
 
 
-    # area_range_plot_object = AreaRange(
-    #     title='July Temperatures',
-    #     y_axis_title='Temperature',
-    #     y_axis_units='*C',
-    #     width='500px',
-    #     height='500px',
-    #     series=[{
-    #         'name': 'Temperature',
-    #         'data': averages,
-    #         'zIndex': 1,
-    #         'marker': {
-    #             'lineWidth': 2,
-    #         }
-    #     }, {
-    #         'name': 'Range',
-    #         'data': ranges,
-    #         'type': 'arearange',
-    #         'lineWidth': 0,
-    #         'linkedTo': ':previous',
-    #         'fillOpacity': 0.3,
-    #         'zIndex': 0
-    #     }]
-    # )
-    # averages = [
-    #     [datetime(2009, 7, 1), 21.5], [datetime(2009, 7, 2), 22.1], [datetime(2009, 7, 3), 23],
-    #     [datetime(2009, 7, 4), 23.8], [datetime(2009, 7, 5), 21.4], [datetime(2009, 7, 6), 21.3],
-    #     [datetime(2009, 7, 7), 18.3], [datetime(2009, 7, 8), 15.4], [datetime(2009, 7, 9), 16.4],
-    #     [datetime(2009, 7, 10), 17.7], [datetime(2009, 7, 11), 17.5], [datetime(2009, 7, 12), 17.6],
-    #     [datetime(2009, 7, 13), 17.7], [datetime(2009, 7, 14), 16.8], [datetime(2009, 7, 15), 17.7],
-    #     [datetime(2009, 7, 16), 16.3], [datetime(2009, 7, 17), 17.8], [datetime(2009, 7, 18), 18.1],
-    #     [datetime(2009, 7, 19), 17.2], [datetime(2009, 7, 20), 14.4],
-    #     [datetime(2009, 7, 21), 13.7], [datetime(2009, 7, 22), 15.7], [datetime(2009, 7, 23), 14.6],
-    #     [datetime(2009, 7, 24), 15.3], [datetime(2009, 7, 25), 15.3], [datetime(2009, 7, 26), 15.8],
-    #     [datetime(2009, 7, 27), 15.2], [datetime(2009, 7, 28), 14.8], [datetime(2009, 7, 29), 14.4],
-    #     [datetime(2009, 7, 30), 15], [datetime(2009, 7, 31), 13.6]
-    # ]
-    #
-    # ranges = [
-    #     [datetime(2009, 7, 1), 14.3, 27.7], [datetime(2009, 7, 2), 14.5, 27.8],
-    #     [datetime(2009, 7, 3), 15.5, 29.6],
-    #     [datetime(2009, 7, 4), 16.7, 30.7], [datetime(2009, 7, 5), 16.5, 25.0],
-    #     [datetime(2009, 7, 6), 17.8, 25.7],
-    #     [datetime(2009, 7, 7), 13.5, 24.8], [datetime(2009, 7, 8), 10.5, 21.4],
-    #     [datetime(2009, 7, 9), 9.2, 23.8],
-    #     [datetime(2009, 7, 10), 11.6, 21.8], [datetime(2009, 7, 11), 10.7, 23.7],
-    #     [datetime(2009, 7, 12), 11.0, 23.3],
-    #     [datetime(2009, 7, 13), 11.6, 23.7], [datetime(2009, 7, 14), 11.8, 20.7],
-    #     [datetime(2009, 7, 15), 12.6, 22.4],
-    #     [datetime(2009, 7, 16), 13.6, 19.6], [datetime(2009, 7, 17), 11.4, 22.6],
-    #     [datetime(2009, 7, 18), 13.2, 25.0],
-    #     [datetime(2009, 7, 19), 14.2, 21.6], [datetime(2009, 7, 20), 13.1, 17.1],
-    #     [datetime(2009, 7, 21), 12.2, 15.5],
-    #     [datetime(2009, 7, 22), 12.0, 20.8], [datetime(2009, 7, 23), 12.0, 17.1],
-    #     [datetime(2009, 7, 24), 12.7, 18.3],
-    #     [datetime(2009, 7, 25), 12.4, 19.4], [datetime(2009, 7, 26), 12.6, 19.9],
-    #     [datetime(2009, 7, 27), 11.9, 20.2],
-    #     [datetime(2009, 7, 28), 11.0, 19.3], [datetime(2009, 7, 29), 10.8, 17.8],
-    #     [datetime(2009, 7, 30), 11.8, 18.5],
-    #     [datetime(2009, 7, 31), 10.8, 16.1]
-    # ]
-    #
-    # observed_hydrograph = PlotView(plot_object=area_range_plot_object,
-    #                                width='500px',
-    #                                height='500px')
 
-
+    import datetime
 
     hydrograph_series_sim = [[datetime.datetime(2010, 10, 2, 0, 0), 0.0], [datetime.datetime(2010, 10, 3, 0, 0), 1.113],
                 [datetime.datetime(2010, 10, 4, 0, 0), 1.17], [datetime.datetime(2010, 10, 5, 0, 0), 1.356],
@@ -1006,6 +970,13 @@ def test2(request):
                 [datetime.datetime(2010, 10, 28, 0, 0), 0.0], [datetime.datetime(2010, 10, 29, 0, 0), 0.0],
                 [datetime.datetime(2010, 10, 30, 0, 0), 0.0], [datetime.datetime(2010, 10, 31, 0, 0), 1.122]]
 
+
+    # json_data = app_utils.read_data_from_json('/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/598d95d552804c188e721a7762611399/output_response_txt.txt')
+    #
+    # hydrograph_series_obs2 = json_data['hydrograph_series_obs']
+    # hydrograph_series_sim2 = json_data['hydrograph_series_sim']
+
+
     observed_hydrograph = TimeSeries(
         height='500px', width='500px', engine='highcharts', title=' Simulated Hydrograph ',
         subtitle="Simulated and Observed flow for " ,
@@ -1021,40 +992,90 @@ def test2(request):
         y_axis_title='Discharge', y_axis_units='cfs',
         series=[
             {'name': 'Observed Flow',
-             'data': hydrograph_series_obs}
+             'data': hydrograph_series_obs
+             }
         ]
     )
 
-    hydrograp_obj = AreaRange(
-        title='Hydrograph',
-        y_axis_title='cfs',
-        y_axis_units='cfs',
+    # hydrograp_obj = AreaRange(
+    #     title='Hydrograph',
+    #     y_axis_title='cfs',
+    #     y_axis_units='cfs',
+    #     series=[{
+    #         'name': 'series_1 Flow',
+    #         'data': hydrograph_series_sim,
+    #         'zIndex': 1,
+    #         'marker': {
+    #             'lineWidth': 2,
+    #         }
+    #     }, {
+    #         'name': 'series_2 Flow',
+    #         'data': hydrograph_series_obs,
+    #         'type': 'arearange',
+    #         'lineWidth': 0.1,
+    #         'linkedTo': ':previous',
+    #         'fillOpacity': 0.3,
+    #         'zIndex': 0
+    #     }]
+    # )
+    # areaPlot = PlotView(plot_object=hydrograp_obj,
+    #                                 width='500px',
+    #                                 height='500px')
+    #
+
+
+
+
+
+    # # print hydrograph_series_sim2
+    # print "*******************************"
+    # print "NOT working data type= ",type(hydrograph_series_obs2[0][0]), ' One such value=',  hydrograph_series_obs2[1], ' And the lenght=',  len(hydrograph_series_obs2),len(hydrograph_series_sim2)
+    # # multi_timeseries_plot = app_utils.plot_multiseries_hydrograph(obs_q=hydrograph_series_obs2, sim_q=hydrograph_series_sim2)
+
+    print "YES working data type= ",type(hydrograph_series_obs[0][0]), ' One such value=',  hydrograph_series_obs[0], ' And the lenght=',  len(hydrograph_series_obs),len(hydrograph_series_sim)
+    # print hydrograph_series_obs
+    multi_timeseries_plot = TimeSeries(
+        height='500px',
+        width='500px',
+        engine='highcharts',
+        title='Multiple Timeseries Plot',
+        y_axis_title='Snow depth',
+        y_axis_units='m',
         series=[{
-            'name': 'series_1 Flow',
-            'data': hydrograph_series_sim,
-            'zIndex': 1,
-            'marker': {
-                'lineWidth': 2,
-            }
+            'name': 'Simulated Hydrograph',
+            'data': hydrograph_series_sim ,
+            # 'color': 'lightblue',
+            'fillOpacity': 0.2,
         }, {
-            'name': 'series_2 Flow',
+            'name': 'Observed Hydrographhh',
             'data': hydrograph_series_obs,
-            'type': 'arearange',
-            'lineWidth': 0.1,
-            'linkedTo': ':previous',
-            'fillOpacity': 0.3,
-            'zIndex': 0
+            'fillOpacity': 0.2,
+            # 'color':'lightgrey'
         }]
     )
-    areaPlot = PlotView(plot_object=hydrograp_obj,
-                                    width='500px',
-                                    height='500px')
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     context = {
                 'test_string1':test_string,
-        'area_range_plot_object':areaPlot,
+        # 'area_range_plot_object':areaPlot,
         'observed_hydrograph':observed_hydrograph,
-        'observed_hydrograph2': observed_hydrograph2
+        'observed_hydrograph2': observed_hydrograph2,
+
+        # 'timeseries_plot': timeseries_plot,
+        'multi_timeseries_plot': multi_timeseries_plot,
+        # 'area_range_plot': area_range_plot,
 
 
     }
@@ -1223,3 +1244,125 @@ def model_input2(request): # for a URL with variables in it, the variables need 
                }
 
     return render(request, 'hydrologic_modeling/model-input2.html', context)
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from tethys_sdk.gizmos import AreaRange, TimeSeries
+
+
+
+@login_required()
+def test3(request):
+    from datetime import datetime
+    """
+    Controller for the app home page.
+    """
+    # TIMESERIES PLOT (HIGHCHARTS)
+    ts_data1 = [[datetime(2008, 12, 2), 0.8], [datetime(2008, 12, 9), 0.6], [datetime(2008, 12, 16), 0.6],
+                [datetime(2008, 12, 28), 0.67], [datetime(2009, 1, 1), 0.81], [datetime(2009, 1, 8), 0.78],
+                [datetime(2009, 1, 12), 0.98], [datetime(2009, 1, 27), 1.84], [datetime(2009, 2, 10), 1.80],
+                [datetime(2009, 2, 18), 1.80], [datetime(2009, 2, 24), 1.92], [datetime(2009, 3, 4), 2.49],
+                [datetime(2009, 3, 11), 2.79], [datetime(2009, 3, 15), 2.73], [datetime(2009, 3, 25), 2.61],
+                [datetime(2009, 4, 2), 2.76], [datetime(2009, 4, 6), 2.82], [datetime(2009, 4, 13), 2.8],
+                [datetime(2009, 5, 3), 2.1], [datetime(2009, 5, 26), 1.1], [datetime(2009, 6, 9), 0.25],
+                [datetime(2009, 6, 12), 0]]
+
+    timeseries_plot = TimeSeries(
+        height='500px',
+        width='500px',
+        engine='highcharts',
+        title='Single Timeseries Plot',
+        y_axis_title='Snow depth',
+        y_axis_units='m',
+        series=[{
+            'name': 'Winter 2007-2008',
+            'data': ts_data1
+        }]
+    )
+
+    # MULTIPLE TIMESERIES ON ONE PLOT (HIGHCHARTS)
+    ts_data2 = [[datetime(2008, 12, 2), 1.8], [datetime(2008, 12, 9), 1.6], [datetime(2008, 12, 16), 1.6],
+                [datetime(2008, 12, 28), 1.67], [datetime(2009, 1, 1), 1.81], [datetime(2009, 1, 8), 1.78],
+                [datetime(2009, 1, 12), 1.98], [datetime(2009, 1, 27), 2.84], [datetime(2009, 2, 10), 2.80],
+                [datetime(2009, 2, 18), 2.80], [datetime(2009, 2, 24), 2.92], [datetime(2009, 3, 4), 3.49],
+                [datetime(2009, 3, 11), 3.79], [datetime(2009, 3, 15), 3.73], [datetime(2009, 3, 25), 3.61],
+                [datetime(2009, 4, 2), 3.76], [datetime(2009, 4, 6), 3.82], [datetime(2009, 4, 13), 3.8],
+                [datetime(2009, 5, 3), 3.1], [datetime(2009, 5, 26), 2.1], [datetime(2009, 6, 9), 1.25],
+                [datetime(2009, 6, 12), 1]]
+
+    multi_timeseries_plot = TimeSeries(
+        height='500px',
+        width='500px',
+        engine='highcharts',
+        title='Multiple Timeseries Plot',
+        y_axis_title='Snow depth',
+        y_axis_units='m',
+        series=[{
+            'name': 'Winter 2007-2008 (1)',
+            'data': ts_data2  # I switched these so that the shorter series was in front of the larger
+        }, {
+            'name': 'Winter 2007-2008 (2)',
+            'data': ts_data1
+        }]
+    )
+
+    averages = [
+        [datetime(2009, 7, 1), 21.5], [datetime(2009, 7, 2), 22.1], [datetime(2009, 7, 3), 23],
+        [datetime(2009, 7, 4), 23.8], [datetime(2009, 7, 5), 21.4], [datetime(2009, 7, 6), 21.3],
+        [datetime(2009, 7, 7), 18.3], [datetime(2009, 7, 8), 15.4], [datetime(2009, 7, 9), 16.4],
+        [datetime(2009, 7, 10), 17.7], [datetime(2009, 7, 11), 17.5], [datetime(2009, 7, 12), 17.6],
+        [datetime(2009, 7, 13), 17.7], [datetime(2009, 7, 14), 16.8], [datetime(2009, 7, 15), 17.7],
+        [datetime(2009, 7, 16), 16.3], [datetime(2009, 7, 17), 17.8], [datetime(2009, 7, 18), 18.1],
+        [datetime(2009, 7, 19), 17.2], [datetime(2009, 7, 20), 14.4],
+        [datetime(2009, 7, 21), 13.7], [datetime(2009, 7, 22), 15.7], [datetime(2009, 7, 23), 14.6],
+        [datetime(2009, 7, 24), 15.3], [datetime(2009, 7, 25), 15.3], [datetime(2009, 7, 26), 15.8],
+        [datetime(2009, 7, 27), 15.2], [datetime(2009, 7, 28), 14.8], [datetime(2009, 7, 29), 14.4],
+        [datetime(2009, 7, 30), 15], [datetime(2009, 7, 31), 13.6]
+    ]
+
+    ranges = [
+        [datetime(2009, 7, 1), 14.3, 27.7], [datetime(2009, 7, 2), 14.5, 27.8], [datetime(2009, 7, 3), 15.5, 29.6],
+        [datetime(2009, 7, 4), 16.7, 30.7], [datetime(2009, 7, 5), 16.5, 25.0], [datetime(2009, 7, 6), 17.8, 25.7],
+        [datetime(2009, 7, 7), 13.5, 24.8], [datetime(2009, 7, 8), 10.5, 21.4], [datetime(2009, 7, 9), 9.2, 23.8],
+        [datetime(2009, 7, 10), 11.6, 21.8], [datetime(2009, 7, 11), 10.7, 23.7], [datetime(2009, 7, 12), 11.0, 23.3],
+        [datetime(2009, 7, 13), 11.6, 23.7], [datetime(2009, 7, 14), 11.8, 20.7], [datetime(2009, 7, 15), 12.6, 22.4],
+        [datetime(2009, 7, 16), 13.6, 19.6], [datetime(2009, 7, 17), 11.4, 22.6], [datetime(2009, 7, 18), 13.2, 25.0],
+        [datetime(2009, 7, 19), 14.2, 21.6], [datetime(2009, 7, 20), 13.1, 17.1], [datetime(2009, 7, 21), 12.2, 15.5],
+        [datetime(2009, 7, 22), 12.0, 20.8], [datetime(2009, 7, 23), 12.0, 17.1], [datetime(2009, 7, 24), 12.7, 18.3],
+        [datetime(2009, 7, 25), 12.4, 19.4], [datetime(2009, 7, 26), 12.6, 19.9], [datetime(2009, 7, 27), 11.9, 20.2],
+        [datetime(2009, 7, 28), 11.0, 19.3], [datetime(2009, 7, 29), 10.8, 17.8], [datetime(2009, 7, 30), 11.8, 18.5],
+        [datetime(2009, 7, 31), 10.8, 16.1]
+    ]
+
+    area_range_plot = AreaRange(
+        width='500px',
+        height='500px',
+        engine='highcharts',
+        title='July Temperatures',
+        y_axis_title='Temperature',
+        y_axis_units='*C',
+        series=[{
+            'name': 'Temperature',
+            'data': averages,
+            'zIndex': 1,
+            'marker': {
+                'lineWidth': 2,
+            }
+        }, {
+            'name': 'Range',
+            'data': ranges,
+            'type': 'arearange',
+            'lineWidth': 0,
+            'linkedTo': ':previous',
+            'fillOpacity': 0.3,
+            'zIndex': 0
+        }]
+    )
+
+    context = {
+        'timeseries_plot': timeseries_plot,
+        'multi_timeseries_plot': multi_timeseries_plot,
+        'area_range_plot': area_range_plot,
+    }
+
+    return render(request, 'hydrologic_modeling/test3.html', context)
