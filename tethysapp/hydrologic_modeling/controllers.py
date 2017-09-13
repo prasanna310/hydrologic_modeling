@@ -102,14 +102,14 @@ def model_input(request):
     box_bottomY = TextInput(display_text='South Y', name='box_bottomY', initial='41.72')
 
 
-    # FOR PLUNGE
-    outlet_x = TextInput(display_text='Longitude', name='outlet_x', initial='-117.141284')
-    outlet_y = TextInput(display_text='Latitude', name='outlet_y', initial='34.12128')
-
-    box_topY = TextInput(display_text='North Y', name='box_topY', initial='34.2336')
-    box_rightX = TextInput(display_text='East X', name='box_rightX', initial='-117.048046')
-    box_leftX = TextInput(display_text='West X', name='box_leftX', initial='-117.168289')
-    box_bottomY = TextInput(display_text='South Y', name='box_bottomY', initial='34.10883')
+    # # FOR PLUNGE
+    # outlet_x = TextInput(display_text='Longitude', name='outlet_x', initial='-117.141284')
+    # outlet_y = TextInput(display_text='Latitude', name='outlet_y', initial='34.12128')
+    #
+    # box_topY = TextInput(display_text='North Y', name='box_topY', initial='34.2336')
+    # box_rightX = TextInput(display_text='East X', name='box_rightX', initial='-117.048046')
+    # box_leftX = TextInput(display_text='West X', name='box_leftX', initial='-117.168289')
+    # box_bottomY = TextInput(display_text='South Y', name='box_bottomY', initial='34.10883')
 
 
     outlet_hs = TextInput(display_text='', name='outlet_hs', initial='')
@@ -212,6 +212,24 @@ def model_input(request):
 def model_run(request):
     """
     Controller that will display the run result (hydrograph). Also allows user to rerun model based on modifications
+
+    *** Confusing Variables & Terms definition:***
+    Method I: Preparing the model for the first time froom the GUI
+    Method II: Loading the existing model by giving hsID of the model instant, or using dropdown menu (queries db)
+    Method III: Modifying the loaded model result
+
+    hs_resource_id_created      : hs resource id created by method I, II or III
+
+    # used in controllers.py to identify from which form the request is coming from.
+    model_input_prepare_request : hs resource id created (method I)
+    model_input_load_request    : hs resource id created (method II)
+    model_input_calib_request   : hs resource id created (method III)
+
+    # used in html to identify where the request is coming from. Default values = None
+    hs_resource_id_prepared     : hs resource id created (method I)
+    hs_resource_id_loaded       : hs resource id loaded (method II)
+    hs_resource_id_modified     : hs resource id modified (method III)
+
     """
     user_name = request.user.username
 
@@ -236,15 +254,20 @@ def model_run(request):
 
     observed_hydrograph_loaded = ""
     observed_hydrograph_loaded2 = ""
-    observed_hydrograph_loaded3 = ''
+    observed_hydrograph_loaded3 = ""
 
-    eta_ts_obj = ''
-    vo_ts_obj = ''
-    vc_ts_obj = ""
-    vs_ts_obj = ''
+    eta_ts_obj  = eta_ts_obj_modified   = eta_ts_obj_loaded = ''
+    vo_ts_obj   = vo_ts_obj_modified    = vo_ts_obj_loaded  = ''
+    vc_ts_obj   = vc_ts_obj_modified    = vc_ts_obj_loaded  = ''
+    vs_ts_obj   = vs_ts_obj_modified    = vs_ts_obj_loaded  = ''
+    ppt_ts_obj  = ppt_ts_obj_modified  = ppt_ts_obj_loaded  = ''
 
     model_run_hidden_form = ''
     hs_resource_id_created = ''
+    hs_resource_id_loaded = ''
+    hs_resource_id_modified = ''
+
+
     simulation_loaded_id  = ""
     current_model_inputs_table_id = 0
     model_inputs_table_id_from_another_html = 0  #:TODO need to make it point to last sim by default
@@ -254,21 +277,16 @@ def model_run(request):
     download_response = {}
     download_status = download_response['download_status'] = None #False
     download_link = download_response['download_link'] = 'http://link.to.zipped.files'
-    hs_res_created = download_response['hs_res_created'] = '60hfg6060TRIAL6fgdf06dg'
+    hs_res_created = download_response['hs_res_created'] = ''
     files_created_dict = 'No dict created'
     download_choice = None
 
-    # gizmo settings
-    fac_L = TextInput(display_text='fac_L', name='fac_L', initial=1.0)
-    fac_Ks = TextInput(display_text='fac_Ks', name='fac_Ks', initial=1.0)
-    fac_n_o = TextInput(display_text='fac_n_o', name='fac_n_o', initial=1.0)
-    fac_n_c = TextInput(display_text='fac_n_c', name='fac_n_c', initial=1.0)
-    fac_th_s = TextInput(display_text='fac_th_s', name='fac_th_s', initial=1.0)
-
-    pvs_t0 = TextInput(display_text='pvs_t0', name='pvs_t0', initial=50.0)
-    vo_t0 = TextInput(display_text='vo_t0', name='vo_t0', initial=10.0)
-    qc_t0 = TextInput(display_text='qc_t0', name='qc_t0', initial=1.0)
-    kc = TextInput(display_text='kc', name='kc', initial=1.0)
+    # initial values
+    fac_L_init = fac_Ks_init = fac_n_o_init = fac_n_c_init = fac_th_s_init = 1.0
+    pvs_t0_init = 50.0
+    vo_t0_init = 50.0
+    qc_t0_init = 1.0
+    kc_init = 1.0
 
     # test
     if request.is_ajax and request.method == 'POST':
@@ -276,46 +294,43 @@ def model_run(request):
 
 
     # model_run can receive request from three sources:
-    # 1) model_input, prepare model
-    # 2) model_input, load model
-    # 3) model_run, calibrate and change the result seen. i.e. passes to itself
+    # 1) model_input, prepare model     (if model_input_prepare_request != None)
+    # 2) model_input, load model        (if model_input_load_request != None)
+    # 3) model_run, calibrate and change the result seen. i.e. passes to itself   (if model_run_calib_request != None)
 
-    # check to see if the request is from method (1)
+
+    # # check to see if the request is from method (1)
     try:
         model_input_prepare_request = request.POST['simulation_name']
-        print "MSG: Preparing model simulation, simulation name is: ", model_input_prepare_request
+        print "MSG from I: Preparing model simulation, simulation name is: ", model_input_prepare_request
     except:
         model_input_prepare_request = None
 
 
-    # check to see if the request is from method (2)
+    # # check to see if the request is from method (2)
     try:
         # for the input text
         try:
             model_input_load_request = hs_resource_id_created = request.POST['existing_sim_res_id']
-            test_variable = str(hs_resource_id_created)
-            print "MSG: Previous simulation is loaded.the simulation loaded from hs_res_id from text box is.", hs_resource_id_created
+            print "MSG from II: Previous simulation is loaded.the simulation loaded from hs_res_id from text box is.", hs_resource_id_created
 
             # chose dropdown if the field is blank. :TODO need to get rid of the except part below:
             if hs_resource_id_created == "":
                 model_input_load_request = hs_resource_id_created = request.POST['simulation_names_list']
-                test_variable = str(hs_resource_id_created)+"______"
-                print "MSG: Previous simulation is loaded. The name of simulation loaded is: ", hs_resource_id_created
+                print "MSG from II: Previous simulation is loaded. The name of simulation loaded is: ", hs_resource_id_created
 
         # for the drop down list
         except:
             model_input_load_request = hs_resource_id_created = request.POST['simulation_names_list'] #  from drop down menu
             b = request.POST['load_simulation_name']
-            print 'MSG: The name of simulation loaded from dropdown menu is: ',hs_resource_id_created
-
-            test_variable = str(hs_resource_id_created)+"______"+ str(b)
-            print "MSG: Previous simulation is loaded. The name of simulation loaded is: ", hs_resource_id_created
+            print 'MSG from II: The name of simulation loaded from dropdown menu is: ',hs_resource_id_created
+            print "MSG from II: Previous simulation is loaded. The name of simulation loaded is: ", hs_resource_id_created
 
     except:
         model_input_load_request = None
 
 
-    # check to see if the request is from method (3)
+    # # check to see if the request is from method (3)
     try:
         model_run_calib_request = request.POST['fac_L']
         print 'MSG: Calibration parameters are modified'
@@ -405,17 +420,37 @@ def model_run(request):
 
                 ######### START: need to get two variables: i) hs_resource_id_created, and ii) hydrograph series ###############
                 #response_JSON_file =  app_utils.call_runpytopkapi(inputs_dictionary= inputs_dictionary)
-                response_JSON_file = '/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/42240e0efd2148ec90c327a17530ee32/pytopkpai_responseJSON.txt'
+                response_JSON_file = '/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/ad2c643e97014199af5ced22f5712f01/pytopkpai_responseJSON.txt'
 
                 json_data = app_utils.read_data_from_json(response_JSON_file)
+
+                print 'MSG: Prepared Simulation Hydrograph ...'
 
                 hs_resource_id_created = json_data['hs_res_id_created']
                 hydrograph_series_obs = json_data['hydrograph_series_obs']
                 hydrograph_series_sim = json_data['hydrograph_series_sim']
+                
+                                        
                 eta =  json_data['eta']
                 vo = json_data['vo']
                 vc = json_data['vc']
                 vs = json_data['vs']
+                ppt= json_data['ppt']
+
+                # initial values
+                # calib_parameter= {"fac_l": 1.0, "fac_n_o": 1.0, "fac_n_c": 1.0, "fac_th_s": 1.0, "fac_ks": 1.0},
+                # numeric_param= {"pvs_t0": 50, "vo_t0": 750.0, "qc_t0": 0.0, "kc": 1.0},
+                if json_data['calib_parameter'] != None:
+                    fac_L_init = json_data['calib_parameter']['fac_l']
+                    fac_Ks_init = json_data['calib_parameter']['fac_ks']
+                    fac_n_o_init = json_data['calib_parameter']['fac_n_o']
+                    fac_n_c_init = json_data['calib_parameter']['fac_n_c']
+                    fac_th_s_init = json_data['calib_parameter']['fac_th_s']
+                if json_data['numeric_param'] != None:
+                    pvs_t0_init = json_data['numeric_param']['pvs_t0']
+                    vo_t0_init = json_data['numeric_param']['vo_t0']
+                    qc_t0_init = json_data['numeric_param']['qc_t0']
+                    kc_init = json_data['numeric_param']['kc']
 
                 print '*****************', hs_resource_id_created
                 # print [i[-1] for i in hydrograph_series_sim]
@@ -426,19 +461,26 @@ def model_run(request):
 
 
                 try:
+                    try:
+                        data_qsim_qobs = zip([i[0] for i in hydrograph_series_sim], [i[-1] for i in hydrograph_series_sim],
+                                        [i[-1] for i in hydrograph_series_obs])
+                    except:
+                        data_qsim_qobs = zip([i[0] for i in hydrograph_series_sim], [i[-1] for i in hydrograph_series_sim])
+                        
                     # Writing to model_inputs_table
-                    print '******************WARNING*********** Writing to database disabled'
-                    # current_model_inputs_table_id = app_utils.write_to_model_input_table(inputs_dictionary=inputs_dictionary, hs_resource_id= hs_resource_id_created)
-                    #
-                    # # Writing to model_calibraiton_table (Because it is first record of the simulation)
-                    # # IF the model did not run, or if user just wants the files, we don't write to calibration table
-                    # current_model_calibration_table_id = app_utils.write_to_model_calibration_table( model_input_table_id=current_model_inputs_table_id)
-                    #
-                    # # Writing to model_result_table
-                    # current_model_result_table_id = app_utils.write_to_model_result_table(model_calibration_table_id=current_model_calibration_table_id,
-                    #                                                                       timeseries_discharge_list=hydrograph_series_sim)
+                    current_model_inputs_table_id = app_utils.write_to_model_input_table(inputs_dictionary=inputs_dictionary, hs_resource_id= hs_resource_id_created)
+
+                    # Writing to model_calibraiton_table (Because it is first record of the simulation)
+                    # IF the model did not run, or if user just wants the files, we don't write to calibration table
+                    current_model_calibration_table_id = app_utils.write_to_model_calibration_table( model_input_table_id=current_model_inputs_table_id,
+                                                                                 numeric_parameters_list=[pvs_t0_init, vo_t0_init,qc_t0_init, kc_init],
+                                                                                 calibration_parameters_list=[fac_L_init,fac_Ks_init, fac_n_o_init,fac_n_c_init,fac_th_s_init])
+
+                    # Writing to model_result_table
+                    current_model_result_table_id = app_utils.write_to_model_result_table(model_calibration_table_id=current_model_calibration_table_id,
+                                                                                 timeseries_discharge_list=data_qsim_qobs)
                 except Exception, e:
-                    print "Error ---> Writing to DB"
+                    print "Error ---> Writing to DB", e
 
 
 
@@ -464,7 +506,7 @@ def model_run(request):
                     height='300px',
                     width='500px',
                     engine='highcharts',
-                    title="Simulated and Observed flow  ",
+                    title="Simulated and Observed Hydrographs",
                     y_axis_title='Discharge ',
                     y_axis_units='cfs',
                     series=[{
@@ -477,10 +519,11 @@ def model_run(request):
                         'fillOpacity': hydrograph_opacity,
                     }])
 
-                eta_ts_obj =app_utils.create_1d(timeseries_list=eta, label='ETa', unit='mm/day')
-                vc_ts_obj = app_utils.create_1d(timeseries_list=vc, label='Vc', unit='...')
-                vs_ts_obj = app_utils.create_1d(timeseries_list=vs, label='Vs', unit='...')
-                vo_ts_obj = app_utils.create_1d(timeseries_list=vo, label='Vo', unit='...')
+                eta_ts_obj =app_utils.create_1d(timeseries_list=eta, label='Actual Evapotranspiration', unit='mm/day')
+                vc_ts_obj = app_utils.create_1d(timeseries_list=vc, label='Average Water Volume in Channel Cells', unit='mm/day')
+                vs_ts_obj = app_utils.create_1d(timeseries_list=vs, label='Average Water Volume in Soil Cells', unit='mm/day')
+                vo_ts_obj = app_utils.create_1d(timeseries_list=vo, label='Average Water Volume in Overland Cells', unit='mm/day')
+                ppt_ts_obj = app_utils.create_1d(timeseries_list=ppt, label='Rainfall', unit='mm/day')
 
 
     # Method (2), request from model_input-load simulation
@@ -500,19 +543,35 @@ def model_run(request):
         ######### START: need to get two variables: i) hs_resource_id_created, and ii) hydrograph series ##############
 
         response_JSON_file =  app_utils.loadpytopkapi(hs_res_id=hs_resource_id, out_folder='')
+        #response_JSON_file ='/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/0f9aa59f8621411e8a63c06b9a8852d1/pytopkpai_responseJSON.txt'
         json_data = app_utils.read_data_from_json(response_JSON_file)
 
-        hs_resource_id_created =hs_resource_id  #json_data['hs_res_id_created']
-        print 'Showing results for ', hs_resource_id_created
+        hs_resource_id_created = hs_resource_id_loaded =hs_resource_id  #json_data['hs_res_id_created']
+
 
         hydrograph_series_sim = json_data['hydrograph_series_sim']
         hydrograph_series_obs = json_data['hydrograph_series_obs']
+        eta = json_data['eta']
+        vo = json_data['vo']
+        vc = json_data['vc']
+        vs = json_data['vs']
+        ppt = json_data['ppt']
 
-        print '*****************', hs_resource_id_created
-        print [i[-1] for i in hydrograph_series_sim]
+        # init values in the form
+        if json_data['calib_parameter'] != None:
+            fac_L_init = json_data['calib_parameter']['fac_l']
+            fac_Ks_init = json_data['calib_parameter']['fac_ks']
+            fac_n_o_init = json_data['calib_parameter']['fac_n_o']
+            fac_n_c_init = json_data['calib_parameter']['fac_n_c']
+            fac_th_s_init = json_data['calib_parameter']['fac_th_s']
+        if json_data['numeric_param'] != None:
+            pvs_t0_init = json_data['numeric_param']['pvs_t0']
+            vo_t0_init = json_data['numeric_param']['vo_t0']
+            qc_t0_init = json_data['numeric_param']['qc_t0']
+            kc_init = json_data['numeric_param']['kc']
 
         observed_hydrograph_loaded =  TimeSeries(
-            height='500px',width='500px', engine='highcharts',title=' Simulated Hydrograph ',
+            height='300px',width='500px', engine='highcharts',title=' Simulated Hydrograph ',
             subtitle="Simulated and Observed flow  " ,
             y_axis_title='Discharge',y_axis_units='cfs',
             series=[{
@@ -530,7 +589,7 @@ def model_run(request):
             }])
 
         observed_hydrograph_loaded3 = TimeSeries(
-            height='500px',
+            height='300px',
             width='500px',
             engine='highcharts',
             title= "Simulated and Observed flow  " ,
@@ -548,9 +607,11 @@ def model_run(request):
         )
 
 
-
-
-
+        vc_ts_obj_loaded = app_utils.create_1d(timeseries_list=vc, label='Average Water Volume in Channel Cells',unit='mm/day')
+        vs_ts_obj_loaded = app_utils.create_1d(timeseries_list=vs, label='Average Water Volume in Soil Cells', unit='mm/day')
+        vo_ts_obj_loaded = app_utils.create_1d(timeseries_list=vo, label='Average Water Volume in Overland Cells',unit='mm/day')
+        ppt_ts_obj_loaded = app_utils.create_1d(timeseries_list=ppt, label='Rainfall', unit='mm/day')
+        eta_ts_obj_loaded = app_utils.create_1d(timeseries_list=eta, label='Actual Evapotranspiration', unit='mm/day')
         # STEP2: Because in this part we load previous simulation, Load the model from hydroshare to hydroDS,
         # STEP2: And from the prepeared model, if the result is not available, run. Otherwise just give the result
         # hydrograph2, table_id = app_utils.run_model_with_input_as_dictionary(inputs_dictionary, False)
@@ -588,21 +649,39 @@ def model_run(request):
         print 'MSG: Method III initiated. The model id we are looking at is: ', hs_resource_id_from_previous_simulation
 
 
-        ######### START: need to get two variables: i) hs_resource_id_created, and ii) hydrograph series ###############
-        response_JSON_file =  app_utils.modifypytopkapi(hs_res_id=hs_resource_id_created, out_folder='',
-                                                        fac_l=fac_L_form, fac_ks=fac_Ks_form, fac_n_o=fac_n_o_form,
-                                                        fac_n_c=fac_n_c_form, fac_th_s=fac_th_s_form,
-                                                        pvs_t0=pvs_t0_form, vo_t0=vo_t0_form, qc_t0=qc_t0_form,
-                                                        kc=kc_form )
-
+        ######### START: need to get at leaset two variables: i) hs_resource_id_created, and ii) hydrograph series #####
+        # response_JSON_file =  app_utils.modifypytopkapi(hs_res_id=hs_resource_id_created, out_folder='',
+        #                                                 fac_l=fac_L_form, fac_ks=fac_Ks_form, fac_n_o=fac_n_o_form,
+        #                                                 fac_n_c=fac_n_c_form, fac_th_s=fac_th_s_form,
+        #                                                 pvs_t0=pvs_t0_form, vo_t0=vo_t0_form, qc_t0=qc_t0_form,
+        #                                                 kc=kc_form )
+        response_JSON_file = '/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/5115bcf068fe4a1a8e90a7ebb84ab871/pytopkpai_responseJSON.txt'
         json_data = app_utils.read_data_from_json(response_JSON_file)
 
-        hs_resource_id_created =  hs_resource_id_created # json_data['hs_res_id_created']
+        hs_resource_id_created = hs_resource_id_modified =  json_data['hs_res_id_created']
         hydrograph_series_sim = json_data['hydrograph_series_sim']
         hydrograph_series_obs = json_data['hydrograph_series_obs']
+        eta = json_data['eta']
+        ppt = json_data['ppt']
+        vo = json_data['vo']
+        vc = json_data['vc']
+        vs = json_data['vs']
+        print 'hydrograph_series_sim is ',[item[-1] for item in hydrograph_series_sim]
 
-        print '*****************', hs_resource_id_created
-        print [i[-1] for i in hydrograph_series_sim]
+        # init values in the form
+        if json_data['calib_parameter'] != None:
+            fac_L_init = json_data['calib_parameter']['fac_l']
+            fac_Ks_init = json_data['calib_parameter']['fac_ks']
+            fac_n_o_init = json_data['calib_parameter']['fac_n_o']
+            fac_n_c_init = json_data['calib_parameter']['fac_n_c']
+            fac_th_s_init = json_data['calib_parameter']['fac_th_s']
+        if json_data['numeric_param'] != None:
+            pvs_t0_init = json_data['numeric_param']['pvs_t0']
+            vo_t0_init = json_data['numeric_param']['vo_t0']
+            qc_t0_init = json_data['numeric_param']['qc_t0']
+            kc_init = json_data['numeric_param']['kc']
+        print '***hs_resource_id_created', hs_resource_id_created
+        # print [i[-1] for i in hydrograph_series_sim]
         ######### END :  ###############
 
         # # # -------DATABASE STUFFS  <start>----- # #
@@ -647,9 +726,24 @@ def model_run(request):
         #     inputs_dictionary['model_engine'] = row.model_engine
 
 
+        observed_hydrograph_userModified3 = TimeSeries(
+            height='300px',
+            width='500px',
+            engine='highcharts',
+            title= "Simulated and Observed flow " ,
+            y_axis_title='Discharge ',
+            y_axis_units='cfs',
+            series=[{
+                'name': 'Simulated Hydrograph',
+                'data': hydrograph_series_sim
+            }, {
+                'name': 'Observed Hydrograph',
+                'data': hydrograph_series_obs
+            }]
+        )
 
         observed_hydrograph_userModified = TimeSeries(
-            height='500px',
+            height='300px',
             width='500px',
             engine='highcharts',
             title=' Corrected Hydrograph ',
@@ -671,42 +765,64 @@ def model_run(request):
                 'data': hydrograph_series_obs
             }])
 
-        observed_hydrograph_userModified3 = TimeSeries(
-            height='500px',
-            width='500px',
-            engine='highcharts',
-            title= "Simulated and Observed flow " ,
-            y_axis_title='Discharge ',
-            y_axis_units='cfs',
-            series=[{
-                'name': 'Simulated Hydrograph',
-                'data': hydrograph_series_sim
-            }, {
-                'name': 'Observed Hydrograph',
-                'data': hydrograph_series_obs
-            }]
-        )
+
+        vc_ts_obj_modified = app_utils.create_1d(timeseries_list=vc, label='Average Water Volume in Channel Cells',unit='mm/day')
+        vs_ts_obj_modified = app_utils.create_1d(timeseries_list=vs, label='Average Water Volume in Soil Cells', unit='mm/day')
+        vo_ts_obj_modified = app_utils.create_1d(timeseries_list=vo, label='Average Water Volume in Overland Cells',unit='mm/day')
+        ppt_ts_obj_modified = app_utils.create_1d(timeseries_list=ppt, label='Rainfall', unit='mm/day')
+        eta_ts_obj_modified = app_utils.create_1d(timeseries_list=eta, label='Actual Evapotranspiration', unit='mm/day')
 
         # create input_dictionary for the last run. Because we are modifying, we need to load the last run
         inputs_dictionary = app_utils.create_model_input_dict_from_db(hs_resource_id = hs_resource_id_from_previous_simulation, user_name= user_name )
 
-        # print 'MSG: Input Dictionary from db of model_input_id= ', model_inputs_table_id_from_another_html, " created for simulation: ", inputs_dictionary['simulation_name']
-        test_string = str(inputs_dictionary)
-        test_variable = hs_resource_id_from_previous_simulation
+        # Writing to db
+        try:
+            try:
+                data_qsim_qobs = zip([i[0] for i in hydrograph_series_sim], [i[-1] for i in hydrograph_series_sim],
+                                [i[-1] for i in hydrograph_series_obs])
+            except:
+                data_qsim_qobs = zip([i[0] for i in hydrograph_series_sim], [i[-1] for i in hydrograph_series_sim])
+
+            # Writing to model_calibration_table
+            current_model_calibration_table_id= app_utils.write_to_model_calibration_table(hs_resource_id=hs_resource_id_from_previous_simulation,
+                                                       numeric_parameters_list=[pvs_t0_init, vo_t0_init, qc_t0_init,
+                                                                                kc_init],
+                                                       calibration_parameters_list=[fac_L_init, fac_Ks_init,
+                                                                                    fac_n_o_init, fac_n_c_init,
+                                                                                    fac_th_s_init])
+            # Writing to model_result_table
+            current_model_result_table_id = app_utils.write_to_model_result_table(
+                                                        model_calibration_table_id=current_model_calibration_table_id,
+                                                        timeseries_discharge_list =data_qsim_qobs)
 
 
-        # following two line should replace the above lines for querring db
-        # from .model import model_inputs_table, model_calibration_table
+        except Exception, e:
+            print "Error ---> Writing to DB", e
+            
 
-
-        # # STEP6: write the calibration and numerical parameters to the database
-        # calibrated_model_info = model_calibration_table(current_model_inputs_table_id, fac_L_form, fac_Ks_form,
-        #                                                 fac_n_o_form, fac_n_c_form, fac_th_s_form,
-        #                                                 pvs_t0_form, vo_t0_form, qc_t0_form,
-        #                                                 kc_form)  # 1 in the begenning is for model_run id, pk for model run
-        # session.add(calibrated_model_info)
-        # session.commit()
         # # # -------DATABASE STUFFS  <ends> ----- # #
+
+    print 'simulation_loaded_id',simulation_loaded_id   # probably useless
+    print 'hs_resource_id_created', hs_resource_id_created
+
+    print 'hs_resource_id_prepared', model_input_prepare_request
+    print 'hs_resource_id_loaded', model_input_load_request
+    print 'hs_resource_id_modified', model_run_calib_request
+
+
+
+    # gizmo settings
+    fac_L = TextInput(display_text='fac_L', name='fac_L', initial=float(fac_L_init))
+    fac_Ks = TextInput(display_text='fac_Ks', name='fac_Ks', initial=float(fac_Ks_init))
+    fac_n_o = TextInput(display_text='fac_n_o', name='fac_n_o', initial=float(fac_n_o_init))
+    fac_n_c = TextInput(display_text='fac_n_c', name='fac_n_c', initial=float(fac_n_c_init))
+    fac_th_s = TextInput(display_text='fac_th_s', name='fac_th_s', initial=float(fac_th_s_init))
+
+    pvs_t0 = TextInput(display_text='pvs_t0', name='pvs_t0', initial=float(pvs_t0_init))
+    vo_t0 = TextInput(display_text='vo_t0', name='vo_t0', initial=float(vo_t0_init))
+    qc_t0 = TextInput(display_text='qc_t0', name='qc_t0', initial=float(qc_t0_init))
+    kc = TextInput(display_text='kc', name='kc', initial=float(kc_init))
+
 
     context = {'simulation_name':simulation_name,
                'outlet_y': outlet_y,
@@ -722,8 +838,8 @@ def model_run(request):
                #'Iwillgiveyou_model_inputs_table_id_from_another_html':model_inputs_table_id_from_another_html,
                # "current_model_inputs_table_id":current_model_inputs_table_id, # model_inputs_table_id
 
-               'observed_hydrograph': observed_hydrograph,
                'observed_hydrograph3': observed_hydrograph3,
+               'observed_hydrograph': observed_hydrograph,
                'observed_hydrograph2': observed_hydrograph2,
 
 
@@ -739,11 +855,31 @@ def model_run(request):
                'vs_ts_obj': vs_ts_obj,
                'vc_ts_obj': vc_ts_obj,
                'vo_ts_obj': vo_ts_obj,
+               'ppt_ts_obj': ppt_ts_obj,
 
-               #"simulation_loaded_id":simulation_loaded_id,
-               'test_string':str(type(observed_hydrograph)), #test_string
+               'eta_ts_obj_modified': eta_ts_obj_modified,
+               'vs_ts_obj_modified': vs_ts_obj_modified,
+               'vc_ts_obj_modified': vc_ts_obj_modified,
+               'vo_ts_obj_modified': vo_ts_obj_modified,
+               'ppt_ts_obj_modified': ppt_ts_obj_modified,
+
+
+               'eta_ts_obj_loaded': eta_ts_obj_loaded,
+               'vs_ts_obj_loaded': vs_ts_obj_loaded,
+               'vc_ts_obj_loaded': vc_ts_obj_loaded,
+               'vo_ts_obj_loaded': vo_ts_obj_loaded,
+               'ppt_ts_obj_loaded': ppt_ts_obj_loaded,
+
+
+               "simulation_loaded_id":simulation_loaded_id,
+               'test_string':simulation_loaded_id, #test_string
                'test_variable':test_variable,
+
                'hs_resource_id_created':hs_resource_id_created,
+
+               'hs_resource_id_prepared': model_input_prepare_request,
+               'hs_resource_id_loaded': model_input_load_request,
+               'hs_resource_id_modified': model_run_calib_request,
 
                 # fow download request
                'download_status': download_status,
@@ -847,6 +983,8 @@ def test2(request):
     from django.core.files.storage import default_storage
     from django.core.files.base import ContentFile
     from django.conf import settings
+
+    user_name = request.user.username
 
     test_string = 'None'
     wshed_shp_fname = None
@@ -1057,13 +1195,20 @@ def test2(request):
 
 
 
+    from .model import engine, Base, SessionMaker,  model_calibration_table, model_inputs_table
+    from sqlalchemy import inspect
+    session = SessionMaker()  # Make session
+    qry = session.query(model_inputs_table.simulation_name).filter(model_inputs_table.user_name == user_name).all()  # because PK is the same as no of rows, i.e. length
+    test_string = qry
+    # print test_string
 
+    for item in qry:
+        print item
 
-
-
-
-
-
+    # inspector = inspect(engine)
+    # for table_name in inspector.get_table_names():
+    #     for column in inspector.get_columns(table_name):
+    #         print("Column: %s" % column['name'])
 
 
 

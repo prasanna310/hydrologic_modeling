@@ -59,14 +59,21 @@ def create_hydrograph(date_in_datetime, Qsim, simulation_name, error):
     return observed_hydrograph
 
 def create_1d(timeseries_list, label, unit):
+    if timeseries_list == "" or timeseries_list==[]:
+        return
     from tethys_sdk.gizmos import TimeSeries
     timeseries_obj = TimeSeries(
-        height='300px', width='500px', engine='highcharts', title=label,
-        subtitle="Simulated and Observed flow  ",
-        y_axis_title='Value', y_axis_units=unit,
+        height='200px', width='600px',
+        engine='highcharts',
+        title=label,
+        inverted=True,
+        # subtitle="Simulated and Observed flow  ",
+        y_axis_title='',
+        y_axis_units=unit,
         series=[{
-            'name': label,
-            'data': timeseries_list
+            'name': 'Water level',
+            'data': timeseries_list,
+            'fillOpacity': 0.2,
         }])
     return  timeseries_obj
 
@@ -248,18 +255,15 @@ def read_data_from_json(json_fname):
         except:
             hs_resource_id_created = None
 
-        yr_mon_day_hr_min_discharge_list = data['runs'][-1]['simulated_discharge']  # of the last run
+        calib_parameter = None
+        numeric_param = None
         hydrograph_series_sim = []
         hydrograph_series_obs = []
         eta = []
         vs = []
         vc = []
         vo = []
-
-        for yr, mon, day, hr, min, q in yr_mon_day_hr_min_discharge_list:
-            date = datetime.datetime(year=int(yr), month=int(mon),   day=int(day), hour=int(hr), minute=int(min) )
-            hydrograph_series_sim.append([date, float(q)])
-
+        ppt = []
 
         if 'observed_discharge' in data:
             yr_mon_day_hr_min_discharge_list = data['observed_discharge']
@@ -268,29 +272,73 @@ def read_data_from_json(json_fname):
                 date = datetime.datetime(year=int(yr), month=int(mon), day=int(day), hour=int(hr), minute=int(min))
                 hydrograph_series_obs.append([date, float(q)])
 
-        if 'et_a' in data['runs'][-1]:
-            yr_mon_day_hr_min_eta = data['runs'][-1]['et_a']
-            for yr, mon, day, hr, min, val in yr_mon_day_hr_min_eta:
+        if 'ppt' in data:
+            yr_mon_day_hr_min_ppt = data['ppt']
+            for yr, mon, day, hr, min, val in yr_mon_day_hr_min_ppt:
                 date = datetime.datetime(year=int(yr), month=int(mon), day=int(day), hour=int(hr), minute=int(min))
-                eta.append([date, float(val)])
-        if 'vc' in data['runs'][-1]:
-            yr_mon_day_hr_min_eta = data['runs'][-1]['vc']
-            for yr, mon, day, hr, min, val in yr_mon_day_hr_min_eta:
-                date = datetime.datetime(year=int(yr), month=int(mon), day=int(day), hour=int(hr), minute=int(min))
-                vc.append([date, float(val)])
-        if 'vs' in data['runs'][-1]:
-            yr_mon_day_hr_min_eta = data['runs'][-1]['vs']
-            for yr, mon, day, hr, min, val in yr_mon_day_hr_min_eta:
-                date = datetime.datetime(year=int(yr), month=int(mon), day=int(day), hour=int(hr), minute=int(min))
-                vs.append([date, float(val)])
-        if 'vo' in data['runs'][-1]:
-            yr_mon_day_hr_min_eta = data['runs'][-1]['vo']
-            for yr, mon, day, hr, min, val in yr_mon_day_hr_min_eta:
-                date = datetime.datetime(year=int(yr), month=int(mon), day=int(day), hour=int(hr), minute=int(min))
-                vo.append([date, float(val)])
+                ppt.append([date, float(val)])
 
-    return  {'hs_res_id_created':hs_resource_id_created, 'hydrograph_series_obs':hydrograph_series_obs, 'hydrograph_series_sim':hydrograph_series_sim ,
-             'eta':eta, 'vs':vs, 'vo':vo, 'vc':vc}
+        if 'runs' in data:
+            if 'simulated_discharge' in data['runs'][-1]:
+                yr_mon_day_hr_min_discharge_list = data['runs'][-1]['simulated_discharge']  # of the last run
+                for yr, mon, day, hr, min, q in yr_mon_day_hr_min_discharge_list:
+                    date = datetime.datetime(year=int(yr), month=int(mon),   day=int(day), hour=int(hr), minute=int(min) )
+                    hydrograph_series_sim.append([date, float(q)])
+
+
+            if 'et_a' in data['runs'][-1]:
+                yr_mon_day_hr_min_eta = data['runs'][-1]['et_a']
+                for yr, mon, day, hr, min, val in yr_mon_day_hr_min_eta:
+                    date = datetime.datetime(year=int(yr), month=int(mon), day=int(day), hour=int(hr), minute=int(min))
+                    eta.append([date, float(val)])
+                eta = [[item[0], 0] if np.isnan(item[-1]) else item for item in eta] # replace nan to 0
+
+            if 'vc' in data['runs'][-1]:
+                yr_mon_day_hr_min_eta = data['runs'][-1]['vc']
+                for yr, mon, day, hr, min, val in yr_mon_day_hr_min_eta:
+                    date = datetime.datetime(year=int(yr), month=int(mon), day=int(day), hour=int(hr), minute=int(min))
+                    vc.append([date, float(val)])
+                vc = [[item[0], 0] if np.isnan(item[-1]) else item for item in vc]  # replace nan to 0
+
+            if 'vs' in data['runs'][-1]:
+                yr_mon_day_hr_min_eta = data['runs'][-1]['vs']
+                for yr, mon, day, hr, min, val in yr_mon_day_hr_min_eta:
+                    date = datetime.datetime(year=int(yr), month=int(mon), day=int(day), hour=int(hr), minute=int(min))
+                    vs.append([date, float(val)])
+                vs = [[item[0], 0] if np.isnan(item[-1]) else item for item in vs]  # replace nan to 0
+
+            if 'vo' in data['runs'][-1]:
+                yr_mon_day_hr_min_eta = data['runs'][-1]['vo']
+                for yr, mon, day, hr, min, val in yr_mon_day_hr_min_eta:
+                    date = datetime.datetime(year=int(yr), month=int(mon), day=int(day), hour=int(hr), minute=int(min))
+                    vo.append([date, float(val)])
+                vo = [[item[0], 0] if np.isnan(item[-1]) else item for item in vo]  # replace nan to 0
+
+            # read numeric and calib parameters:
+            try:
+                # calib_parameter= {"fac_l": 1.0, "fac_n_o": 1.0, "fac_n_c": 1.0, "fac_th_s": 1.0, "fac_ks": 1.0},
+                # numeric_param= {"pvs_t0": 50, "vo_t0": 750.0, "qc_t0": 0.0, "kc": 1.0},
+                calib_parameter = data['runs'][-1]['calib_parameter']
+                numeric_param = data['runs'][-1]['numeric_param']
+
+            except:
+                calib_parameter = None
+                numeric_param =None
+
+
+
+    return_dict=  {'hs_res_id_created':hs_resource_id_created, 'hydrograph_series_obs':hydrograph_series_obs, 'hydrograph_series_sim':hydrograph_series_sim ,
+             'eta':eta, 'vs':vs, 'vo':vo, 'vc':vc, 'ppt':ppt, 'calib_parameter':calib_parameter, 'numeric_param':numeric_param }
+
+    for key in return_dict:
+        if key =='hs_res_id_created':
+            print str( key) +  str( type(return_dict[key])  )
+
+        elif key == 'numeric_param' or key == 'calib_parameter':
+            print str(key) + str(return_dict[key])
+        else:
+            print str( key) + " : Length = " + str( len(return_dict[key])  )
+    return return_dict
 
 
 def read_both_hydrograph_from_txt(hydrograph_fname):
@@ -920,7 +968,7 @@ def call_runpytopkapi(inputs_dictionary, out_folder=''):
     print 'rain_et =', rain_et
 
 
-    run_model_call = HDS.runpytopkapi5(user_name=inputs_dictionary['user_name'],
+    run_model_call = HDS.runpytopkapi6(user_name=inputs_dictionary['user_name'],
                                        simulation_name=valid_simulation_name, #inputs_dictionary['simulation_name'],
                                        simulation_start_date=inputs_dictionary['simulation_start_date'],
                                        simulation_end_date=inputs_dictionary['simulation_end_date'],
@@ -948,7 +996,8 @@ def call_runpytopkapi(inputs_dictionary, out_folder=''):
                                        timestep=inputs_dictionary['timestep'],
                                        output_response_txt="pytopkpai_response.txt",
                                        rain_fname= rain_et['output_rain_fname'],
-                                       et_fname= rain_et['output_et_reference_fname']
+                                       et_fname= rain_et['output_et_reference_fname'],
+                                       timeseries_source = inputs_dictionary['timeseries_source']
                                        )
 
     if out_folder == "":
@@ -1882,15 +1931,14 @@ def write_to_model_input_table(inputs_dictionary, hs_resource_id=""):
                  model_engine=model_engine, other_model_parameters=other_model_parameters, remarks=remarks, user_option=user_option )
     session.add(one_run)
     session.commit()
-    print "Run details written successfully to model_input_table"
+    print "Run details written successfully to model_input_table", one_run
 
-    # read the id
-    current_model_inputs_table_id = str(len(session.query(model_inputs_table).filter(
-        model_inputs_table.user_name == user_name).all()))  # because PK is the same as no of rows, i.e. length
+    # read the id, whcih is equal to lenght of total item in the simulationlist for the user
+    current_model_inputs_table_id = str(len(session.query(model_inputs_table).filter(model_inputs_table.user_name == user_name).all()))  # because PK is the same as no of rows, i.e. length
 
     return current_model_inputs_table_id
 
-def write_to_model_calibration_table(model_input_table_id, numeric_parameters_list=None, calibration_parameters_list=None):
+def write_to_model_calibration_table(hs_resource_id=None, model_input_table_id=None, numeric_parameters_list=None, calibration_parameters_list=None):
     '''
     list, which will be converted string separated by __ double underscore
     :param numeric_parameters_list:   [pvs_t0, vo_t0 , qc_t0, kc] for topkapi
@@ -1903,6 +1951,8 @@ def write_to_model_calibration_table(model_input_table_id, numeric_parameters_li
     if calibration_parameters_list == None:
         calibration_parameters_list = [1,1,1,1,1]
 
+
+
     # make the exam same list, but change numbers to string
     numeric_parameters_list = [str(item) for item in numeric_parameters_list]
     calibration_parameters_list = [str(item) for item in calibration_parameters_list]
@@ -1912,8 +1962,13 @@ def write_to_model_calibration_table(model_input_table_id, numeric_parameters_li
     calibration_parameters = '__'.join(calibration_parameters_list)
 
     # :TODO write only when sim_name is different for a user
-    from .model import engine, Base, SessionMaker,  model_calibration_table
+    from .model import engine, Base, SessionMaker,  model_calibration_table, model_inputs_table
     session = SessionMaker()  # Make session
+
+    # calculate model_input_table_id
+    if model_input_table_id is None and hs_resource_id != None:
+        qry = session.query(model_inputs_table.id).filter(model_inputs_table.hs_resource_id == hs_resource_id).all()  # because PK is the same as no of rows, i.e. length
+        model_input_table_id = qry[-1][0]
 
     # one etnry / row
     one_run = model_calibration_table(numeric_parameters= numeric_parameters,
@@ -1935,24 +1990,25 @@ def write_to_model_calibration_table(model_input_table_id, numeric_parameters_li
 def write_to_model_result_table(model_calibration_table_id, timeseries_discharge_list):
     '''
     :param: model_calibration_table_id:     The foriegn ID to reference the model_calibration_table
-    :param timeseries_discharge_list:       [   [datetime.datetime(2015, 1, 1, 0, 0), 2.0, 3.1],  [datetime.datetime(2015, 1, 2, 0, 0),2.35, 3.5]   ]
+    INVALID :param  timeseries_discharge_list:       [   [datetime.datetime(2015, 1, 1, 0, 0), 2.0, 3.1],  [datetime.datetime(2015, 1, 2, 0, 0),2.35, 3.5]   ]
+    :param timeseries_discharge_list [(datetime.datetime(2015, 1, 1, 0, 0), 1, 5), (datetime.datetime(2015, 1, 1, 0, 0), 6,5), i.e. [(datetime, sim,obs), (datetime, sim,obs)...]
+           timeseries_discharge_list [(datetime.datetime(2015, 1, 1, 0, 0), 1), (datetime.datetime(2015, 1, 1, 0, 0), 6),
     :return:
     '''
     from .model import  SessionMaker,  model_result_table
     session = SessionMaker()
 
-    q_obs = 0.0
-    # one_timestep =  [datetime.datetime(2015, 1, 1, 0, 0), 2.0, 3.1]       # example
-    for one_timestep in timeseries_discharge_list:
 
-        # to avoid cases where observed discharge isn't given
-        if timeseries_discharge_list[0].__len__() == 3:
-            q_obs = one_timestep[2]
 
-        # one etnry / row
-        one_run = model_result_table(date_time=one_timestep[0], simulated_discharge=one_timestep[1],
-                                     observed_discharge=q_obs, model_calibration_id =model_calibration_table_id)
+    for one_tuple in timeseries_discharge_list:
+        q_obs = one_tuple[2]
+        if len(timeseries_discharge_list[0]) == 2:  # i.e. no observed flow
+            q_obs = 0
+
+        one_run = model_result_table(date_time=one_tuple[0], simulated_discharge=one_tuple[1], observed_discharge=q_obs,
+                                     model_calibration_id =model_calibration_table_id)
         session.add(one_run)
+
     session.commit()
     print "Run details written successfully to model_results_table"
     return

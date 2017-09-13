@@ -67,7 +67,7 @@
 
           {% else %}
 
-                <!--<hr>-->
+                <hr>
                 <!--<p> The request is being processed. Please wait while the input files (geospatial, and forcing files) for the region selected are being created</p>-->
                 <!--<p> Test string : {{test_string}}</p>-->
   {% endif %}
@@ -77,7 +77,27 @@
 
 
   <!--if the user creates a simulation.. :TODO need to have 'and' clause for no download case in the if statement below-->
-  {% if simulation_name != None %} <!--- If the input is complete --->
+  {% if  hs_resource_id_loaded != None %} <!--- If the input is complete --->
+    <h5>{{test_string}}</h5>
+    <h5> Congratulations!! Results successfully retreived from HydroShare resource ID: {{hs_resource_id_created}}, {{hs_resource_id_loaded}}!  </h5>
+            <!--Using the calibratoin parameters provided, the graph was updated for the ll-input id: {{Iwillgiveyou_model_inputs_table_id_from_another_html}}-->
+
+            {% gizmo plot_view observed_hydrograph_loaded3 %} <br><br><br><br>
+            <!--{% gizmo plot_view observed_hydrograph_loaded %} <br><br><br><br>-->
+            <!--{% gizmo plot_view observed_hydrograph_loaded2 %} <br><br><br><br>-->
+        {% gizmo plot_view ppt_ts_obj_loaded %} <br><br><br><br>
+        {% gizmo plot_view eta_ts_obj_loaded %} <br><br><br><br>
+        {% gizmo plot_view vs_ts_obj_loaded %} <br> <br><br><br>
+        {% gizmo plot_view vc_ts_obj_loaded %} <br><br><br><br>
+        {% gizmo plot_view vo_ts_obj_loaded %} <br><br><br><br>
+
+   {% endif %}
+
+
+
+   <!--If user loads the simulation from HydroShare or dropdown menu-->
+   {% if  hs_resource_id_prepared != None  %}
+        <h5>{{test_string}}</h5>
         <h5> Congratulations! PyTOPKAPI simualation- {{simulation_name}} ran successfully!  </h5>
 
          Here is the simulated discharge for the outlet chosen
@@ -85,44 +105,40 @@
 
 
 
-
-
-        {% gizmo plot_view observed_hydrograph3 %}
+        {% gizmo plot_view observed_hydrograph3 %}  <br><br><br><br>
         <!--{% gizmo plot_view observed_hydrograph %}-->
         <!--{% gizmo plot_view observed_hydrograph2 %}-->
 
+        {% gizmo plot_view ppt_ts_obj %} <br><br><br><br>
 
-        {% gizmo plot_view eta_ts_obj %}
-        {% gizmo plot_view vs_ts_obj %}
-        {% gizmo plot_view vc_ts_obj %}
-        {% gizmo plot_view vo_ts_obj %}
-
+        {% gizmo plot_view vs_ts_obj %} <br><br><br><br>
+        {% gizmo plot_view vc_ts_obj %} <br><br><br><br>
+        {% gizmo plot_view vo_ts_obj %} <br><br><br><br>
+        {% gizmo plot_view eta_ts_obj %} <br><br><br><br>
 
    {% endif %}
 
 
 
 
-  <!--if the user modifies a simulation.. -->
+  <!--if the user modifies a loaded simulation.. -->
   {% if fac_L_form != "" %} <!--- If the input is complete --->
       <h5> Congratulations <b>{{user_name}}</b>! Parameters were changed successfully!  </h5>
             Using the calibratoin parameters provided, the graph was updated for the ll-input id: {{Iwillgiveyou_model_inputs_table_id_from_another_html}}
 
-            {% gizmo plot_view observed_hydrograph_userModified3 %}
-            {% gizmo plot_view observed_hydrograph_userModified %}
-            {% gizmo plot_view observed_hydrograph_userModified2 %}
+            {% gizmo plot_view observed_hydrograph_userModified3 %} <br><br><br><br>
+            <!--{% gizmo plot_view observed_hydrograph_userModified %}-->
+            <!--{% gizmo plot_view observed_hydrograph_userModified2 %}-->
+        {% gizmo plot_view ppt_ts_obj_modified %} <br><br><br><br>
+        {% gizmo plot_view vs_ts_obj_modified %} <br><br><br><br>
+        {% gizmo plot_view vc_ts_obj_modified %} <br><br><br><br>
+        {% gizmo plot_view vo_ts_obj_modified %} <br><br><br><br>
+        {% gizmo plot_view eta_ts_obj_modified %} <br><br><br><br>
+
 
    {% endif %}
 
-  {% if simulation_loaded_id != "" %} <!--- If the input is complete --->
-      <h5> Congratulations <b>{{user_name}}</b>! Results successfully retreived from HydroShare resource ID: {{hs_resource_id_created}}!  </h5>
-            <!--Using the calibratoin parameters provided, the graph was updated for the ll-input id: {{Iwillgiveyou_model_inputs_table_id_from_another_html}}-->
 
-            {% gizmo plot_view observed_hydrograph_loaded3 %}
-            {% gizmo plot_view observed_hydrograph_loaded %}
-            {% gizmo plot_view observed_hydrograph_loaded2 %}
-
-   {% endif %}
 
 {% endblock %}
 
