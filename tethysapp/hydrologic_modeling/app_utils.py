@@ -1547,171 +1547,171 @@ def run_topnet(inputs_dictionary):
         creat_latlonxyfile = {
             u'output_latlonfromxyfile': u'http://129.123.9.159:20199/files/data/user_6/latlongfromxy.txt'}
 
-        # subsetDEM_request = HDS.subset_raster(input_raster=input_static_DEM, left=leftX, top=topY, right=rightX,
-        #                                       bottom=bottomY,output_raster=watershedName + 'DEM84.tif')
-        # print "subsetDEM_request = ", subsetDEM_request
-        # list_of_outfiles_dict.append(subsetDEM_request)
-        #
-        # myWatershedDEM = watershedName + 'Proj' + str(dx) + '.tif'
-        # WatershedDEM = HDS.project_resample_raster(input_raster_url_path=subsetDEM_request['output_raster'],
-        #                                                       cell_size_dx=dx, cell_size_dy=dy, epsg_code=epsgCode,
-        #                                                        output_raster=myWatershedDEM,resample='bilinear')
-        # print "WatershedDEM = ", WatershedDEM
-        # list_of_outfiles_dict.append(WatershedDEM)
-        # # subsetSoil_request = HDS.subset_raster(input_raster=input_static_Soil_mukey, left=leftX, top=topY, right=rightX,
-        # #                                       bottom=bottomY,output_raster=watershedName + 'Soil84.tif')
-        # # myWatershedSoil= watershedName + 'ProjSoil' + str(dx) + '.tif'
-        # # WatershedSoil = HDS.project_resample_raster(input_raster_url_path=subsetSoil_request['output_raster'],
-        # #                                                       cell_size_dx=dx, cell_size_dy=dy, epsg_code=epsgCode,
-        # #                                                        output_raster=myWatershedSoil,resample='bilinear')
-        #
-        #
-        # outlet_shapefile_result = HDS.create_outlet_shapefile(point_x=lon_outlet, point_y=lat_outlet,
-        #                                                       output_shape_file_name=watershedName+'Outlet.shp')
-        # print "outlet_shapefile_result = ", outlet_shapefile_result
-        # list_of_outfiles_dict.append(outlet_shapefile_result)
-        #
-        # project_shapefile_result = HDS.project_shapefile(outlet_shapefile_result['output_shape_file_name'],
-        #                                                  watershedName + 'OutletProj.shp',
-        #                                                  epsg_code=epsgCode)
-        # print "project_shapefile_result = ", project_shapefile_result
-        # list_of_outfiles_dict.append(project_shapefile_result)
-        #
-        # Watershed_prod = HDS.delineate_watershed_peuker_douglas(input_raster_url_path=WatershedDEM['output_raster'],
-        #                                 threshold=streamThreshold,peuker_min_threshold=pk_min_threshold,
-        #                                 peuker_max_threshold=pk_max_threshold,peuker_number_threshold=pk_num_thershold,
-        #                                 input_outlet_shapefile_url_path=project_shapefile_result['output_shape_file'],
-        #                                 output_watershed_raster=watershedName + str(dx) +'WS.tif',
-        #                                 output_outlet_shapefile=watershedName + 'moveOutlet2.shp',
-        #                                 output_streamnetfile=watershedName+'net.shp',
-        #                                 output_treefile=watershedName+'tree.txt',
-        #                                 output_coordfile=watershedName+'coord.txt',
-        #                                 output_slopearea_raster=watershedName+'slparr.tif',
-        #                                 output_distance_raster=watershedName+'dist.tif')
-        # print "Watershed_prod = ", Watershed_prod
-        # list_of_outfiles_dict.append(Watershed_prod)
+        subsetDEM_request = HDS.subset_raster(input_raster=input_static_DEM, left=leftX, top=topY, right=rightX,
+                                              bottom=bottomY,output_raster=watershedName + 'DEM84.tif')
+        print "subsetDEM_request = ", subsetDEM_request
+        list_of_outfiles_dict.append(subsetDEM_request)
 
-        # """getting and processed climate data"""
-        # download_process_climatedata=HDS.get_daymet_data(input_raster_url_path=Watershed_prod['output_watershedfile'],
-        #                                     start_year=start_year,end_year=end_year,
-        #                                     output_gagefile='Climate_Gage.shp',output_rainfile='rain.dat',
-        #                                     output_temperaturefile='tmaxtmintdew.dat',output_cliparfile='clipar.dat')
-        # print "download_process_climatedata = ", download_process_climatedata
-        # list_of_outfiles_dict.append(download_process_climatedata)
+        myWatershedDEM = watershedName + 'Proj' + str(dx) + '.tif'
+        WatershedDEM = HDS.project_resample_raster(input_raster_url_path=subsetDEM_request['output_raster'],
+                                                              cell_size_dx=dx, cell_size_dy=dy, epsg_code=epsgCode,
+                                                               output_raster=myWatershedDEM,resample='bilinear')
+        print "WatershedDEM = ", WatershedDEM
+        list_of_outfiles_dict.append(WatershedDEM)
+        # subsetSoil_request = HDS.subset_raster(input_raster=input_static_Soil_mukey, left=leftX, top=topY, right=rightX,
+        #                                       bottom=bottomY,output_raster=watershedName + 'Soil84.tif')
+        # myWatershedSoil= watershedName + 'ProjSoil' + str(dx) + '.tif'
+        # WatershedSoil = HDS.project_resample_raster(input_raster_url_path=subsetSoil_request['output_raster'],
+        #                                                       cell_size_dx=dx, cell_size_dy=dy, epsg_code=epsgCode,
+        #                                                        output_raster=myWatershedSoil,resample='bilinear')
+
+
+        outlet_shapefile_result = HDS.create_outlet_shapefile(point_x=lon_outlet, point_y=lat_outlet,
+                                                              output_shape_file_name=watershedName+'Outlet.shp')
+        print "outlet_shapefile_result = ", outlet_shapefile_result
+        list_of_outfiles_dict.append(outlet_shapefile_result)
+
+        project_shapefile_result = HDS.project_shapefile(outlet_shapefile_result['output_shape_file_name'],
+                                                         watershedName + 'OutletProj.shp',
+                                                         epsg_code=epsgCode)
+        print "project_shapefile_result = ", project_shapefile_result
+        list_of_outfiles_dict.append(project_shapefile_result)
+
+        Watershed_prod = HDS.delineate_watershed_peuker_douglas(input_raster_url_path=WatershedDEM['output_raster'],
+                                        threshold=streamThreshold,peuker_min_threshold=pk_min_threshold,
+                                        peuker_max_threshold=pk_max_threshold,peuker_number_threshold=pk_num_thershold,
+                                        input_outlet_shapefile_url_path=project_shapefile_result['output_shape_file'],
+                                        output_watershed_raster=watershedName + str(dx) +'WS.tif',
+                                        output_outlet_shapefile=watershedName + 'moveOutlet2.shp',
+                                        output_streamnetfile=watershedName+'net.shp',
+                                        output_treefile=watershedName+'tree.txt',
+                                        output_coordfile=watershedName+'coord.txt',
+                                        output_slopearea_raster=watershedName+'slparr.tif',
+                                        output_distance_raster=watershedName+'dist.tif')
+        print "Watershed_prod = ", Watershed_prod
+        list_of_outfiles_dict.append(Watershed_prod)
+
+        """getting and processed climate data"""
+        download_process_climatedata=HDS.get_daymet_data(input_raster_url_path=Watershed_prod['output_watershedfile'],
+                                            start_year=start_year,end_year=end_year,
+                                            output_gagefile='Climate_Gage.shp',output_rainfile='rain.dat',
+                                            output_temperaturefile='tmaxtmintdew.dat',output_cliparfile='clipar.dat')
+        print "download_process_climatedata = ", download_process_climatedata
+        list_of_outfiles_dict.append(download_process_climatedata)
+
+
+        """create nodelink and reachlink information"""
+        Create_Reach_Nodelink=HDS.reachlink(input_DEM_raster_url_path=WatershedDEM['output_raster'],input_watershed_raster_url_path=Watershed_prod['output_watershedfile']
+                                            ,input_treefile=Watershed_prod['output_treefile'],input_coordfile=Watershed_prod['output_coordfile'],
+                                            output_reachfile='rchlink.txt',output_nodefile='nodelinks.txt',output_reachareafile='rchareas.txt',output_rchpropertiesfile='rchproperties.txt')
+        print "Create_Reach_Nodelink = ", Create_Reach_Nodelink
+        list_of_outfiles_dict.append(Create_Reach_Nodelink)
+
+        ##get distribution
+        Create_wet_distribution=HDS.distance_wetness_distribution(input_watershed_raster_url_path=Watershed_prod['output_watershedfile'],
+                                           input_sloparearatio_raster_url_path=Watershed_prod['output_slopareafile'],input_distancnetostream_raster_url_path=Watershed_prod['output_distancefile'],
+                                           output_distributionfile='distribution.txt')
+        print "Create_wet_distribution = ", Create_wet_distribution
+        list_of_outfiles_dict.append(Create_wet_distribution)
+
+        ##getting landcover data
+
+        subset_NLCD_result = HDS.project_clip_raster(input_raster=nlcd_raster_resource,ref_raster_url_path=Watershed_prod['output_watershedfile'],output_raster='lulcmmef.tif')
+        print "subset_NLCD_result = ", subset_NLCD_result
+        list_of_outfiles_dict.append(subset_NLCD_result)
+
+        ##mukey_raster_resource='soil_mukey_westernUS.tif'
+        ##soil_raster='http://hydrods-dev.uwrl.usu.edu:20199/files/data/user_5/watershed_mukey.tif'
+        #http://hydrods-dev.uwrl.usu.edu:20199/api/dataservice/projectandcliprastertoreference?input_raster=soil_mukey_westernUS.tif&reference_raster=http://hydrods-dev.uwrl.usu.edu:20199/files/data/user_5/LoganRiver30WS.tif&output_raster=nlncd_spwan_proj_clip.tif
+
+        #subset_soil_data= HDS.project_clip_raster(input_raster=mukey_raster_resource,ref_raster_url_path=ref_raster_url_path,output_raster='watershed_mukey.tif')
         #
-        #
-        # """create nodelink and reachlink information"""
-        # Create_Reach_Nodelink=HDS.reachlink(input_DEM_raster_url_path=WatershedDEM['output_raster'],input_watershed_raster_url_path=Watershed_prod['output_watershedfile']
-        #                                     ,input_treefile=Watershed_prod['output_treefile'],input_coordfile=Watershed_prod['output_coordfile'],
-        #                                     output_reachfile='rchlink.txt',output_nodefile='nodelinks.txt',output_reachareafile='rchareas.txt',output_rchpropertiesfile='rchproperties.txt')
-        # print "Create_Reach_Nodelink = ", Create_Reach_Nodelink
-        # list_of_outfiles_dict.append(Create_Reach_Nodelink)
-        #
-        # ##get distribution
-        # Create_wet_distribution=HDS.distance_wetness_distribution(input_watershed_raster_url_path=Watershed_prod['output_watershedfile'],
-        #                                    input_sloparearatio_raster_url_path=Watershed_prod['output_slopareafile'],input_distancnetostream_raster_url_path=Watershed_prod['output_distancefile'],
-        #                                    output_distributionfile='distribution.txt')
-        # print "Create_wet_distribution = ", Create_wet_distribution
-        # list_of_outfiles_dict.append(Create_wet_distribution)
-        #
-        # ##getting landcover data
-        #
-        # subset_NLCD_result = HDS.project_clip_raster(input_raster=nlcd_raster_resource,ref_raster_url_path=Watershed_prod['output_watershedfile'],output_raster='lulcmmef.tif')
-        # print "subset_NLCD_result = ", subset_NLCD_result
-        # list_of_outfiles_dict.append(subset_NLCD_result)
-        #
-        # ##mukey_raster_resource='soil_mukey_westernUS.tif'
-        # ##soil_raster='http://hydrods-dev.uwrl.usu.edu:20199/files/data/user_5/watershed_mukey.tif'
-        # #http://hydrods-dev.uwrl.usu.edu:20199/api/dataservice/projectandcliprastertoreference?input_raster=soil_mukey_westernUS.tif&reference_raster=http://hydrods-dev.uwrl.usu.edu:20199/files/data/user_5/LoganRiver30WS.tif&output_raster=nlncd_spwan_proj_clip.tif
-        #
-        # #subset_soil_data= HDS.project_clip_raster(input_raster=mukey_raster_resource,ref_raster_url_path=ref_raster_url_path,output_raster='watershed_mukey.tif')
-        # #
-        # ##soil_raster=HDS.subset_raster_to_reference(WatershedSoil['output_raster'], Watershed_prod['output_watershedfile'],'Soil_Mukey_all.tif', save_as=None)
-        #
-        # soil_data=HDS.get_soil_data(input_watershed_raster_url_path=Watershed_prod['output_watershedfile'],output_f_raster='f.tif',output_k_raster='ko.tif',output_dth1_raster='dth1.tif'
-        #                          ,output_dth2_raster='dth2.tif',output_psif_raster='psif.tif',output_sd_raster='sd.tif',output_tran_raster='trans.tif')
-        # print "soil_data = ", soil_data
-        # list_of_outfiles_dict.append(soil_data)
-        #
-        # #create parameterspecificationfile
-        #
-        #  #http://hydrods-dev.uwrl.usu.edu:20199/api/dataservice/downloadsoildata?Watershed_Raster=http://hydrods-dev.uwrl.usu.edu:20199/files/data/user_5/LoganRiver30WS.tif&
-        #                     #  &output_f_file=f.tif&output_k_file=ko.tif&output_dth1_file=dth1.tif
-        #                         #  &output_dth2_file=dth2.tif&output_psif_file=psif.tif&output_sd_file=sd.tif&output_tran_file=trans.tif
-        # #create parameterspecificationfile
-        #
-        #
-        #
-        #
-        #
-        #
-        # paramlisfile=HDS.createparameterlistfile(input_watershed_raster_url_path=WatershedDEM['output_raster'],output_file=watershedName+'param.txt')
-        # print "paramlisfile = ", paramlisfile
-        # list_of_outfiles_dict.append(paramlisfile)
-        #
-        # ##creating basinparameter file
-        # basinparfile=HDS.create_basinparamterfile(input_DEM_raster_url_path=WatershedDEM['output_raster'],input_watershed_raster_url_path=Watershed_prod['output_watershedfile'],
-        #                                           input_f_url_path=soil_data['output_f_file'],input_dth1_url_path=soil_data['output_dth1_file'],
-        #                                           input_dth2_url_path=soil_data['output_dth2_file'],input_k_url_path=soil_data['output_k_file'],
-        #                                           input_sd_url_path=soil_data['output_sd_file'],input_psif_url_path=soil_data['output_psif_file'],
-        #                                           input_tran_url_path=soil_data['output_tran_file'],
-        #                                           input_lulc_url_path=subset_NLCD_result['output_raster'],input_lutlc_url_path=upload_lutlcfile,
-        #                                           input_lutkc_url_path=upload_lutkcfile,input_parameterspecfile_url_path=paramlisfile['output_parspcfile'],
-        #                                           input_nodelinksfile_url_path=Create_Reach_Nodelink['output_nodefile'], output_basinparameterfile='basinpars.txt')
-        # print "basinparfile = ", basinparfile
-        # list_of_outfiles_dict.append(basinparfile)
+        ##soil_raster=HDS.subset_raster_to_reference(WatershedSoil['output_raster'], Watershed_prod['output_watershedfile'],'Soil_Mukey_all.tif', save_as=None)
+
+        soil_data=HDS.get_soil_data(input_watershed_raster_url_path=Watershed_prod['output_watershedfile'],output_f_raster='f.tif',output_k_raster='ko.tif',output_dth1_raster='dth1.tif'
+                                 ,output_dth2_raster='dth2.tif',output_psif_raster='psif.tif',output_sd_raster='sd.tif',output_tran_raster='trans.tif')
+        print "soil_data = ", soil_data
+        list_of_outfiles_dict.append(soil_data)
+
+        #create parameterspecificationfile
+
+         #http://hydrods-dev.uwrl.usu.edu:20199/api/dataservice/downloadsoildata?Watershed_Raster=http://hydrods-dev.uwrl.usu.edu:20199/files/data/user_5/LoganRiver30WS.tif&
+                            #  &output_f_file=f.tif&output_k_file=ko.tif&output_dth1_file=dth1.tif
+                                #  &output_dth2_file=dth2.tif&output_psif_file=psif.tif&output_sd_file=sd.tif&output_tran_file=trans.tif
+        #create parameterspecificationfile
+
+
+
+
+
+
+        paramlisfile=HDS.createparameterlistfile(input_watershed_raster_url_path=WatershedDEM['output_raster'],output_file=watershedName+'param.txt')
+        print "paramlisfile = ", paramlisfile
+        list_of_outfiles_dict.append(paramlisfile)
+
+        ##creating basinparameter file
+        basinparfile=HDS.create_basinparamterfile(input_DEM_raster_url_path=WatershedDEM['output_raster'],input_watershed_raster_url_path=Watershed_prod['output_watershedfile'],
+                                                  input_f_url_path=soil_data['output_f_file'],input_dth1_url_path=soil_data['output_dth1_file'],
+                                                  input_dth2_url_path=soil_data['output_dth2_file'],input_k_url_path=soil_data['output_k_file'],
+                                                  input_sd_url_path=soil_data['output_sd_file'],input_psif_url_path=soil_data['output_psif_file'],
+                                                  input_tran_url_path=soil_data['output_tran_file'],
+                                                  input_lulc_url_path=subset_NLCD_result['output_raster'],input_lutlc_url_path=upload_lutlcfile,
+                                                  input_lutkc_url_path=upload_lutkcfile,input_parameterspecfile_url_path=paramlisfile['output_parspcfile'],
+                                                  input_nodelinksfile_url_path=Create_Reach_Nodelink['output_nodefile'], output_basinparameterfile='basinpars.txt')
+        print "basinparfile = ", basinparfile
+        list_of_outfiles_dict.append(basinparfile)
         
 
-        # create rainweight file
-        ## Subset DEM and Delineate Watershed
+        # # create rainweight file
+        # Subset DEM and Delineate Watershed
 
-        # input_static_prismrainfall  = 'PRISM_ppt_30yr_normal_800mM2_annual_bil.bil'
-        # # input_static_prismrainfall  = '/home/ahmet/hydosdata/PRISM_annual/PRISM_ppt_30yr_normal_800mM2_annual_bil.bil'
-        #
-        # subsetprismrainfall_request = HDS.subset_raster(input_raster=input_static_prismrainfall , left=leftX-0.05, top=topY+0.05, right=rightX+0.05,
-        #                                       bottom=bottomY-0.05,output_raster=watershedName + 'prism84.tif')
-        # print "subsetprismrainfall_request= ", subsetprismrainfall_request
-        # list_of_outfiles_dict.append(subsetprismrainfall_request)
-        #
-        #
-        # ## notes problem no such function susetrastertobbox is supported
-        # myWatershedPRISM= watershedName + 'ProjPRISM' + str(dx) + '.tif'
-        #
-        #
-        # ## notes problem no such function susetrastertobbox is supported
-        # myWatershedPRISM= watershedName + 'ProjPRISM' + str(dx) + '.tif'
-        # WatershedPRISMRainfall= HDS.project_resample_raster(input_raster_url_path=subsetprismrainfall_request['output_raster'],
-        #                                                       cell_size_dx=dx, cell_size_dy=dy, epsg_code=epsgCode,
-        #                                                       output_raster=myWatershedPRISM,resample='bilinear')
-        # print "WatershedPRISMRainfall = ", WatershedPRISMRainfall
-        # list_of_outfiles_dict.append(WatershedPRISMRainfall)
-        #
+        input_static_prismrainfall  = 'PRISM_ppt_30yr_normal_800mM2_annual_bil.bil'
+        # input_static_prismrainfall  = '/home/ahmet/hydosdata/PRISM_annual/PRISM_ppt_30yr_normal_800mM2_annual_bil.bil'
 
-        #
-        # project_climate_shapefile_result = HDS.project_shapefile(download_process_climatedata['output_gagefile'], 'ClimateGageProj.shp',
-        #                                                  epsg_code=epsgCode)
-        # print "project_climate_shapefile_result = ", project_climate_shapefile_result
-        # list_of_outfiles_dict.append(project_climate_shapefile_result)
-        #
-        #
-        # create_rainweightfile=HDS.create_rainweight(input_watershed_raster_url_path=Watershed_prod['output_watershedfile'],
-        #                                             input_raingauge_shapefile_url_path=project_climate_shapefile_result['output_shape_file'],
-        #                                         input_annual_rainfile=WatershedPRISMRainfall['output_raster'],
-        #                                             input_nodelink_file=Create_Reach_Nodelink['output_nodefile'],
-        #                                             output_rainweightfile='rainweights.txt')
-        # print "create_rainweightfile = ", create_rainweightfile
-        # list_of_outfiles_dict.append(create_rainweightfile)
-        #
-        # ##create latlonfromxy file
-        # creat_latlonxyfile=HDS.createlatlonfromxy(input_watershed_raster_url_path=Watershed_prod['output_watershedfile'],output_file='latlongfromxy.txt')
-        # print "creat_latlonxyfile = ", creat_latlonxyfile
-        # list_of_outfiles_dict.append(creat_latlonxyfile)
+        subsetprismrainfall_request = HDS.subset_raster(input_raster=input_static_prismrainfall , left=leftX-0.05, top=topY+0.05, right=rightX+0.05,
+                                              bottom=bottomY-0.05,output_raster=watershedName + 'prism84.tif')
+        print "subsetprismrainfall_request= ", subsetprismrainfall_request
+        list_of_outfiles_dict.append(subsetprismrainfall_request)
 
-        ##get streamflow file :TODO, there seem to be some error with the function used in R
-        # streamflow = HDS.download_streamflow(usgs_gage=usgs_gage_number, start_year=start_year, end_year=end_year,
-        #                                      output_streamflow='streamflow_calibration.dat')
-        # print "streamflow = ", streamflow
-        # list_of_outfiles_dict.append(streamflow)
+
+        ## notes problem no such function susetrastertobbox is supported
+        myWatershedPRISM= watershedName + 'ProjPRISM' + str(dx) + '.tif'
+
+
+        ## notes problem no such function susetrastertobbox is supported
+        myWatershedPRISM= watershedName + 'ProjPRISM' + str(dx) + '.tif'
+        WatershedPRISMRainfall= HDS.project_resample_raster(input_raster_url_path=subsetprismrainfall_request['output_raster'],
+                                                              cell_size_dx=dx, cell_size_dy=dy, epsg_code=epsgCode,
+                                                              output_raster=myWatershedPRISM,resample='bilinear')
+        print "WatershedPRISMRainfall = ", WatershedPRISMRainfall
+        list_of_outfiles_dict.append(WatershedPRISMRainfall)
+
+
+
+        project_climate_shapefile_result = HDS.project_shapefile(download_process_climatedata['output_gagefile'], 'ClimateGageProj.shp',
+                                                         epsg_code=epsgCode)
+        print "project_climate_shapefile_result = ", project_climate_shapefile_result
+        list_of_outfiles_dict.append(project_climate_shapefile_result)
+
+
+        create_rainweightfile=HDS.create_rainweight(input_watershed_raster_url_path=Watershed_prod['output_watershedfile'],
+                                                    input_raingauge_shapefile_url_path=project_climate_shapefile_result['output_shape_file'],
+                                                input_annual_rainfile=WatershedPRISMRainfall['output_raster'],
+                                                    input_nodelink_file=Create_Reach_Nodelink['output_nodefile'],
+                                                    output_rainweightfile='rainweights.txt')
+        print "create_rainweightfile = ", create_rainweightfile
+        list_of_outfiles_dict.append(create_rainweightfile)
+
+        ##create latlonfromxy file
+        creat_latlonxyfile=HDS.createlatlonfromxy(input_watershed_raster_url_path=Watershed_prod['output_watershedfile'],output_file='latlongfromxy.txt')
+        print "creat_latlonxyfile = ", creat_latlonxyfile
+        list_of_outfiles_dict.append(creat_latlonxyfile)
+
+        #get streamflow file :TODO, there seem to be some error with the function used in R
+        streamflow = HDS.download_streamflow(usgs_gage=usgs_gage_number, start_year=start_year, end_year=end_year,
+                                             output_streamflow='streamflow_calibration.dat')
+        print "streamflow = ", streamflow
+        list_of_outfiles_dict.append(streamflow)
 
         # Trying just the attempt case
         list_of_outfiles_dict.append(subsetDEM_request)
@@ -1797,40 +1797,40 @@ def call_runpytopkapi(inputs_dictionary, out_folder=''):
 
 
 
-    #
-    # # # Clip Static DEM (i.e. DEM that is in HydroDS) to the domain given & Project, and Resample it
-    # subsetDEM_request = HDS.subset_raster2(input_raster='nedWesternUS.tif', left=inputs_dictionary['box_leftX'],
-    #                                        top=inputs_dictionary['box_topY'], right=inputs_dictionary['box_rightX'],
-    #                                        bottom=inputs_dictionary['box_bottomY'], cell_size= float(inputs_dictionary['cell_size']),
-    #                                        output_raster= 'BlancoRiver.tif')  # BlancoRiver
-    # DEM_resample_request = HDS.project_resample_raster(input_raster_url_path=subsetDEM_request['output_raster'],cell_size_dx=int(inputs_dictionary['cell_size']), cell_size_dy=int(inputs_dictionary['cell_size']), epsg_code=epsgCode, output_raster='DEM84'+str( int(inputs_dictionary['cell_size']))+'.tif', resample='bilinear')
-    # #DEM_resample_request = HDS.project_resample_raster(input_raster_url_path='http://129.123.9.159:20199/files/data/user_6/loganSample100m.tif',cell_size_dx=int(inputs_dictionary['cell_size']), cell_size_dy=int(inputs_dictionary['cell_size']), epsg_code=epsgCode, output_raster='DEM84'+str( int(inputs_dictionary['cell_size']))+'.tif', resample='bilinear')
-    #
-    #
-    # # Create outlet shapefile from the point value
-    # outlet_shapefile_result = HDS.create_outlet_shapefile(point_x=inputs_dictionary['outlet_x'], point_y=inputs_dictionary['outlet_y'],output_shape_file_name= 'Outlet.shp'); print 'unprojected shapefile=', outlet_shapefile_result
-    # project_shapefile_result = HDS.project_shapefile(outlet_shapefile_result['output_shape_file_name'],'OutletProj.shp', epsg_code=epsgCode); print 'project_shapefile_result =', project_shapefile_result
-    #
-    # # Get complete raster set
-    # watershed_files = HDS.delineatewatershedtogetcompleterasterset(input_raster_url_path= DEM_resample_request['output_raster'],
-    #                        threshold=inputs_dictionary['threshold'], output_raster='mask.tif', output_outlet_shapefile='corrected_outlet.shp',
-    #                        input_outlet_shapefile_url_path=project_shapefile_result['output_shape_file'], )
-    #
-    # print "watershed_files =", watershed_files
-    #
-    # # # clip all the files to mask
-    # # clip_hds_file_dict(watershed_files,watershed_files['output_raster'] )
-    #
-    # slope_raster = HDS.create_raster_slope(input_raster_url_path=watershed_files['output_fill_raster'], output_raster= 'slope.tif'); print 'slope_raster =', slope_raster
-    #
-    #
-    #
-    # soil_files = HDS.downloadsoildataforpytopkapi5(input_watershed_raster_url_path=  watershed_files['output_raster']); print  'soil_files =', soil_files #,     #'http://129.123.9.159:20199/files/data/user_6/watershed_mukey.tif',
-    #
-    #
-    # subset_NLCD_result = HDS.project_clip_raster(input_raster='nlcd2011CONUS.tif',ref_raster_url_path=watershed_files['output_raster'], output_raster='nlcdProj' + str(inputs_dictionary['cell_size']) + '.tif');  print 'subset_NLCD_result=', subset_NLCD_result
-    # LUT_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'utils' ,'LUT_NLCD2n.csv')
-    # LUT_overland = HDS.upload_file(LUT_location);  reclassify_nlcd = HDS.reclassifyrasterwithlut(LUT=LUT_overland, input_raster=subset_NLCD_result['output_raster']);  print 'reclassify_nlcd =', reclassify_nlcd
+
+    # # Clip Static DEM (i.e. DEM that is in HydroDS) to the domain given & Project, and Resample it
+    subsetDEM_request = HDS.subset_raster2(input_raster='nedWesternUS.tif', left=inputs_dictionary['box_leftX'],
+                                           top=inputs_dictionary['box_topY'], right=inputs_dictionary['box_rightX'],
+                                           bottom=inputs_dictionary['box_bottomY'], cell_size= float(inputs_dictionary['cell_size']),
+                                           output_raster= 'BlancoRiver.tif')  # BlancoRiver
+    DEM_resample_request = HDS.project_resample_raster(input_raster_url_path=subsetDEM_request['output_raster'],cell_size_dx=int(inputs_dictionary['cell_size']), cell_size_dy=int(inputs_dictionary['cell_size']), epsg_code=epsgCode, output_raster='DEM84'+str( int(inputs_dictionary['cell_size']))+'.tif', resample='bilinear')
+    #DEM_resample_request = HDS.project_resample_raster(input_raster_url_path='http://129.123.9.159:20199/files/data/user_6/loganSample100m.tif',cell_size_dx=int(inputs_dictionary['cell_size']), cell_size_dy=int(inputs_dictionary['cell_size']), epsg_code=epsgCode, output_raster='DEM84'+str( int(inputs_dictionary['cell_size']))+'.tif', resample='bilinear')
+
+
+    # Create outlet shapefile from the point value
+    outlet_shapefile_result = HDS.create_outlet_shapefile(point_x=inputs_dictionary['outlet_x'], point_y=inputs_dictionary['outlet_y'],output_shape_file_name= 'Outlet.shp'); print 'unprojected shapefile=', outlet_shapefile_result
+    project_shapefile_result = HDS.project_shapefile(outlet_shapefile_result['output_shape_file_name'],'OutletProj.shp', epsg_code=epsgCode); print 'project_shapefile_result =', project_shapefile_result
+
+    # Get complete raster set
+    watershed_files = HDS.delineatewatershedtogetcompleterasterset(input_raster_url_path= DEM_resample_request['output_raster'],
+                           threshold=inputs_dictionary['threshold'], output_raster='mask.tif', output_outlet_shapefile='corrected_outlet.shp',
+                           input_outlet_shapefile_url_path=project_shapefile_result['output_shape_file'], )
+
+    print "watershed_files =", watershed_files
+
+    # # clip all the files to mask
+    # clip_hds_file_dict(watershed_files,watershed_files['output_raster'] )
+
+    slope_raster = HDS.create_raster_slope(input_raster_url_path=watershed_files['output_fill_raster'], output_raster= 'slope.tif'); print 'slope_raster =', slope_raster
+
+
+
+    soil_files = HDS.downloadsoildataforpytopkapi5(input_watershed_raster_url_path=  watershed_files['output_raster']); print  'soil_files =', soil_files #,     #'http://129.123.9.159:20199/files/data/user_6/watershed_mukey.tif',
+
+
+    subset_NLCD_result = HDS.project_clip_raster(input_raster='nlcd2011CONUS.tif',ref_raster_url_path=watershed_files['output_raster'], output_raster='nlcdProj' + str(inputs_dictionary['cell_size']) + '.tif');  print 'subset_NLCD_result=', subset_NLCD_result
+    LUT_location = os.path.join(os.path.dirname(os.path.realpath(__file__)),'utils' ,'LUT_NLCD2n.csv')
+    LUT_overland = HDS.upload_file(LUT_location);  reclassify_nlcd = HDS.reclassifyrasterwithlut(LUT=LUT_overland, input_raster=subset_NLCD_result['output_raster']);  print 'reclassify_nlcd =', reclassify_nlcd
 
 
     if inputs_dictionary['timeseries_source'].lower() =='daymet':
