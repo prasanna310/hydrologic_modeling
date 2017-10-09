@@ -1,20 +1,21 @@
-from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+# from django.shortcuts import render
+# from .model import SessionMaker
+# from tethys_gizmos.gizmo_options import TextInput, DatePicker
+# from tethys_sdk.gizmos import SelectInput
+# from tethys_sdk.gizmos import TimeSeries, AreaRange, PlotView, LinePlot
+# import datetime
 
-from .model import SessionMaker
-from tethys_gizmos.gizmo_options import TextInput, DatePicker
-from tethys_sdk.gizmos import SelectInput
-from tethys_sdk.gizmos import TimeSeries, AreaRange, PlotView, LinePlot
 from tethys_apps.sdk.gizmos import *
-import datetime
+
 
 import sys, os, json
 sys.path.append('/utils')
 
-sys.path.append(os.path.abspath('/utils/pytopkapi_utils.py'))
-sys.path.append(os.path.abspath(os.path.abspath(os.path.dirname(__file__) )))
+# sys.path.append(os.path.abspath('/utils/pytopkapi_utils.py'))
+# sys.path.append(os.path.abspath(os.path.abspath(os.path.dirname(__file__) )))
 
-from utils.pytopkapi_utils import *
+# from utils.pytopkapi_utils import *
 import app_utils
 
 # try:
@@ -171,7 +172,7 @@ def model_input(request):
         if not validation_status:
             # useless code. If the file is prepared, we know validatoin status = False
             import numpy as np
-            np.savetxt("/home/prasanna/Documents/a%s.txt"%form_error, np.array([1, 1]))
+            np.savetxt("/a%s.txt"%form_error, np.array([1, 1]))
 
         if validation_status:
             # hydrograpph series is a series (list) object.

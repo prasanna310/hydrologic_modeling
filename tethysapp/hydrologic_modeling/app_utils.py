@@ -12,13 +12,12 @@ except Exception, e:
 from datetime import date
 import datetime
 
-
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from tethys_gizmos.gizmo_options import MapView, MVLayer, MVView
-from tethys_gizmos.gizmo_options import TextInput, DatePicker
+# from django.shortcuts import render
+# from django.contrib.auth.decorators import login_required
+# from tethys_gizmos.gizmo_options import MapView, MVLayer, MVView
+# from tethys_gizmos.gizmo_options import TextInput, DatePicker
+# from tethys_sdk.gizmos import SelectInput
 from tethys_sdk.gizmos import TimeSeries
-from tethys_sdk.gizmos import SelectInput
 
 from HDS_hydrogate_dev import HydroDS
 import HDS_settings
