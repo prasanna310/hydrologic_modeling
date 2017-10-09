@@ -10,7 +10,7 @@ app_class = 'hydrologic_modeling.app:HydrologicModeling'
 app_package_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tethysapp', app_package)
 
 ### Python Dependencies ###
-dependencies = ['numpy', 'requests', 'pickle', 'subprocess', 'shlex'] #subprocess, shlex
+dependencies = ['numpy', 'requests']#, 'pickle', 'subprocess', 'shlex'
 
 setup(
     name=release_package,
