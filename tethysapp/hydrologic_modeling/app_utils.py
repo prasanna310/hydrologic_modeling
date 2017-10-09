@@ -2,7 +2,7 @@
 import subprocess, shlex, shutil
 
 import os, sys, json
-
+import numpy as np
 try:
     from osgeo import ogr, osr
     import fiona
@@ -38,7 +38,7 @@ def create_hydrograph(date_in_datetime, Qsim, simulation_name, error):
     hydrograph = []
     date_broken = [[dt.year, dt.month, dt.day, dt.hour, dt.minute] for dt in date_in_datetime]
     for i in range(len(Qsim)):
-        date = datetime(year=date_broken[i][0], month=date_broken[i][1], day=date_broken[i][2], hour=date_broken[i][3],
+        date = datetime.datetime(year=date_broken[i][0], month=date_broken[i][1], day=date_broken[i][2], hour=date_broken[i][3],
                         minute=date_broken[i][4])
         hydrograph.append([date, float(Qsim[i])])
 
@@ -235,7 +235,7 @@ def read_hydrograph_from_txt(hydrograph_fname):
     ar = np.genfromtxt(hydrograph_fname, dtype=(int, int, int, int, int, float))
     hydrograph_series = []
     for i in range(len(ar)):
-        date = datetime(year= int(ar[i][0]), month=int(ar[i][1]), day=int(ar[i][2]), hour=int(ar[i][3]),   minute=int(ar[i][4]))
+        date = datetime.datetime(year= int(ar[i][0]), month=int(ar[i][1]), day=int(ar[i][2]), hour=int(ar[i][3]),   minute=int(ar[i][4]))
         hydrograph_series.append([date, float(ar[i][5] ) ])
 
     return hydrograph_series
@@ -290,6 +290,7 @@ def read_data_from_json(json_fname):
         qsim_sum = 0
         eta_sum= 0
         ppt_sum = 0
+        qobs_sum = 0
         # also accomodate discharge in mm if area of watershed is provided
         if 'watershed_area' in data:
             watershed_area = data['watershed_area']
@@ -584,87 +585,6 @@ def meter_to_degree(distance_in_m, avg_lat):
 
     return angle_along_lon, angle_along_lat
 
-
-def run_model_with_input_as_dictionary(inputs_dictionary,write_to_db=True, simulation_folder=""):
-    """
-    :param inputs_dictionary:   inputs converted to dictionary in validation step. Type of inouts are taken care of
-                                e.g. float is already a float type, int is int, and string is string.
-    :param simulation_folder:
-    :return:                    Hydrograph (as timeseries, between datetime Vs Discharge)
-    """
-    # inputs extracted from the dictionary
-
-    user_name = inputs_dictionary['user_name']
-    simulation_name = inputs_dictionary['simulation_name']
-    simulation_folder = simulation_folder
-    simulation_start_date = inputs_dictionary['simulation_start_date']
-    simulation_end_date = inputs_dictionary['simulation_end_date']
-    USGS_gage = int(inputs_dictionary['USGS_gage'])
-
-    outlet_x = float(inputs_dictionary['outlet_x'])
-    outlet_y = float(inputs_dictionary['outlet_y'])
-    box_topY = float(inputs_dictionary['box_topY'])
-    box_bottomY = float(inputs_dictionary['box_bottomY'])
-    box_rightX = float(inputs_dictionary['box_rightX'])
-    box_leftX = float(inputs_dictionary['box_leftX'])
-
-    timeseries_source = inputs_dictionary['timeseries_source']
-    threshold = float(inputs_dictionary['box_bottomY'])
-    cell_size = float(inputs_dictionary['box_bottomY'])
-    timestep = float(inputs_dictionary['box_bottomY'])
-    model_engine = inputs_dictionary['model_engine']
-
-    # :todo some sort of algorith to create a folder name. ini_fname = simulation_name OR may not be required
-    temp_folder_name = 'usr1'
-    ini_fname = 'BlackSmithFork.ini'
-
-    simulation_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'workspaces', 'user_workspaces',
-                                     temp_folder_name)
-    ini_path = os.path.join(simulation_folder, ini_fname)
-
-    # TOPKAPI MODEL
-    if model_engine == 'TOPKAPI':
-        # step0,
-        run_1 = pytopkapi_run_instance(simulation_name=simulation_name, cell_size=cell_size, timestep=timestep,
-                                       xy_outlet=[outlet_x, outlet_y],
-                                       yyxx_boundingBox=[box_topY, box_bottomY, box_leftX, box_rightX],
-                                       USGS_gage=USGS_gage, list_of_threshold=[threshold],
-                                       simulation_folder=simulation_folder)
-
-        step1_create_ini = run_1.prepare_supporting_ini()  # step1
-        # step2_run_model = run_1.run()                               # step2
-        date_in_datetime, Qsim, error = run_1.get_Qsim_and_error()
-
-        if write_to_db:
-            # write_to_model_input_table(inputs_dictionary, simulation_folder)
-            table_id = write_to_model_input_table(inputs_dictionary, simulation_folder)
-
-        # create_viewplot_hydrograph(date_in_datetime, Qsim, error)  # aile kina ho kaam garena
-
-        # preparing timeseries data in the format shown in: http://docs.tethysplatform.org/en/latest/tethys_sdk/gizmos/plot_view.html#time-series
-        hydrograph_series = []
-        date_broken = [[dt.year, dt.month, dt.day, dt.hour, dt.minute] for dt in date_in_datetime]
-        for i in range(len(Qsim)):
-            date = datetime(year=date_broken[i][0], month=date_broken[i][1], day=date_broken[i][2],
-                            hour=date_broken[i][3],
-                            minute=date_broken[i][4])
-            hydrograph_series.append([date, float(Qsim[i])])
-
-    return hydrograph_series, table_id
-
-def shapefile_to_geojson(path_to_shp):
-    #input: Shapefile
-    #output: geojson that the javascript can plot
-
-    # shapefile to geojson using gdal
-    directory, filename = os.path.split(path_to_shp)
-    directory = '/home/prasanna/Documents/outlet_boundary'  #:todo del this line
-    path_to_geojson = os.path.join(directory, "watershed_converted.geojson")
-    cmd = '''ogr2ogr -f GeoJSON -t_srs crs:84 %s %s'''%(path_to_geojson, path_to_shp)
-    print cmd
-    os.system(cmd)
-    return  path_to_geojson
-
     # edit geojson
     def json_to_js_prepend(json_filename):
         import fileinput
@@ -682,6 +602,21 @@ def shapefile_to_geojson(path_to_shp):
                 print line_to_prepend.rstrip('\r\n') + '\n' + xline,
             else:
                 print xline,
+
+
+def shapefile_to_geojson(path_to_shp):
+    #input: Shapefile
+    #output: geojson that the javascript can plot
+
+    # shapefile to geojson using gdal
+    directory, filename = os.path.split(path_to_shp)
+    directory = '.'  #:todo del this line
+    path_to_geojson = os.path.join(directory, "watershed_converted.geojson")
+    cmd = '''ogr2ogr -f GeoJSON -t_srs crs:84 %s %s'''%(path_to_geojson, path_to_shp)
+    print cmd
+    os.system(cmd)
+    return  path_to_geojson
+
 
     json_to_js_prepend(path_to_geojson)
     return path_to_geojson
@@ -741,13 +676,17 @@ def read_raster(rast_fname, file_format='GTiff'):
         array is the same as the data type stored in the raster file.
 
     """
+    data = None
     if file_format != 'GTiff':
         err_str = 'Reading %s files not implemented.' % file_format
         raise NotImplementedError(err_str)
     else:
-        from osgeo import gdal
-        dset = gdal.Open(rast_fname)
-        data = dset.ReadAsArray()
+        try:
+            from osgeo import gdal
+            dset = gdal.Open(rast_fname)
+            data = dset.ReadAsArray()
+        except:
+            pass
 
     return data
 
@@ -878,7 +817,7 @@ def validate_inputs(request):
                 if afile.name.split(".")[-1] == "dbf":
                     outlet_dbf = afile
 
-            outlet_x, outlet_y = get_outlet_xy_from_shp_shx(shp_file=outlet_shp, shx_file=outlet_shx)
+            outlet_x, outlet_y = get_outlet_xy_from_shp(shp_file=outlet_shp, shx_file=outlet_shx)
             geojson_files['geojson_outlet'] = shapefile_to_geojson(outlet_shp)
 
 
