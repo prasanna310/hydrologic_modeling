@@ -1305,8 +1305,6 @@ def test2(request):
                            condensed=True)
 
 
-
-
     context = {
         'test_string1':test_string,
         'observed_hydrograph':observed_hydrograph,

@@ -36,29 +36,30 @@ class HydrologicModeling(TethysAppBase):
                            url='hydrologic-modeling/model_run',
                            controller='hydrologic_modeling.controllers.model_run'),
 
+                    # /hydrologic-modeling/model-input2
+                    UrlMap(name='model_input2',
+                           url='hydrologic-modeling/model_input2',
+                           controller='hydrologic_modeling.controllers.model_input2'),
 
 
                     UrlMap(name='visualize_shp',
                            url='hydrologic-modeling/visualize_shp',
                            controller='hydrologic_modeling.controllers.visualize_shp'),
 
-                    # /hydrologic-modeling/test2
-                    UrlMap(name='test2',
-                           url='hydrologic-modeling/test2',
-                           controller='hydrologic_modeling.controllers.test2'),
+                    # # /hydrologic-modeling/test2
+                    # UrlMap(name='test2',
+                    #        url='hydrologic-modeling/test2',
+                    #        controller='hydrologic_modeling.controllers.test2'),
 
-                    # /hydrologic-modeling/model-input2
-                    UrlMap(name='model_input2',
-                           url='hydrologic-modeling/model_input2',
-                           controller='hydrologic_modeling.controllers.model_input2'),
 
-                    UrlMap(name='model_input0',
-                           url='hydrologic-modeling/model_input0',
-                           controller='hydrologic_modeling.controllers.model_input0'),
-
-                    UrlMap(name='test3',
-                           url='hydrologic-modeling/test3',
-                           controller='hydrologic_modeling.controllers.test3'),
+                    #
+                    # UrlMap(name='model_input0',
+                    #        url='hydrologic-modeling/model_input0',
+                    #        controller='hydrologic_modeling.controllers.model_input0'),
+                    #
+                    # UrlMap(name='test3',
+                    #        url='hydrologic-modeling/test3',
+                    #        controller='hydrologic_modeling.controllers.test3'),
 
         )
 
