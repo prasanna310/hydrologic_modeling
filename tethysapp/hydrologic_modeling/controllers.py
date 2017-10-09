@@ -55,61 +55,82 @@ def model_input(request):
     # give the value for thsi variable = 0 if the program is starting for the first time
     simulation_names_list = app_utils.create_simulation_list_after_querying_db(given_user_name=user_name)
 
+    # # intials
+    watershed_name = 'SantaCruz' # 'RBC' , 'Santa Cruz', 'Barrow Creeks', 'Plunge' , Logan
+    initials = {
 
-    simulation_name = TextInput(display_text='Simulation name', name='simulation_name', initial='Logan_sample')
-    USGS_gage = TextInput(display_text='USGS gage nearby', name='USGS_gage', initial='10109000')
-    cell_size = TextInput(display_text='Cell size in meters', name='cell_size', initial='300')
-    timestep = TextInput(display_text='Timestep in hrs', name='timestep', initial='24') #, append="hours"
+        'Logan': {'simulation_name': 'Logan_sample', 'USGS_gage': '10109000', 'cell_size': '300', 't0': '10-01-2010',
+                  't': '10-30-2010', 'threshold': '25', 'del_t': '24', 'x': '-111.7836', 'y': '41.7436',
+                  'ymax': '42.12', 'xmax': '-111.44', 'ymin': '41.68', 'xmin': '-111.83'},
+
+        'RBC': {'simulation_name': 'RBC_sample', 'USGS_gage': '10172200', 'cell_size': '100', 't0': '10-01-2010',
+                  't': '01-01-2011', 'threshold': '2', 'del_t': '24', 'x': '-111.80624', 'y': '40.77968',
+                  'ymax': '40.8327', 'xmax': '-111.728', 'ymin': '40.772', 'xmin': '-111.834'},
+
+
+        'Plunge': {'simulation_name': 'Plunge_sample', 'USGS_gage': '11055500', 'cell_size': '300', 't0': '10-01-2010',
+                  't': '01-01-2011', 'threshold': '5', 'del_t': '24', 'x':'-117.141284', 'y': '34.12128',
+                  # 'ymax':'34.2336', 'xmax': '-117.048046', 'ymin': '34.10883', 'xmin': '-117.168289',
+                    'ymax':'34.213', 'xmax': '-117.062', 'ymin': '34.10883', 'xmin': '-117.18'
+                   },
+
+        'SantaCruz': {'simulation_name': 'SantaCruz_demo', 'USGS_gage': '11124500', 'cell_size': '100', 't0': '01-01-2010',
+                  't': '12-30-2011', 'threshold': '5', 'del_t': '24', 'x': '-119.90873', 'y': '34.59637',
+                  'ymax': '34.714', 'xmax':'-119.781', 'ymin':'34.586', 'xmin': '-119.925'},
+
+        'BlancoRiver': {'simulation_name': 'BlancoRiver_trial', 'USGS_gage': '08171000', 'cell_size': '500',
+                      't0': '01-01-2010',
+                      't': '12-30-2011', 'threshold': '20', 'del_t': '24', 'x': '-98.088989', 'y': '29.99349',
+                      'ymax': '30.20707', 'xmax': '-98.0679', 'ymin': '29.96298', 'xmin': '-98.4732'},
+
+        'OnionCreek': {'simulation_name': 'OnionCreek_trial', 'USGS_gage': '08158700', 'cell_size': '200',
+                        't0': '01-01-2010',
+                        't': '12-30-2011', 'threshold': '20', 'del_t': '24', 'x': '-98.00826', 'y': '30.08341',
+                        'ymax': '30.213', 'xmax': '-97.956', 'ymin': '30.027', 'xmin': '-98.461'},
+
+    }
+
+
+    simulation_name = TextInput(display_text='Simulation name', name='simulation_name', initial=initials[watershed_name]['simulation_name'])
+    USGS_gage = TextInput(display_text='USGS gage nearby', name='USGS_gage', initial=initials[watershed_name]['USGS_gage'])
+    cell_size = TextInput(display_text='Cell size in meters', name='cell_size', initial=initials[watershed_name]['cell_size'])
+    timestep = TextInput(display_text='Timestep in hrs', name='timestep', initial=initials[watershed_name]['del_t']) #, append="hours"
     simulation_start_date_picker = DatePicker(name='simulation_start_date_picker', display_text='Start Date',
                                               autoclose=True, format='mm-dd-yyyy', start_date='10-15-2005',
-                                              start_view='year', today_button=True, initial='01-01-2010')
+                                              start_view='year', today_button=True, initial=initials[watershed_name]['t0'])
     simulation_end_date_picker = DatePicker(name='simulation_end_date_picker', display_text='End Date',
                                             autoclose=True, format='mm-dd-yyyy', start_date='10-15-2005',
-                                            start_view='year', today_button=False, initial='12-30-2011')
+                                            start_view='year', today_button=False, initial=initials[watershed_name]['t'])
+    threshold = TextInput(display_text='Stream threshold in km2', name='threshold', initial=initials[watershed_name]['threshold'])
 
     timeseries_source = SelectInput(display_text='Timeseries source',
                 name='timeseries_source',
                 multiple=False,
-                options=[('User File', 'user_file'), ('UEB', 'UEB'), ('Daymet', 'Daymet')],
+                options=[  ('Daymet', 'Daymet'),('UEB', 'UEB')],
                 initial=['Daymet'],
                 original=['Daymet'])
 
     model_engine = SelectInput(display_text='Choose Model',
                 name='model_engine',
                 multiple=False,
-                options=[('TOPKAPI', 'TOPKAPI'), ('TOPNET', 'TOPNET'), ('RHESSys', 'RHESSys')],
+                options=[('TOPKAPI', 'TOPKAPI'), ('TOPNET', 'TOPNET')],
                 initial=['TOPKAPI'],
                 original=['TOPKAPI'])
 
-    threshold = TextInput(display_text='Stream threshold in km2', name='threshold', initial='25')
-
-    # html form to django form (for LOGAN WATERSHED)
-    outlet_x = TextInput(display_text='Longitude', name='outlet_x', initial='-111.7836')
-    outlet_y = TextInput(display_text='Latitude', name='outlet_y', initial='41.744')
-
-    box_topY = TextInput(display_text='North Y', name='box_topY', initial='42.128')
-    box_rightX = TextInput(display_text='East X', name='box_rightX', initial='-111.438')
-    box_leftX = TextInput(display_text='West X', name='box_leftX', initial='-111.822')
-    box_bottomY = TextInput(display_text='South Y', name='box_bottomY', initial='41.686')
-
-    # (NEW FOR LOGAN WATERSHED)
-    # outlet_x = TextInput(display_text='Longitude', name='outlet_x', initial='-111.7915') #41.74025, -111.7915
-    # outlet_y = TextInput(display_text='Latitude', name='outlet_y', initial='41.74025')
-
-    box_topY = TextInput(display_text='North Y', name='box_topY', initial='41.90')
-    box_rightX = TextInput(display_text='East X', name='box_rightX', initial='-111.54')
-    box_leftX = TextInput(display_text='West X', name='box_leftX', initial='-111.85')
-    box_bottomY = TextInput(display_text='South Y', name='box_bottomY', initial='41.72')
 
 
-    # # FOR PLUNGE
-    # outlet_x = TextInput(display_text='Longitude', name='outlet_x', initial='-117.141284')
-    # outlet_y = TextInput(display_text='Latitude', name='outlet_y', initial='34.12128')
-    #
-    # box_topY = TextInput(display_text='North Y', name='box_topY', initial='34.2336')
-    # box_rightX = TextInput(display_text='East X', name='box_rightX', initial='-117.048046')
-    # box_leftX = TextInput(display_text='West X', name='box_leftX', initial='-117.168289')
-    # box_bottomY = TextInput(display_text='South Y', name='box_bottomY', initial='34.10883')
+    # # html form to django form
+
+    # (Any Watershed)
+    outlet_x = TextInput(display_text='Longitude', name='outlet_x', initial=initials[watershed_name]['x']) #41.74025, -111.7915
+    outlet_y = TextInput(display_text='Latitude', name='outlet_y', initial=initials[watershed_name]['y'])
+
+    box_topY = TextInput(display_text='North Y', name='box_topY', initial=initials[watershed_name]['ymax'])
+    box_rightX = TextInput(display_text='East X', name='box_rightX', initial=initials[watershed_name]['xmax'])
+    box_bottomY = TextInput(display_text='South Y', name='box_bottomY', initial=initials[watershed_name]['ymin'])
+    box_leftX = TextInput(display_text='West X', name='box_leftX', initial=initials[watershed_name]['xmin'])
+
+
 
 
     outlet_hs = TextInput(display_text='', name='outlet_hs', initial='')
@@ -172,8 +193,6 @@ def model_input(request):
                     'data': hydrograph_series,
                 }]
             )
-
-
 
 
     context = {
@@ -243,19 +262,22 @@ def model_run(request):
 
     hydrograph_series_obs = None
     hydrograph_series_sim = None
-    hydrograph_opacity =0.2
+    hydrograph_opacity =0.1
     observed_hydrograph = ""
     observed_hydrograph2 = ''
     observed_hydrograph3 = ''
+    vol_bal_graphs = ''
 
     observed_hydrograph_userModified = ""
     observed_hydrograph_userModified2 = ""
     observed_hydrograph_userModified3 = ""
-
+    vol_bal_graphs_userModified = ''
+    
     observed_hydrograph_loaded = ""
     observed_hydrograph_loaded2 = ""
     observed_hydrograph_loaded3 = ""
-
+    vol_bal_graphs_loaded = ''
+    
     eta_ts_obj  = eta_ts_obj_modified   = eta_ts_obj_loaded = ''
     vo_ts_obj   = vo_ts_obj_modified    = vo_ts_obj_loaded  = ''
     vc_ts_obj   = vc_ts_obj_modified    = vc_ts_obj_loaded  = ''
@@ -271,7 +293,7 @@ def model_run(request):
     simulation_loaded_id  = ""
     current_model_inputs_table_id = 0
     model_inputs_table_id_from_another_html = 0  #:TODO need to make it point to last sim by default
-    # temp_folder = app_utils.generate_uuid_file_path()
+
 
     # if user wants to download the file only
     download_response = {}
@@ -292,11 +314,12 @@ def model_run(request):
     if request.is_ajax and request.method == 'POST':
         pass
 
-
-    # model_run can receive request from three sources:
-    # 1) model_input, prepare model     (if model_input_prepare_request != None)
-    # 2) model_input, load model        (if model_input_load_request != None)
-    # 3) model_run, calibrate and change the result seen. i.e. passes to itself   (if model_run_calib_request != None)
+    '''
+    model_run can receive request from three sources:
+    1) model_input, prepare model     (if model_input_prepare_request != None)
+    2) model_input, load model        (if model_input_load_request != None)
+    3) model_run, calibrate and change the result seen. i.e. passes to itself   (if model_run_calib_request != None)
+    '''
 
 
     # # check to see if the request is from method (1)
@@ -325,7 +348,6 @@ def model_run(request):
             b = request.POST['load_simulation_name']
             print 'MSG from II: The name of simulation loaded from dropdown menu is: ',hs_resource_id_created
             print "MSG from II: Previous simulation is loaded. The name of simulation loaded is: ", hs_resource_id_created
-
     except:
         model_input_load_request = None
 
@@ -353,9 +375,6 @@ def model_run(request):
             print inputs_dictionary
             run_request = app_utils.run_topnet(inputs_dictionary)
 
-        elif model_engine_chosen.lower() == 'rhessys':
-            test_string =  'RHESSys was chosen'
-            print test_string
         else:
             # Check if user wants to just download the file
             try:
@@ -369,11 +388,11 @@ def model_run(request):
                     # creata input_dictionary from the request
                     inputs_dictionary = app_utils.create_model_input_dict_from_request(request)
 
-                    # test_string = inputs_dictionary['cell_size']
-                    # download_request_response = app_utils.download_geospatial_and_forcing_files(inputs_dictionary)
-                    # if download_request_response != {}:
-                    #     download_status = True
-                    #     download_link = download_request_response
+                    test_string = inputs_dictionary['cell_size']
+                    download_request_response = app_utils.download_geospatial_and_forcing_files(inputs_dictionary)
+                    if download_request_response != {}:
+                        download_status = True
+                        download_link = download_request_response
                 elif download_choice == 'soil':
                     print "Downloading geospatial and soil file in progrress"
                     test_string ="Downloading geospatial and soil file in progrress"
@@ -387,13 +406,15 @@ def model_run(request):
 
                 download_request_response = app_utils.download_geospatial_and_forcing_files(inputs_dictionary, download_request=download_choice)
                 print "Downloading all the files successfully completed"
+
+
                 if download_request_response != {}:
                     download_status = True
                     download_link = download_request_response
 
             except Exception, e:
                 print 'The forcing file creation step gave error'
-                f = file('/home/prasanna/Documents/error_log.html', 'w')
+                f = file('/home/prasanna/Desktop/error_auto.html', 'w')
                 f.write(str(e))
                 f.close()
 
@@ -419,8 +440,8 @@ def model_run(request):
                 # # Method (1), STEP (2):call_runpytopkapi function
 
                 ######### START: need to get two variables: i) hs_resource_id_created, and ii) hydrograph series ###############
-                #response_JSON_file =  app_utils.call_runpytopkapi(inputs_dictionary= inputs_dictionary)
-                response_JSON_file = '/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/ad2c643e97014199af5ced22f5712f01/pytopkpai_responseJSON.txt'
+                response_JSON_file = '/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/8c6a4bf0a3ad45c69b661a1b55bb0d4d/pytopkpai_responseJSON.txt'
+                response_JSON_file =  app_utils.call_runpytopkapi(inputs_dictionary= inputs_dictionary)
 
                 json_data = app_utils.read_data_from_json(response_JSON_file)
 
@@ -436,6 +457,11 @@ def model_run(request):
                 vc = json_data['vc']
                 vs = json_data['vs']
                 ppt= json_data['ppt']
+
+                ppt_cum = json_data['ppt_cum']  # cumulative
+                eta_cum = json_data['eta_cum']
+                q_obs_cum = json_data['q_obs_cum']
+                q_sim_cum = json_data['q_sim_cum']
 
                 # initial values
                 # calib_parameter= {"fac_l": 1.0, "fac_n_o": 1.0, "fac_n_c": 1.0, "fac_th_s": 1.0, "fac_ks": 1.0},
@@ -484,29 +510,11 @@ def model_run(request):
 
 
 
-                observed_hydrograph=  TimeSeries(
-                    height='300px',width='500px', engine='highcharts',title=' Simulated Hydrograph ',
-                    subtitle="Simulated and Observed flow  " ,
-                    y_axis_title='Discharge',y_axis_units='cfs',
-                    series=[{
-                        'name': 'Simulated Flow',
-                        'data': hydrograph_series_sim
-                    }])
-
-                observed_hydrograph2 = TimeSeries(
-                    height='300px', width='500px', engine='highcharts', title=' Observed (Actual) Hydrograph ',
-                    subtitle="Simulated and Observed flow  " ,
-                    y_axis_title='Discharge', y_axis_units='cfs',
-                    series=[
-                            {'name': 'Observed Flow',
-                             'data':  hydrograph_series_obs
-                             }])
 
                 observed_hydrograph3 = TimeSeries(
-                    height='300px',
-                    width='500px',
-                    engine='highcharts',
+                    height='300px', width='500px', engine='highcharts',
                     title="Simulated and Observed Hydrographs",
+                    subtitle='Nash value: %s, R2: %s'%(json_data['nash_value'], json_data['r2_value']),
                     y_axis_title='Discharge ',
                     y_axis_units='cfs',
                     series=[{
@@ -519,11 +527,37 @@ def model_run(request):
                         'fillOpacity': hydrograph_opacity,
                     }])
 
+
+                vol_bal_graphs = TimeSeries(
+                    height='600px',  width='500px', engine='highcharts',
+                    title="Cumulative volume of water in the basin",
+                    y_axis_title='Volume of water ',
+                    y_axis_units='mm',
+                    series=[{
+                        'name': 'Simulated Q',
+                        'data': q_sim_cum,
+                        'fillOpacity': hydrograph_opacity,
+                    }, {
+                        'name': 'Observed Q',
+                        'data': q_obs_cum,
+                        'fillOpacity': hydrograph_opacity,
+                    },{
+                        'name': 'ETa',
+                        'data': eta_cum,
+                        'fillOpacity': hydrograph_opacity,
+                    } , {
+                        'name': 'PPT',
+                        'data': ppt_cum,
+                        'fillOpacity': hydrograph_opacity,
+                    }
+                    ])
+
                 eta_ts_obj =app_utils.create_1d(timeseries_list=eta, label='Actual Evapotranspiration', unit='mm/day')
                 vc_ts_obj = app_utils.create_1d(timeseries_list=vc, label='Average Water Volume in Channel Cells', unit='mm/day')
                 vs_ts_obj = app_utils.create_1d(timeseries_list=vs, label='Average Water Volume in Soil Cells', unit='mm/day')
                 vo_ts_obj = app_utils.create_1d(timeseries_list=vo, label='Average Water Volume in Overland Cells', unit='mm/day')
                 ppt_ts_obj = app_utils.create_1d(timeseries_list=ppt, label='Rainfall', unit='mm/day')
+
 
 
     # Method (2), request from model_input-load simulation
@@ -541,9 +575,8 @@ def model_run(request):
 
 
         ######### START: need to get two variables: i) hs_resource_id_created, and ii) hydrograph series ##############
-
+        response_JSON_file = '/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/0a6ffd827ba14b07b6fed5dc8559877f/pytopkpai_responseJSON.txt'
         response_JSON_file =  app_utils.loadpytopkapi(hs_res_id=hs_resource_id, out_folder='')
-        #response_JSON_file ='/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/0f9aa59f8621411e8a63c06b9a8852d1/pytopkpai_responseJSON.txt'
         json_data = app_utils.read_data_from_json(response_JSON_file)
 
         hs_resource_id_created = hs_resource_id_loaded =hs_resource_id  #json_data['hs_res_id_created']
@@ -557,6 +590,12 @@ def model_run(request):
         vs = json_data['vs']
         ppt = json_data['ppt']
 
+        ppt_cum = json_data['ppt_cum']  # cumulative
+        eta_cum = json_data['eta_cum']
+        q_obs_cum = json_data['q_obs_cum']
+        q_sim_cum = json_data['q_sim_cum']
+        
+        
         # init values in the form
         if json_data['calib_parameter'] != None:
             fac_L_init = json_data['calib_parameter']['fac_l']
@@ -593,8 +632,9 @@ def model_run(request):
             width='500px',
             engine='highcharts',
             title= "Simulated and Observed flow  " ,
-            y_axis_title='Discharge (cfs)',
-            y_axis_units='m',
+            # subtitle='Nash value: %s, R2: %s'%(json_data['nash_value'], json_data['r2_value']),
+            y_axis_title='Discharge',
+            y_axis_units='cfs',
             series=[{
                 'name': 'Simulated Hydrograph',
                 'data': hydrograph_series_sim,
@@ -606,6 +646,31 @@ def model_run(request):
             }]
         )
 
+        vol_bal_graphs_loaded = TimeSeries(
+            height='600px',
+            width='500px',
+            engine='highcharts',
+            title="Cumulative volume of water in the basin",
+            y_axis_title='Volume of water ',
+            y_axis_units='mm',
+            series=[{
+                'name': 'Simulated Q',
+                'data': q_sim_cum,
+                'fillOpacity': hydrograph_opacity,
+            }, {
+                'name': 'Observed Q',
+                'data': q_obs_cum,
+                'fillOpacity': hydrograph_opacity,
+            }, {
+                'name': 'ETa',
+                'data': eta_cum,
+                'fillOpacity': hydrograph_opacity,
+            }, {
+                'name': 'PPT',
+                'data': ppt_cum,
+                'fillOpacity': hydrograph_opacity,
+            }
+            ])
 
         vc_ts_obj_loaded = app_utils.create_1d(timeseries_list=vc, label='Average Water Volume in Channel Cells',unit='mm/day')
         vs_ts_obj_loaded = app_utils.create_1d(timeseries_list=vs, label='Average Water Volume in Soil Cells', unit='mm/day')
@@ -624,7 +689,6 @@ def model_run(request):
 
         # hydrograph2 = []
         # observed_hydrograph_loaded = ''
-
 
 
     # Method (3), request from model_run, change calibration parameters
@@ -650,12 +714,12 @@ def model_run(request):
 
 
         ######### START: need to get at leaset two variables: i) hs_resource_id_created, and ii) hydrograph series #####
-        # response_JSON_file =  app_utils.modifypytopkapi(hs_res_id=hs_resource_id_created, out_folder='',
-        #                                                 fac_l=fac_L_form, fac_ks=fac_Ks_form, fac_n_o=fac_n_o_form,
-        #                                                 fac_n_c=fac_n_c_form, fac_th_s=fac_th_s_form,
-        #                                                 pvs_t0=pvs_t0_form, vo_t0=vo_t0_form, qc_t0=qc_t0_form,
-        #                                                 kc=kc_form )
-        response_JSON_file = '/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/5115bcf068fe4a1a8e90a7ebb84ab871/pytopkpai_responseJSON.txt'
+        response_JSON_file =  app_utils.modifypytopkapi(hs_res_id=hs_resource_id_created, out_folder='',
+                                                        fac_l=fac_L_form, fac_ks=fac_Ks_form, fac_n_o=fac_n_o_form,
+                                                        fac_n_c=fac_n_c_form, fac_th_s=fac_th_s_form,
+                                                        pvs_t0=pvs_t0_form, vo_t0=vo_t0_form, qc_t0=qc_t0_form,
+                                                        kc=kc_form )
+        #response_JSON_file = '/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/5115bcf068fe4a1a8e90a7ebb84ab871/pytopkpai_responseJSON.txt'
         json_data = app_utils.read_data_from_json(response_JSON_file)
 
         hs_resource_id_created = hs_resource_id_modified =  json_data['hs_res_id_created']
@@ -666,6 +730,12 @@ def model_run(request):
         vo = json_data['vo']
         vc = json_data['vc']
         vs = json_data['vs']
+
+        ppt_cum = json_data['ppt_cum']  # cumulative
+        eta_cum = json_data['eta_cum']
+        q_obs_cum = json_data['q_obs_cum']
+        q_sim_cum = json_data['q_sim_cum']
+
         print 'hydrograph_series_sim is ',[item[-1] for item in hydrograph_series_sim]
 
         # init values in the form
@@ -765,6 +835,31 @@ def model_run(request):
                 'data': hydrograph_series_obs
             }])
 
+        vol_bal_graphs_userModified = TimeSeries(
+            height='600px',
+            width='500px',
+            engine='highcharts',
+            title="Cumulative volume of water in the basin",
+            y_axis_title='Volume of water ',
+            y_axis_units='mm',
+            series=[{
+                'name': 'Simulated Q',
+                'data': q_sim_cum,
+                'fillOpacity': hydrograph_opacity,
+            }, {
+                'name': 'Observed Q',
+                'data': q_obs_cum,
+                'fillOpacity': hydrograph_opacity,
+            }, {
+                'name': 'ETa',
+                'data': eta_cum,
+                'fillOpacity': hydrograph_opacity,
+            }, {
+                'name': 'PPT',
+                'data': ppt_cum,
+                'fillOpacity': hydrograph_opacity,
+            }
+            ])
 
         vc_ts_obj_modified = app_utils.create_1d(timeseries_list=vc, label='Average Water Volume in Channel Cells',unit='mm/day')
         vs_ts_obj_modified = app_utils.create_1d(timeseries_list=vs, label='Average Water Volume in Soil Cells', unit='mm/day')
@@ -801,6 +896,9 @@ def model_run(request):
             
 
         # # # -------DATABASE STUFFS  <ends> ----- # #
+
+
+
 
     print 'simulation_loaded_id',simulation_loaded_id   # probably useless
     print 'hs_resource_id_created', hs_resource_id_created
@@ -856,19 +954,21 @@ def model_run(request):
                'vc_ts_obj': vc_ts_obj,
                'vo_ts_obj': vo_ts_obj,
                'ppt_ts_obj': ppt_ts_obj,
+               'vol_bal_graphs':vol_bal_graphs,
 
                'eta_ts_obj_modified': eta_ts_obj_modified,
                'vs_ts_obj_modified': vs_ts_obj_modified,
                'vc_ts_obj_modified': vc_ts_obj_modified,
                'vo_ts_obj_modified': vo_ts_obj_modified,
                'ppt_ts_obj_modified': ppt_ts_obj_modified,
-
+                'vol_bal_graphs_userModified':vol_bal_graphs_userModified,
 
                'eta_ts_obj_loaded': eta_ts_obj_loaded,
                'vs_ts_obj_loaded': vs_ts_obj_loaded,
                'vc_ts_obj_loaded': vc_ts_obj_loaded,
                'vo_ts_obj_loaded': vo_ts_obj_loaded,
                'ppt_ts_obj_loaded': ppt_ts_obj_loaded,
+               'vol_bal_graphs_loaded':vol_bal_graphs_loaded,
 
 
                "simulation_loaded_id":simulation_loaded_id,
@@ -983,6 +1083,7 @@ def test2(request):
     from django.core.files.storage import default_storage
     from django.core.files.base import ContentFile
     from django.conf import settings
+    from tethys_sdk.gizmos import TableView
 
     user_name = request.user.username
 
@@ -1197,30 +1298,60 @@ def test2(request):
 
     from .model import engine, Base, SessionMaker,  model_calibration_table, model_inputs_table
     from sqlalchemy import inspect
+    import sqlalchemy
     session = SessionMaker()  # Make session
-    qry = session.query(model_inputs_table.simulation_name).filter(model_inputs_table.user_name == user_name).all()  # because PK is the same as no of rows, i.e. length
-    test_string = qry
+
+    # qry1 = session.query(model_inputs_table).filter(model_inputs_table.simulation_name == 'simulation-1').delete()  # because PK is the same as no of rows, i.e. length
+    # print 'deleted or not, ', qry1
+    # test_string = qry1
+
+    # qry = session.query(model_inputs_table.simulation_name).filter(model_inputs_table.user_name == user_name).all()  # because PK is the same as no of rows, i.e. length
+    # test_string = qry
     # print test_string
+    # foo_col = sqlalchemy.sql.column('foo')
+    # s = sqlalchemy.sql.select(['*']).where(foo_col == 1)
 
-    for item in qry:
-        print item
+    model_input_rows = []
+    model_input_cols = ('Simulation name', 'hs_res_id', #'start', 'end',
+                        'usgs gage', 'outlet X', 'outlet Y',
+                        #'box_topY','box_bottomY','box_rightX','box_leftX',
+                        'model_engine','rain/et source','stream threshold','X','timestep', #'remarks', 'user_option'
+                        )
+    #model_input_cols = model_inputs_table.__table__.columns
 
-    # inspector = inspect(engine)
-    # for table_name in inspector.get_table_names():
-    #     for column in inspector.get_columns(table_name):
-    #         print("Column: %s" % column['name'])
+    qry = session.query(model_inputs_table).filter(model_inputs_table.user_name == user_name).all()  # because PK is the same as no of rows, i.e. length
+    test_string = model_input_cols #.__getitem__()
+    for row in qry:
+        test_string = 'ROW: Type %s, Itself: %s '%(type(row) , row.__getitem__() )
+        row_tuple = (row.simulation_name, row.hs_resource_id,# row.simulation_start_date, row.simulation_end_date,
+                    row.USGS_gage, row.outlet_x, row.outlet_y, # row.box_topY,row.box_bottomY,row.box_rightX, row.box_leftX,
+                    row.model_engine ,
+                     row.other_model_parameters.split('__')[0] ,row.other_model_parameters.split('__')[1],row.other_model_parameters.split('__')[2],row.other_model_parameters.split('__')[3],
+                     #,row.remarks ,row.user_option
+                     )
+        model_input_rows.append(row_tuple)
+
+
+
+    table_query = TableView(column_names=model_input_cols,
+                           rows=model_input_rows,
+                           hover=True,
+                           striped=True,
+                           bordered=False,
+                           condensed=True)
+
 
 
 
     context = {
-                'test_string1':test_string,
-        # 'area_range_plot_object':areaPlot,
+        'test_string1':test_string,
+
         'observed_hydrograph':observed_hydrograph,
         'observed_hydrograph2': observed_hydrograph2,
-
-        # 'timeseries_plot': timeseries_plot,
         'multi_timeseries_plot': multi_timeseries_plot,
-        # 'area_range_plot': area_range_plot,
+
+        'table_query': table_query,
+
 
 
     }

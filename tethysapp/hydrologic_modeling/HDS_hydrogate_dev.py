@@ -2657,6 +2657,61 @@ class HydroDS(object):
 
 
     ##################################START OF TOPKAPI FUNCTIONS ################################
+
+    def subset_raster2(self, left, top, right, bottom, input_raster, output_raster, cell_size=None , save_as=None):
+        """
+        Subset raster data
+
+        :param left: x-coordinate of the left-top corner of the bounding box
+        :type left: float
+        :param top: y-coordinate of the left-top corner of the bounding box
+        :type top: float
+        :param right: x-coordinate of the right-bottom corner of the bounding box
+        :type right: float
+        :param bottom: y-coordinate of the right-bottom corner of the bounding box
+        :type bottom: float
+        :param input_raster: raster file to subset from (this can either be a url path for the user file on the HydroDS
+                             server or name of a relevant supported data file on the HydroDS server)
+        :param output_raster: name for the output (subsetted) raster file (if there is file already with the same name
+                              it will be overwritten)
+        :type output_raster: string
+        :param save_as: (optional) file name and file path to save the subsetted raster file locally
+        :type save_as: string
+        :return: a dictionary with key 'output_raster' and value of url path for the generated raster file
+
+        :raises: HydroDSArgumentException: one or more argument failed validation at client side
+        :raises: HydroDSBadRequestException: one or more argument failed validation on the server side
+        :raises: HydroDSNotAuthenticatedException: provided user account failed validation
+        :raises: HydroDSNotAuthorizedException: user making this request is not authorized to do so
+        :raises: HydroDSNotFoundException: specified raster input file(s) does not exist on the server
+
+        Example usage:
+            hds = HydroDS(username=your_username, password=your_password)
+            response_data = hds.subset_raster(left=-111.97, top=42.11, right=-111.35, bottom=41.66,
+                                              input_raster='nedWesternUS.tif', output_raster='subset_dem_logan.tif')
+
+            output_subset_dem_url = response_data['output_raster']
+
+            # print the url path for the generated raster file
+            print(output_subset_dem_url)
+        """
+
+        url = self._get_dataservice_specific_url(service_name='rastersubset2') ##
+        if save_as:
+            self._validate_file_save_as(save_as)
+
+        if not self._is_file_name_valid(output_raster, ext='.tif'):
+            raise HydroDSArgumentException('{file_name} is not a valid raster file '
+                                           'name.'.format(file_name=output_raster))
+
+        self._validate_boundary_box(bottom, left, right, top)
+
+        payload = {'xmin': left, 'ymin': bottom, 'xmax': right, 'ymax': top, 'input_raster': input_raster,
+                   'output_raster': output_raster, 'cell_size':cell_size}
+
+        response = self._make_data_service_request(url=url, params=payload)
+        return self._process_dataservice_response(response, save_as)
+
     def reclassifyrasterwithlut(self, input_raster, LUT=u'http://129.123.9.159:20199/files/data/user_6/LUT_NLCD2n.csv',  output_raster='reclassified_raster.tif',delimiter=',',  save_as=None):
 
         if save_as:
@@ -2792,6 +2847,88 @@ class HydroDS(object):
 
         response = self._make_data_service_request(url=url, params=payload)
         return self._process_dataservice_response(response, save_as)
+
+    def runpytopkapi5(self, user_name, simulation_name, simulation_start_date, simulation_end_date, USGS_gage,
+                     timestep, threshold,
+                     mask_fname, overland_manning_fname, hillslope_fname, dem_fname, channel_network_fname,
+                     flowdir_fname,
+                     pore_size_dist_fname, bubbling_pressure_fname, resid_moisture_content_fname,
+                     sat_moisture_content_fname, conductivity_fname, soil_depth_fname,
+                     rain_fname, et_fname,
+                     output_response_txt='pytopkpai_responseJSON.txt',  save_as=None):
+
+        if save_as:
+            self._validate_file_save_as(save_as)
+
+        url = self._get_dataservice_specific_url('runpytopkapi5')
+        payload = {'user_name': user_name, 'simulation_name': simulation_name,
+                   'simulation_start_date': simulation_start_date.replace('-','/'),
+                   'simulation_end_date': simulation_end_date.replace('-','/'),
+                   'USGS_gage': USGS_gage, 'timestep': timestep,
+                   'threshold': threshold,
+                   'hillslope_fname': hillslope_fname, 'dem_fname': dem_fname,
+                   'channel_network_fname': channel_network_fname, 'overland_manning_fname': overland_manning_fname,
+                   'mask_fname': mask_fname, 'flowdir_fname': flowdir_fname,
+                   'pore_size_dist_fname': pore_size_dist_fname,
+                   'bubbling_pressure_fname': bubbling_pressure_fname,
+                   'resid_moisture_content_fname': resid_moisture_content_fname,
+                   'sat_moisture_content_fname': sat_moisture_content_fname,
+                   'conductivity_fname': conductivity_fname, 'soil_depth_fname': soil_depth_fname,
+                   'rain_fname':rain_fname,
+                   'et_fname':et_fname,
+                   # 'runoff_fname':runoff_fname ,
+                   # 'output_hs_rs_id_txt': output_hs_rs_id_txt
+                   }
+
+        self._is_file_name_valid(output_response_txt, ext='.txt')
+        payload['output_hs_rs_id_txt'] = output_response_txt
+
+
+
+        response = self._make_data_service_request(url=url, params=payload)
+        return self._process_dataservice_response(response, save_as)
+
+    def runpytopkapi6(self, user_name, simulation_name, simulation_start_date, simulation_end_date, USGS_gage,
+                     timestep, threshold,
+                     mask_fname, overland_manning_fname, hillslope_fname, dem_fname, channel_network_fname,
+                     flowdir_fname,
+                     pore_size_dist_fname, bubbling_pressure_fname, resid_moisture_content_fname,
+                     sat_moisture_content_fname, conductivity_fname, soil_depth_fname,
+                     rain_fname, et_fname, timeseries_source='daymet',
+                     output_response_txt='pytopkpai_responseJSON.txt',  save_as=None):
+
+        if save_as:
+            self._validate_file_save_as(save_as)
+
+        url = self._get_dataservice_specific_url('runpytopkapi6')
+        payload = {'user_name': user_name, 'simulation_name': simulation_name,
+                   'simulation_start_date': simulation_start_date.replace('-','/'),
+                   'simulation_end_date': simulation_end_date.replace('-','/'),
+                   'USGS_gage': USGS_gage, 'timestep': timestep,
+                   'threshold': threshold,
+                   'hillslope_fname': hillslope_fname, 'dem_fname': dem_fname,
+                   'channel_network_fname': channel_network_fname, 'overland_manning_fname': overland_manning_fname,
+                   'mask_fname': mask_fname, 'flowdir_fname': flowdir_fname,
+                   'pore_size_dist_fname': pore_size_dist_fname,
+                   'bubbling_pressure_fname': bubbling_pressure_fname,
+                   'resid_moisture_content_fname': resid_moisture_content_fname,
+                   'sat_moisture_content_fname': sat_moisture_content_fname,
+                   'conductivity_fname': conductivity_fname, 'soil_depth_fname': soil_depth_fname,
+                   'rain_fname':rain_fname,
+                   'et_fname':et_fname,
+                   # 'runoff_fname':runoff_fname ,
+                   # 'output_hs_rs_id_txt': output_hs_rs_id_txt
+                   }
+        payload['timeseries_source']=timeseries_source
+
+        self._is_file_name_valid(output_response_txt, ext='.txt')
+        payload['output_hs_rs_id_txt'] = output_response_txt
+
+
+
+        response = self._make_data_service_request(url=url, params=payload)
+        return self._process_dataservice_response(response, save_as)
+
 
 
     def modifypytopkapi(self,  fac_l, fac_ks, fac_n_o, fac_n_c,fac_th_s,
@@ -2956,6 +3093,268 @@ class HydroDS(object):
                    'output_ksat_rawls_file':output_ksat_rawls_file
                    }
 
+        response = self._make_data_service_request(url=url, params=payload)
+        return self._process_dataservice_response(response, save_as)
+
+
+    def downloadsoildataforpytopkapi2(self,input_watershed_raster_url_path,output_f_raster='f.tif',output_k_raster='ko.tif',output_dth1_raster='dth1.tif',
+                     output_dth2_raster='dth2.tif',output_psif_raster='psif.tif',output_sd_raster='sd.tif',output_tran_raster='trans.tif',
+                                     output_bubbling_pressure_file='BBL.tif', output_pore_size_distribution_file="PSD.tif",
+                                     output_residual_soil_moisture_file='RSM.tif', output_saturated_soil_moisture_file='SSM.tif',
+                                      output_ksat_rawls_file='ksat_rawls.tif',output_ksat_hz_file='ksat_hz.tif',
+                                     save_as=None):
+
+        if save_as:
+            self._validate_file_save_as(save_as)
+
+        if not self._is_file_name_valid(output_f_raster, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_f_raster))
+
+        if not self._is_file_name_valid(output_k_raster, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_k_raster))
+        if not self._is_file_name_valid(output_dth1_raster, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_dth1_raster))
+        if not self._is_file_name_valid(output_dth2_raster, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_dth2_raster))
+        if not self._is_file_name_valid(output_psif_raster, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_psif_raster))
+        if not self._is_file_name_valid(output_sd_raster, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_sd_raster))
+        if not self._is_file_name_valid(output_tran_raster, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_tran_raster))
+
+        if not self._is_file_name_valid(output_bubbling_pressure_file, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_bubbling_pressure_file))
+        if not self._is_file_name_valid(output_pore_size_distribution_file, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_pore_size_distribution_file))
+        if not self._is_file_name_valid(output_residual_soil_moisture_file, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_residual_soil_moisture_file))
+        if not self._is_file_name_valid(output_saturated_soil_moisture_file, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_saturated_soil_moisture_file))
+        if not self._is_file_name_valid(output_ksat_rawls_file, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_ksat_rawls_file))
+
+        url = self._get_dataservice_specific_url(service_name='downloadsoildataforpytopkapi2')
+        payload = {'Watershed_Raster':input_watershed_raster_url_path, 'output_f_file': output_f_raster,'output_k_file': output_k_raster,
+                       'output_dth1_file': output_dth1_raster,'output_dth2_file': output_dth2_raster, 'output_psif_file': output_psif_raster,
+                       'output_sd_file': output_sd_raster,'output_tran_file': output_tran_raster,
+                   'output_bubbling_pressure_file': output_bubbling_pressure_file, 'output_pore_size_distribution_file': output_pore_size_distribution_file,
+                   'output_residual_soil_moisture_file': output_residual_soil_moisture_file, 'output_saturated_soil_moisture_file': output_saturated_soil_moisture_file,
+                   'output_ksat_rawls_file':output_ksat_rawls_file, 'output_ksat_hz_file':output_ksat_hz_file,
+                   }
+
+        response = self._make_data_service_request(url=url, params=payload)
+        return self._process_dataservice_response(response, save_as)
+
+
+    def downloadsoildataforpytopkapi3(self,input_watershed_raster_url_path,output_dth1_raster='dth1.tif',
+                     output_dth2_raster='dth2.tif',output_psif_raster='psif.tif',output_sd_raster='sd.tif',
+                                     output_bubbling_pressure_file='BBL.tif', output_pore_size_distribution_file="PSD.tif",
+                                     output_residual_soil_moisture_file='RSM.tif', output_saturated_soil_moisture_file='SSM.tif',
+                                      output_ksat_rawls_file='ksat_rawls.tif',output_ksat_hz_file='ksat_hz.tif',
+                                     save_as=None):
+
+        if save_as:
+            self._validate_file_save_as(save_as)
+
+
+        if not self._is_file_name_valid(output_dth1_raster, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_dth1_raster))
+        if not self._is_file_name_valid(output_dth2_raster, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_dth2_raster))
+        if not self._is_file_name_valid(output_psif_raster, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_psif_raster))
+        if not self._is_file_name_valid(output_sd_raster, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_sd_raster))
+
+
+        if not self._is_file_name_valid(output_bubbling_pressure_file, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_bubbling_pressure_file))
+        if not self._is_file_name_valid(output_pore_size_distribution_file, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_pore_size_distribution_file))
+        if not self._is_file_name_valid(output_residual_soil_moisture_file, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_residual_soil_moisture_file))
+        if not self._is_file_name_valid(output_saturated_soil_moisture_file, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_saturated_soil_moisture_file))
+        if not self._is_file_name_valid(output_ksat_rawls_file, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_ksat_rawls_file))
+
+        url = self._get_dataservice_specific_url(service_name='downloadsoildataforpytopkapi3')
+        payload = {'Watershed_Raster':input_watershed_raster_url_path,
+                       'output_dth1_file': output_dth1_raster,'output_dth2_file': output_dth2_raster, 'output_psif_file': output_psif_raster,
+                       'output_sd_file': output_sd_raster,
+                   'output_bubbling_pressure_file': output_bubbling_pressure_file, 'output_pore_size_distribution_file': output_pore_size_distribution_file,
+                   'output_residual_soil_moisture_file': output_residual_soil_moisture_file, 'output_saturated_soil_moisture_file': output_saturated_soil_moisture_file,
+                   'output_ksat_rawls_file':output_ksat_rawls_file, 'output_ksat_hz_file':output_ksat_hz_file,
+                   }
+
+        response = self._make_data_service_request(url=url, params=payload)
+        return self._process_dataservice_response(response, save_as)
+
+    def downloadsoildataforpytopkapi4(self,input_watershed_raster_url_path,output_dth1_raster='dth1.tif',
+                     output_dth2_raster='dth2.tif',output_psif_raster='psif.tif',output_sd_raster='sd.tif',
+                                     output_bubbling_pressure_file='BBL.tif', output_pore_size_distribution_file="PSD.tif",
+                                     output_residual_soil_moisture_file='RSM.tif', output_saturated_soil_moisture_file='SSM.tif',
+
+                                      output_ksat_LUT_file='ksat_LUT.tif',
+                                      output_ksat_ssurgo_wtd_file='ksat_ssurgo_wtd.tif',
+                                      output_ksat_ssurgo_min_file='ksat_ssurgo_min.tif',
+                                      output_hydrogrp_file='hydrogrp.tif',
+
+                                     save_as=None):
+
+        if save_as:
+            self._validate_file_save_as(save_as)
+
+
+        if not self._is_file_name_valid(output_dth1_raster, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_dth1_raster))
+        if not self._is_file_name_valid(output_dth2_raster, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_dth2_raster))
+        if not self._is_file_name_valid(output_psif_raster, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_psif_raster))
+        if not self._is_file_name_valid(output_sd_raster, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_sd_raster))
+
+
+        if not self._is_file_name_valid(output_bubbling_pressure_file, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_bubbling_pressure_file))
+        if not self._is_file_name_valid(output_pore_size_distribution_file, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_pore_size_distribution_file))
+        if not self._is_file_name_valid(output_residual_soil_moisture_file, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_residual_soil_moisture_file))
+        if not self._is_file_name_valid(output_saturated_soil_moisture_file, ext='.tif'):
+            raise HydroDSArgumentException("{file_name} is not a valid raster file name".format(file_name=output_saturated_soil_moisture_file))
+
+
+        url = self._get_dataservice_specific_url(service_name='downloadsoildataforpytopkapi4')
+        payload = {'Watershed_Raster':input_watershed_raster_url_path,
+                       'output_dth1_file': output_dth1_raster,'output_dth2_file': output_dth2_raster, 'output_psif_file': output_psif_raster,
+                       'output_sd_file': output_sd_raster,
+                   'output_bubbling_pressure_file': output_bubbling_pressure_file, 'output_pore_size_distribution_file': output_pore_size_distribution_file,
+                   'output_residual_soil_moisture_file': output_residual_soil_moisture_file, 'output_saturated_soil_moisture_file': output_saturated_soil_moisture_file,
+                   'output_ksat_LUT_file':output_ksat_LUT_file,
+                   'output_ksat_ssurgo_wtd_file':output_ksat_ssurgo_wtd_file,
+                   'output_ksat_ssurgo_min_file': output_ksat_ssurgo_min_file,
+                   'output_hydrogrp_file': output_hydrogrp_file,
+                   }
+
+        response = self._make_data_service_request(url=url, params=payload)
+        return self._process_dataservice_response(response, save_as)
+
+    def downloadsoildataforpytopkapi5(self,input_watershed_raster_url_path, save_as=None):
+
+        if save_as:
+            self._validate_file_save_as(save_as)
+
+
+
+        url = self._get_dataservice_specific_url(service_name='downloadsoildataforpytopkapi5')
+        payload = {'Watershed_Raster':input_watershed_raster_url_path
+                   }
+
+        response = self._make_data_service_request(url=url, params=payload)
+        return self._process_dataservice_response(response, save_as)
+
+    def abstractclimatedata(self, input_raster, startDate, endDate, cell_size=None,
+                            output_vp_fname='output_vp.nc',
+                            output_tmin_fname='output_tmin.nc',
+                            output_tmax_fname='output_tmax.nc',
+                            output_srad_fname='output_srad.nc',
+                            output_prcp_fname='output_prcp.nc',
+                            save_as=None):
+
+        if save_as:
+            self._validate_file_save_as(save_as)
+
+        url = self._get_dataservice_specific_url('abstractclimatedata')
+        payload = {
+            'input_raster':input_raster,
+            'startDate': startDate.replace("-",'/'),
+            'endDate': endDate.replace("-",'/'),
+            'cell_size':cell_size,
+
+            'output_vp_fname': output_vp_fname,
+            'output_tmin_fname': output_tmin_fname,
+            'output_tmax_fname': output_tmax_fname,
+            'output_srad_fname': output_srad_fname,
+            'output_prcp_fname': output_prcp_fname,
+        }
+
+
+
+        response = self._make_data_service_request(url=url, params=payload)
+        return self._process_dataservice_response(response, save_as)
+
+
+    def calculaterainETfromdaymet(self, input_raster,input_dem, startDate, endDate, cell_size=None,
+                                  output_et_reference_fname='output_et.nc', output_rain_fname='output_ppt.nc',
+                                  save_as=None):
+        # date format: mm/dd/yyyy or mm-dd-yyyy
+        if save_as:
+            self._validate_file_save_as(save_as)
+
+        url = self._get_dataservice_specific_url('calculaterainETfromdaymet')
+        payload = {
+            'input_raster':input_raster,
+            'input_dem':input_dem,
+            'startDate': startDate.replace("-",'/'),
+            'endDate': endDate.replace("-",'/'),
+            'cell_size':cell_size,
+
+            'output_et_reference_fname': output_et_reference_fname,
+            'output_rain_fname': output_rain_fname,
+        }
+
+        response = self._make_data_service_request(url=url, params=payload)
+        return self._process_dataservice_response(response, save_as)
+
+    def changetimestepofforcingnetcdf(self, input_netcdf, time_interval_in_hr=6,
+                                  output_et_reference_fname='output_et.nc', output_rain_fname='output_ppt.nc',
+                                  save_as=None):
+        # date format: mm/dd/yyyy or mm-dd-yyyy
+        if save_as:
+            self._validate_file_save_as(save_as)
+
+        url = self._get_dataservice_specific_url('changetimestepofforcingnetcdf')
+        payload = {
+            'input_netcdf':input_netcdf,
+            'time_interval_in_hr':time_interval_in_hr,
+
+            'output_et_reference_fname': output_et_reference_fname,
+            'output_rain_fname': output_rain_fname,
+        }
+
+        response = self._make_data_service_request(url=url, params=payload)
+        return self._process_dataservice_response(response, save_as)
+
+    def bboxfromtiff(self, input_raster, output_json='responseJSON.txt', save_as=None):
+        if save_as:
+            self._validate_file_save_as(save_as)
+
+        url = self._get_dataservice_specific_url('bboxfromtiff')
+        payload = {"input_raster": input_raster, 'output_json':output_json}
+
+        response = self._make_data_service_request(url=url, params=payload)
+        return self._process_dataservice_response(response, save_as)
+
+
+    def outletxyfromshp(self, input_shp, output_json='responseJSON.txt', save_as=None):
+        if save_as:
+            self._validate_file_save_as(save_as)
+
+        url = self._get_dataservice_specific_url('outletxyfromshp')
+        payload = {"input_shp": input_shp, 'output_json':output_json}
+        response = self._make_data_service_request(url=url, params=payload)
+        return self._process_dataservice_response(response, save_as)
+
+
+    def bboxfromshp(self, input_shp, output_json='responseJSON.txt', save_as=None):
+        if save_as:
+            self._validate_file_save_as(save_as)
+
+        url = self._get_dataservice_specific_url('bboxfromshp')
+        payload = {"input_shp": input_shp, 'output_json':output_json}
         response = self._make_data_service_request(url=url, params=payload)
         return self._process_dataservice_response(response, save_as)
 

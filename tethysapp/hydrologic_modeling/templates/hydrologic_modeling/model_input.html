@@ -77,17 +77,17 @@
                                       <table width="100%">
                                           <tr>
                                                 <th> </th>
-                                                <th> {% gizmo text_input box_topY %}</th>
+                                                <th onChange="init()"> {% gizmo text_input box_topY %}</th>
                                                 <th> </th>
                                           </tr>
                                           <tr>
-                                                <td>{% gizmo text_input box_leftX %}</td>
+                                                <td onChange="init()">{% gizmo text_input box_leftX %}</td>
                                                 <td></td>
-                                                <td>{% gizmo text_input box_rightX %}</td>
+                                                <td onChange="init()">{% gizmo text_input box_rightX %}</td>
                                           </tr>
                                           <tr>
                                                 <td></td>
-                                                <td> {% gizmo text_input box_bottomY %}</td>
+                                                <td onChange="init()"> {% gizmo text_input box_bottomY %}</td>
                                                 <td></td>
                                           </tr>
 
@@ -106,7 +106,7 @@
                                           <form id ="input_shp"  method="post" action="{% url 'hydrologic_modeling:visualize_shp' %}" enctype="multipart/form-data">
                                               <tr>
                                                   <!--<th> Watershed </th>-->
-                                                  <th><input type="file" name="watershed_upload"  accept=".shp, .shx, .dbf, .prj, .tif, .tiff/*" title="&nbsp;" multiple/> </th>
+                                                  <th><input type="file" name="watershed_upload"  accept=".shp, .shx, .dbf, .prj, .zip, .tif, .tiff/*" title="&nbsp;" multiple/> </th>
                                               </tr>
 
                                               <tr>
@@ -305,6 +305,11 @@
                             document.getElementById('prompt').innerHTML = 'Total drainage area in km2= ' + bb_area+ ' Total no of cells= ' +  total_no_of_cells  ;
                         }
 
+                        if (bb_area <= 500) {
+
+                            document.getElementById('prompt').innerHTML = ''  ;
+                        }
+
                     });
 
                     google.maps.event.addListener(marker, "dragend", function(event){
@@ -316,6 +321,22 @@
                 }
 
 
+
+        // This block of code for trying to uncheck download btns
+        var allRadios = document.getElementsByName('download_choice');
+        var booRadio;
+        var x = 0;
+        for(x = 0; x < allRadios.length; x++){
+
+            allRadios[x].onclick = function() {
+                if(booRadio == this){
+                    this.checked = false;
+                    booRadio = null;
+                }else{
+                    booRadio = this;
+                }
+            };
+        }
 
 
                 window.onload = init;
