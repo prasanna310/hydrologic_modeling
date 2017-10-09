@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 # import datetime
 
 from tethys_apps.sdk.gizmos import *
-
+#from tethys_sdk.gizmos import *
 
 import sys, os, json
 import app_utils
