@@ -131,7 +131,6 @@ def model_input(request):
 
 
 
-
     outlet_hs = TextInput(display_text='', name='outlet_hs', initial='')
     bounding_box_hs = TextInput(display_text='', name='bounding_box_hs', initial='')
 

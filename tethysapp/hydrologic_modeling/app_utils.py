@@ -531,17 +531,19 @@ def create_simulation_list_after_querying_db(given_user_name=None, return_hs_res
     hs_resourceID = []
     queries = []
 
-    for record in simulations_queried:
-        simulation_names_list_queried.append(record.simulation_name)
-        simulation_names_id.append(record.id)
-        hs_resourceID.append(record.hs_resource_id)
+    try:
+        for record in simulations_queried:
+            simulation_names_list_queried.append(record.simulation_name)
+            simulation_names_id.append(record.id)
+            hs_resourceID.append(record.hs_resource_id)
 
 
-    if return_model_input_id :
-        queries = zip(simulation_names_list_queried,simulation_names_id ) # returns model_input_table_id
-    if return_hs_resource_id :
-        queries = zip(simulation_names_list_queried, hs_resourceID)  # returns hs_resource of model instance
-
+        if return_model_input_id :
+            queries = zip(simulation_names_list_queried,simulation_names_id ) # returns model_input_table_id
+        if return_hs_resource_id :
+            queries = zip(simulation_names_list_queried, hs_resourceID)  # returns hs_resource of model instance
+    except Exception,e:
+        print 'Could not query the db to create a list of existing simulation'
 
     simulation_names_list = SelectInput(display_text='Saved Models',
                                      name='simulation_names_list',
