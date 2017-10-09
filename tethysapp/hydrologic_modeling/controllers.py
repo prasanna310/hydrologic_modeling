@@ -1321,7 +1321,7 @@ def test2(request):
     qry = session.query(model_inputs_table).filter(model_inputs_table.user_name == user_name).all()  # because PK is the same as no of rows, i.e. length
     test_string = model_input_cols #.__getitem__()
     for row in qry:
-        test_string = 'ROW: Type %s, Itself: %s '%(type(row) , row.__getitem__() )
+        # test_string = 'ROW: Type %s, Itself: %s '%(type(row) , row.__getitem__() )
         row_tuple = (row.simulation_name, row.hs_resource_id,# row.simulation_start_date, row.simulation_end_date,
                     row.USGS_gage, row.outlet_x, row.outlet_y, # row.box_topY,row.box_bottomY,row.box_rightX, row.box_leftX,
                     row.model_engine ,
@@ -1344,14 +1344,11 @@ def test2(request):
 
     context = {
         'test_string1':test_string,
-
         'observed_hydrograph':observed_hydrograph,
         'observed_hydrograph2': observed_hydrograph2,
         'multi_timeseries_plot': multi_timeseries_plot,
 
         'table_query': table_query,
-
-
 
     }
     return render(request, 'hydrologic_modeling/test2.html', context)
