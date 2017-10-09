@@ -992,42 +992,10 @@ def model_run(request):
 
 
 
-def download_request(request):
-
-    # defaults values
-    download_response = {}
-    download_status = download_response['download_status'] = False
-    download_link = download_response['download_link'] = 'http://link.to.zipped.files'
-    hs_res_created = download_response['hs_res_created'] = '60hfg60606fgdf06dg'
-    files_created_dict = 'No dict created'
-    # validate  / return a confirmation to use regarding bounding box / input watershed
-
-    # creata input_dictionary from the request
-
-    inputs_dictionary = app_utils.create_model_input_dict_from_request(request)
-    test_string = inputs_dictionary['cell_size']
-    # resource ID to file created, as well as links to files created
-    # files_created_dict =  app_utils.download_geospatial_and_forcing_files(inputs_dictionary)
-
-    context = { 'download_status': download_status,
-                'download_link':download_link,
-                'hs_res_created':hs_res_created,
-                'dict_files_created':files_created_dict,
-                'test_string':test_string,
-               }
-    print "this function has been called!"
-    return render(request, 'hydrologic_modeling/download_request.html', context)
-
-
-
-
-
-
-
-
 def visualize_shp(request):
     # when it receives request. This is not in effect. Currently, the request is sent to model_run, not model_input.html
     geojson_files = {}
+    geojson_domain = ''
     if request.is_ajax and request.method == 'POST':
         print "Request Received"
 
@@ -1066,9 +1034,7 @@ def visualize_shp(request):
         'geojson_file':geojson_domain
     }
 
-    render(request, 'hydrologic_modeling/model_input.html', context)
-
-    return
+    return render(request, 'hydrologic_modeling/model_input.html', context)
 
 
 def google_map_input(request):
