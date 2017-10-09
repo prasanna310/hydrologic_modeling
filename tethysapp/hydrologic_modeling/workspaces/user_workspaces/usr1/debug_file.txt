@@ -1,5 +1,0 @@
-INFO: Open of `outlet.shp'
-      using driver `ESRI Shapefile' successful.
-FAILURE: Couldn't fetch requested layer INFO:!
-Starting Add shx to the uploaded shp 
-There was error in Add shx to the uploaded shp
