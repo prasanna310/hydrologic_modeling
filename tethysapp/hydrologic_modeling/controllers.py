@@ -10,14 +10,12 @@ from tethys_apps.sdk.gizmos import *
 
 
 import sys, os, json
-sys.path.append('/utils')
-
-# sys.path.append(os.path.abspath('/utils/pytopkapi_utils.py'))
-# sys.path.append(os.path.abspath(os.path.abspath(os.path.dirname(__file__) )))
-
-# from utils.pytopkapi_utils import *
 import app_utils
 
+# sys.path.append('/utils')
+# sys.path.append(os.path.abspath('/utils/pytopkapi_utils.py'))
+# sys.path.append(os.path.abspath(os.path.abspath(os.path.dirname(__file__) )))
+# from utils.pytopkapi_utils import *
 # try:
 #     from .app_utils import *
 # except Exception,e:
