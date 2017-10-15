@@ -31,53 +31,6 @@ HDS = HydroDS(username=HDS_settings.USER_NAME, password=HDS_settings.PASSWORD)
 
 
 
-def create_hydrograph(date_in_datetime, Qsim, simulation_name, error):
-    # preparing timeseries data in the format shown in: http://docs.tethysplatform.org/en/latest/tethys_sdk/gizmos/plot_view.html#time-series
-    from tethys_sdk.gizmos import TimeSeries
-
-    hydrograph = []
-    date_broken = [[dt.year, dt.month, dt.day, dt.hour, dt.minute] for dt in date_in_datetime]
-    for i in range(len(Qsim)):
-        date = datetime.datetime(year=date_broken[i][0], month=date_broken[i][1], day=date_broken[i][2], hour=date_broken[i][3],
-                        minute=date_broken[i][4])
-        hydrograph.append([date, float(Qsim[i])])
-
-    observed_hydrograph = TimeSeries(
-        height='500px',
-        width='500px',
-        engine='highcharts',
-        title='Hydrograph ',
-        subtitle="Simulated and Observed flow for " + simulation_name,
-        y_axis_title='Discharge',
-        y_axis_units='cumecs',
-        series=[{
-            'name': 'Simulated Flow',
-            'data': hydrograph,
-        }]
-    )
-    return observed_hydrograph
-
-def create_1d(timeseries_list, label, unit):
-    if timeseries_list == "" or timeseries_list==[]:
-        return
-    from tethys_sdk.gizmos import TimeSeries
-    timeseries_obj = TimeSeries(
-        height='200px', width='600px',
-        engine='highcharts',
-        title=label,
-        inverted=True,
-        # subtitle="Simulated and Observed flow  ",
-        y_axis_title='',
-        y_axis_units=unit,
-        series=[{
-            'name': 'Water level',
-            'data': timeseries_list,
-            'fillOpacity': 0.2,
-        }])
-    return  timeseries_obj
-
-
-
 def create_model_input_dict_from_request(request):
     # from the user input forms in model_input page, the request is converted to a dictionary of inputs
     print request.user.username
@@ -228,6 +181,53 @@ def create_model_input_dict_from_request(request):
 
 
     return inputs_dictionary
+
+
+
+def create_hydrograph(date_in_datetime, Qsim, simulation_name, error):
+    # preparing timeseries data in the format shown in: http://docs.tethysplatform.org/en/latest/tethys_sdk/gizmos/plot_view.html#time-series
+    from tethys_sdk.gizmos import TimeSeries
+
+    hydrograph = []
+    date_broken = [[dt.year, dt.month, dt.day, dt.hour, dt.minute] for dt in date_in_datetime]
+    for i in range(len(Qsim)):
+        date = datetime.datetime(year=date_broken[i][0], month=date_broken[i][1], day=date_broken[i][2], hour=date_broken[i][3],
+                        minute=date_broken[i][4])
+        hydrograph.append([date, float(Qsim[i])])
+
+    observed_hydrograph = TimeSeries(
+        height='500px',
+        width='500px',
+        engine='highcharts',
+        title='Hydrograph ',
+        subtitle="Simulated and Observed flow for " + simulation_name,
+        y_axis_title='Discharge',
+        y_axis_units='cumecs',
+        series=[{
+            'name': 'Simulated Flow',
+            'data': hydrograph,
+        }]
+    )
+    return observed_hydrograph
+
+def create_1d(timeseries_list, label, unit):
+    if timeseries_list == "" or timeseries_list==[]:
+        return
+    from tethys_sdk.gizmos import TimeSeries
+    timeseries_obj = TimeSeries(
+        height='200px', width='600px',
+        engine='highcharts',
+        title=label,
+        inverted=True,
+        # subtitle="Simulated and Observed flow  ",
+        y_axis_title='',
+        y_axis_units=unit,
+        series=[{
+            'name': 'Water level',
+            'data': timeseries_list,
+            'fillOpacity': 0.2,
+        }])
+    return  timeseries_obj
 
 
 def read_hydrograph_from_txt(hydrograph_fname):
@@ -1273,6 +1273,25 @@ def download_geospatial_and_forcing_files(inputs_dictionary, download_request='g
 
     # :TODO epsgCode has to be one consistent CS
     epsgCode = 102003 # North America Albers Equal Area Conic
+    valid_simulation_name = ''.join(e for e in inputs_dictionary['simulation_name'] if e.isalnum())
+
+    # #download UEB
+    # run_ueb_request = HDS.runueb( watershedName=valid_simulation_name,
+    #                               leftX=inputs_dictionary['box_leftX'],
+    #                               topY=inputs_dictionary['box_topY'],
+    #                               rightX=inputs_dictionary['box_rightX'],
+    #                               bottomY=inputs_dictionary['box_bottomY'],
+    #                               lat_outlet=inputs_dictionary['outlet_y'], lon_outlet=inputs_dictionary['outlet_x'],
+    #                               streamThreshold=inputs_dictionary['threshold'],
+    #                               startDateTime=inputs_dictionary['simulation_start_date'],
+    #                               endDateTime=inputs_dictionary['simulation_end_date'], cell_size=inputs_dictionary['cell_size'],
+    #
+    #        # hs_client_id=None, hs_client_secret=None, token=None,
+    #        epsgCode=102003,  usic=0, wsic=0, tic=0, wcic=0, ts_last=0,
+    #        res_keywords='ueb, pytopkapi, melt+snowmelt', output_rain_and_melt='SWIT.nc',
+    #        save_as=None)
+    # print 'run_ueb_request=',run_ueb_request
+
 
     #:todo check if input is shapefile, or TIFF file. If it is, need to execute a function that gives bbox in WGS84
 
@@ -1281,7 +1300,7 @@ def download_geospatial_and_forcing_files(inputs_dictionary, download_request='g
     subsetDEM_request = {'output_raster':'http://129.123.9.159:20199/files/data/user_6/DEM84.tif'}
     subsetDEM_request = HDS.subset_raster2(input_raster='nedWesternUS.tif', left=inputs_dictionary['box_leftX'],
                                            top=inputs_dictionary['box_topY'], right=inputs_dictionary['box_rightX'],
-                                           bottom=inputs_dictionary['box_bottomY'], output_raster= 'DEM84.tif')
+                                           bottom=inputs_dictionary['box_bottomY'], output_raster= 'DEM84.tif', cell_size=int(inputs_dictionary['cell_size']))
 
     DEM_resample_request = HDS.project_resample_raster(input_raster_url_path=subsetDEM_request['output_raster'],cell_size_dx=int(inputs_dictionary['cell_size']), cell_size_dy=int(inputs_dictionary['cell_size']), epsg_code=epsgCode, output_raster='DEM84'+str( int(inputs_dictionary['box_bottomY']))+'.tif', resample='bilinear')
     prepared_file['dem'] = DEM_resample_request
