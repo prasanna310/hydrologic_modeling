@@ -79,7 +79,8 @@
   <!--if the user creates a simulation.. :TODO need to have 'and' clause for no download case in the if statement below-->
   {% if  hs_resource_id_loaded != None %} <!--- If the input is complete --->
     <h5>{{test_string}}</h5>
-    <h5> Congratulations!! Results successfully retreived from HydroShare resource ID: {{hs_resource_id_created}}, {{hs_resource_id_loaded}}!  </h5>
+    <h5> Congratulations!! Results successfully retreived from HydroShare resource ID: <a href="http://www.hydroshare.org/resource/{{hs_resource_id_loaded}}"> {{hs_resource_id_loaded}} </a>   </h5>
+
             <!--Using the calibratoin parameters provided, the graph was updated for the ll-input id: {{Iwillgiveyou_model_inputs_table_id_from_another_html}}-->
 
             {% gizmo plot_view observed_hydrograph_loaded3 %} <br><br><br><br>
@@ -98,8 +99,9 @@
 
    <!--If user loads the simulation from HydroShare or dropdown menu-->
    {% if  hs_resource_id_prepared != None  %}
-        <h5>{{test_string}}</h5>
-        <h5> Congratulations! PyTOPKAPI simualation- {{simulation_name}} ran successfully!  </h5>
+
+        <h6> PyTOPKAPI simualation- {{simulation_name}} ran successfully!  </h6>
+        <h7> Results saved in HydroShare with resource ID: <a href="www.hydroshare.org/resource/{{hs_resource_id_created}}"> {{hs_resource_id_created}} </a> </h7>
 
          Here is the simulated discharge for the outlet chosen
         <br>
@@ -127,6 +129,8 @@
   <!--if the user modifies a loaded simulation.. -->
   {% if fac_L_form != "" %} <!--- If the input is complete --->
       <h5> Congratulations <b>{{user_name}}</b>! Parameters were changed successfully!  </h5>
+      <!--<h7> Modified Results saved in HydroShare with resource ID: <a href="www.hydroshare.org/resource/{{hs_resource_id_created}}"> {{hs_resource_id_created}} </a> </h7>-->
+
             Using the calibratoin parameters provided, the graph was updated for the ll-input id: {{Iwillgiveyou_model_inputs_table_id_from_another_html}}
 
             {% gizmo plot_view observed_hydrograph_userModified3 %} <br><br><br><br>
