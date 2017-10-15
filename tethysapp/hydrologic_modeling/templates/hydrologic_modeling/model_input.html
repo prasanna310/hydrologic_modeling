@@ -237,6 +237,7 @@
             <meta charset="UTF-8">
             <title>Domain information from google maps</title>
 
+
             <style> #mymap {width:95%; height:800px;} </style>
               <script async defer
                       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCJVwfz-TJWiZCvLmgYHv2yHYc8vagp7V0&callback=initMap"
@@ -282,8 +283,6 @@
                         draggable:true
                     });
 
-
-
                     //map.data.loadGeoJson("usgsgages" );  //https://usgsgages.000webhostapp.com/googletryjson.json
 
 
@@ -325,8 +324,79 @@
                         document.forms["inputs"]["outlet_y"].value= this.getPosition().lat() ;
                     });
 
+
+
+
+
+
+//                    // Create the search box and link it to the UI element.
+//                    var input = document.getElementById('pac-input');
+//                    var searchBox = new google.maps.places.SearchBox(input);
+//                    map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+//
+//                    // Bias the SearchBox results towards current map's viewport.
+//                    map.addListener('bounds_changed', function() {
+//                      searchBox.setBounds(map.getBounds());
+//                    });
+//
+//                    searchBox.addListener('places_changed', function() {
+//                      var places = searchBox.getPlaces();
+//
+//
+//
+//                      // For each place, get the icon, name and location.
+//                      var bounds = new google.maps.LatLngBounds();
+//                      places.forEach(function(place) {
+//                        if (!place.geometry) {
+//                          console.log("Returned place contains no geometry");
+//                          return;
+//                        }
+//                        var icon = {
+//                          url: place.icon,
+//                          size: new google.maps.Size(71, 71),
+//                          origin: new google.maps.Point(0, 0),
+//                          anchor: new google.maps.Point(17, 34),
+//                          scaledSize: new google.maps.Size(25, 25)
+//                        };
+//
+//
+//                        if (place.geometry.viewport) {
+//                          // Only geocodes have viewport.
+//                          bounds.union(place.geometry.viewport);
+//                        } else {
+//                          bounds.extend(place.geometry.location);
+//                        }
+//                      });
+//                      map.fitBounds(bounds);
+//                    });
+//
+//
+
+
+
+
                 //inti closes
                 }
+
+//google.maps.event.addDomListener(window, 'load', init);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -359,8 +429,18 @@
             <!--<p> Variable1, Error: {{form_error}} </p>-->
             <!--<p> Variable2, geojson file: {{geojson_domain}} </p>-->
 
-            <div id="mymap"></div>
+
+
+
+
+            <!--<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=places"></script>-->
+            <!--<input id="pac-input" class="controls" type="text" placeholder="Search Box">-->
+            <div class="container" id="mymap"></div>
             <div id="info"></div>
+
+
+
+         <!--<div class="container" id="mymap" style="height:300px;"></div>-->
         </body>
         </html>
 
@@ -391,6 +471,9 @@
 {% block scripts %}
   {{ block.super }}
   <!--<script src="main.js" type="text/javascript"></script>-->
+
+
+
   <script>
       function mToDegree(distance_in_m, avg_lat){
 
