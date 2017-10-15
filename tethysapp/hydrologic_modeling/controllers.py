@@ -11,7 +11,7 @@ from tethys_sdk.gizmos import *
 
 import sys, os, json
 import app_utils
-
+import numpy as np
 # sys.path.append('/utils')
 # sys.path.append(os.path.abspath('/utils/pytopkapi_utils.py'))
 # sys.path.append(os.path.abspath(os.path.abspath(os.path.dirname(__file__) )))
@@ -63,7 +63,7 @@ def model_input(request):
                   'ymax': '42.12', 'xmax': '-111.44', 'ymin': '41.68', 'xmin': '-111.83'},
 
         'RBC': {'simulation_name': 'RBC_sample', 'USGS_gage': '10172200', 'cell_size': '100', 't0': '10-01-2010',
-                  't': '01-01-2011', 'threshold': '2', 'del_t': '24', 'x': '-111.80624', 'y': '40.77968',
+                  't': '10-03-2011', 'threshold': '2', 'del_t': '24', 'x': '-111.80624', 'y': '40.77968',
                   'ymax': '40.8327', 'xmax': '-111.728', 'ymin': '40.772', 'xmin': '-111.834'},
 
 
@@ -73,8 +73,8 @@ def model_input(request):
                     'ymax':'34.213', 'xmax': '-117.062', 'ymin': '34.10883', 'xmin': '-117.18'
                    },
 
-        'SantaCruz': {'simulation_name': 'SantaCruz_demo', 'USGS_gage': '11124500', 'cell_size': '100', 't0': '01-01-2010',
-                  't': '12-30-2011', 'threshold': '5', 'del_t': '24', 'x': '-119.90873', 'y': '34.59637',
+        'SantaCruz': {'simulation_name': 'SantaCruz_demo', 'USGS_gage': '11124500', 'cell_size': '500', 't0': '11-15-2010',
+                  't': '06-15-2011', 'threshold': '5', 'del_t': '24', 'x': '-119.90873', 'y': '34.59637',
                   'ymax': '34.714', 'xmax':'-119.781', 'ymin':'34.586', 'xmin': '-119.925'},
 
         'BlancoRiver': {'simulation_name': 'BlancoRiver_trial', 'USGS_gage': '08171000', 'cell_size': '500',
@@ -303,8 +303,8 @@ def model_run(request):
 
     # initial values
     fac_L_init = fac_Ks_init = fac_n_o_init = fac_n_c_init = fac_th_s_init = 1.0
-    pvs_t0_init = 50.0
-    vo_t0_init = 50.0
+    pvs_t0_init = 10.0
+    vo_t0_init = 5.0
     qc_t0_init = 1.0
     kc_init = 1.0
 
@@ -630,7 +630,7 @@ def model_run(request):
             width='500px',
             engine='highcharts',
             title= "Simulated and Observed flow  " ,
-            # subtitle='Nash value: %s, R2: %s'%(json_data['nash_value'], json_data['r2_value']),
+            subtitle='Nash value: %s, R2: %s'%(json_data['nash_value'], json_data['r2_value']),
             y_axis_title='Discharge',
             y_axis_units='cfs',
             series=[{
@@ -799,14 +799,17 @@ def model_run(request):
             width='500px',
             engine='highcharts',
             title= "Simulated and Observed flow " ,
+            subtitle='Nash value: %s, R2: %s' % (json_data['nash_value'], json_data['r2_value']),
             y_axis_title='Discharge ',
             y_axis_units='cfs',
             series=[{
                 'name': 'Simulated Hydrograph',
-                'data': hydrograph_series_sim
+                'data': hydrograph_series_sim,
+                'fillOpacity': hydrograph_opacity,
             }, {
                 'name': 'Observed Hydrograph',
-                'data': hydrograph_series_obs
+                'data': hydrograph_series_obs,
+                'fillOpacity': hydrograph_opacity,
             }]
         )
 
