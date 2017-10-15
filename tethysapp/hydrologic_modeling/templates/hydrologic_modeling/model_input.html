@@ -170,12 +170,19 @@
             <div id="additionalInputs" class="panel-collapse collapse">
                 <div class="panel-body">
 
-                            {% gizmo text_input cell_size %}
-                            {% gizmo text_input timestep %}
-                            {% gizmo select_input timeseries_source %}
-                            {% gizmo select_input model_engine %}
-                            {% gizmo text_input threshold %}
+                     <table>
+                         <tr  onChange="init()">{% gizmo text_input cell_size %} </tr>
+                         <tr>{% gizmo text_input timestep %} </tr>
+                         <tr> {% gizmo select_input timeseries_source %}</tr>
+                         <tr>{% gizmo select_input model_engine %} </tr>
+                         <tr> {% gizmo text_input threshold %}</tr>
+                            <!--{% gizmo text_input cell_size %}-->
+                            <!--{% gizmo text_input timestep %}-->
+                            <!--{% gizmo select_input timeseries_source %}-->
+                            <!--{% gizmo select_input model_engine %}-->
+                            <!--{% gizmo text_input threshold %}-->
 
+                     </table>
                 </div>
             </div>
         </div>
@@ -205,7 +212,7 @@
 
         <hr>
           Simulation already prepared? Load the previously saved simulation from the dropdown menu, or enter the HydroShare resource ID containing simulations files.
-            {% gizmo select_input simulation_names_list %}
+            <!--{% gizmo select_input simulation_names_list %}-->
 
       <a style="color:grey;" data-toggle="collapse" data-target="#hs_res_id_for_model"> Enter HydroShare resource id instead</a>
       <div class="collapse" id="hs_res_id_for_model">{% gizmo text_input existing_sim_res_id %}  </div>
@@ -224,10 +231,6 @@
 
 
 {% block app_content %}
-    <!--{% gizmo plot_view observed_hydrograph %}-->
-    <!--{% gizmo highcharts_plot_view observed_hydrograph2 %}-->
-    <!--{% gizmo plot_view observed_hydrograph2 %}-->
-
 
         <html lang="en">
         <head>
@@ -241,6 +244,7 @@
 
 
             <script>
+
 
                 function  init() {
                     var mapDiv = document.getElementById("mymap");
@@ -295,20 +299,24 @@
 
 
                         // :TODO Area of bounding box, and if its > -- km2, give prompt
-                        var di_along_long = 6371* (SW.lng() - NE.lng())*3.14/180 ;
-                        var di_along_lat = 6371* Math.cos((NE.lat()+ SW.lat())/2*3.14/180.0) * (NE.lat() - SW.lat())*3.14/180  ;
+                        var di_along_long = 3985* (SW.lng() - NE.lng())*3.14/180 ;
+                        var di_along_lat = 3985* Math.cos((NE.lat()+ SW.lat())/2*3.14/180.0) * (NE.lat() - SW.lat())*3.14/180  ;
                         var bb_area = parseInt( Math.abs( di_along_long * di_along_lat) ) ;  // im km2
 
-                        if (bb_area > 500) {
-                            var total_no_of_cells = parseInt( bb_area / Math.pow(document.forms["inputs"]["cell_size"].value/1000.0,2) );
+                        var total_no_of_cells = parseInt( bb_area / Math.pow(document.forms["inputs"]["cell_size"].value/1000.0,2) );
+                        document.getElementById('prompt').innerHTML = 'Total drainage area in mi2= ' + bb_area+ ' Total no of cells= ' +  total_no_of_cells  ;
 
-                            document.getElementById('prompt').innerHTML = 'Total drainage area in km2= ' + bb_area+ ' Total no of cells= ' +  total_no_of_cells  ;
+                        // if greater than 300 miles, warnings
+                        if (bb_area > 300) {
+                             document.getElementById('prompt').style.color = "red";
+
                         }
 
-                        if (bb_area <= 500) {
-
-                            document.getElementById('prompt').innerHTML = ''  ;
+                        if (bb_area <= 300) {
+                            document.getElementById('prompt').style.color = "grey";
+//                            document.getElementById('prompt').innerHTML = ''  ;
                         }
+
 
                     });
 
