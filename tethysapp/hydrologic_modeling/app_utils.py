@@ -544,11 +544,13 @@ def create_simulation_list_after_querying_db(given_user_name=None, return_hs_res
             queries = zip(simulation_names_list_queried, hs_resourceID)  # returns hs_resource of model instance
 
         if len(queries)<= 1:
-            print 'Error in reading database'
+            print '**************Success: Error in reading database, length only 1'
             stop
+        print '**************Success: Querying the db to create a list of existing simulation'
+
     except Exception,e:
         queries = [( 'No saved model', '44248166e239490383f23f6568de5fcf')]
-        print 'Could not query the db to create a list of existing simulation. Error = >',e
+        print '**************Error: Could not query the db to create a list of existing simulation. Error = >',e
 
     simulation_names_list = SelectInput(display_text='Saved Models',
                                      name='simulation_names_list',
