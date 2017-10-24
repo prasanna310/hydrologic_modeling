@@ -519,8 +519,8 @@ def create_simulation_list_after_querying_db(given_user_name=None, return_hs_res
     Base.metadata.create_all(engine)    # Create tables
     session = SessionMaker()            # Make session
 
-     # Query DB
-    simulations_queried = session.query(model_inputs_table).filter(model_inputs_table.user_name==given_user_name).all() # searches just the id input in URL
+    #  # Query DB
+    # simulations_queried = session.query(model_inputs_table).filter(model_inputs_table.user_name==given_user_name).all() # searches just the id input in URL
 
     # print 'Total no of records in model input table is', session.query(model_inputs_table).count()
     # print 'Total no of records in model calibration table is', session.query(model_calibration_table).count()
@@ -532,6 +532,11 @@ def create_simulation_list_after_querying_db(given_user_name=None, return_hs_res
     queries = []
 
     try:
+        # Query DB
+        simulations_queried = session.query(model_inputs_table).filter(
+            model_inputs_table.user_name == given_user_name).all()  # searches just the id input in URL
+
+
         for record in simulations_queried:
             simulation_names_list_queried.append(record.simulation_name)
             simulation_names_id.append(record.id)

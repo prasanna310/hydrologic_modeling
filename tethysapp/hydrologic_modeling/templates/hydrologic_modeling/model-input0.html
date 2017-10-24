@@ -1,226 +1,299 @@
 {% extends "hydrologic_modeling/googlemap.html" %}
 
+{% load staticfiles %}
+
 {% load tethys_gizmos %}
 
 
-{% block app_navigation_items %}
-  <h3>Prepare the model</h3>
 
 
-  <p>Lets start with providing some inputs for the model </p>
-  <form id ="inputs"  method="post" action="{% url 'hydrologic_modeling:test1' %}" enctype="multipart/form-data">
-      {% csrf_token %}
-      {% gizmo text_input simulation_name %}
+{% block app_navigation %}
 
-      <table style="width:100%">
-          <tr>
-                <th> {% gizmo text_input cell_size %} </th>
-                <th> {% gizmo text_input timestep %} </th>
-          </tr>
-
-      </table>
-      Outlet Longitude and Latitude
-      <table style="width:100%">
-           <!-- checking to see mixture of forms, tethys and html -->
-          <!--<tr>-->
-                <!--<th> Outlet Lng and Lat </th>-->
-                <!--<th>  </th>-->
-          <!--</tr>-->
-          <!--<tr>-->
-                <!--<td width="20px"><input type="text" name="outlet_x" value= -111.7915 size="15"></td>-->
-                <!--<td width="20px"><input type="text" name="outlet_y" value= 41.74025 size="15"> </td>-->
-
-          <!--</tr>-->
-          <tr>
-                <th> {% gizmo text_input outlet_x %} </th>
-                <th> {% gizmo text_input outlet_y %} </th>
-          </tr>
-
-        </table>
+    <h3>Inputs for the model </h3>
+    <p id="test_para">Prepare the hydrologic model by entering the inputs (in the three steps) below. </p>
 
 
+  <form id ="inputs"  method="post" action="{% url 'hydrologic_modeling:model_run' %}" enctype="multipart/form-data">
+  {% csrf_token %}
 
-       Bounding box coordinates
-      <!--<table width="100%">-->
-          <!--<tr>-->
-                <!--<th> </th>-->
-                <!--<th> <input type="text" name="box_topY" value= 41.7215 size="9"> </th>-->
-                <!--<th> </th>-->
-          <!--</tr>-->
-          <!--<tr>-->
-                <!--<td><input type="text" name="box_rightX" value= -111.8461 size="9"></td>-->
-                <!--<td></td>-->
-                <!--<td><input type="text" name="box_leftX" value= -111.6208 size="9"></td>-->
-          <!--</tr>-->
-          <!--<tr>-->
-                <!--<td></td>-->
-                <!--<td><input type="text" name="box_bottomY" value= 41.88 size="9"></td>-->
-                <!--<td></td>-->
-          <!--</tr>-->
+    <!--http://stackoverflow.com/questions/29151241/using-bootstrap-collapse-on-radio-buttons-to-show-hide-content-no-js-->
+    <!--<input type="radio" name="group1" value="1" data-toggle="collapse" data-parent="#accordion" data-target="#collapseOne" >-->
+    <!--<input type="radio" name="group1" value="2" data-toggle="collapse" data-parent="#accordion" data-target="#collapseTwo">-->
+    <!--<input type="radio" name="group1" value="3" data-toggle="collapse" data-parent="#accordion" data-target="#collapseThree">-->
 
-      <!--</table>-->
 
-      <table width="100%">
-          <tr>
-                <th> </th>
-                <th> {% gizmo text_input box_topY %}</th>
-                <th> </th>
-          </tr>
-          <tr>
-                <td>{% gizmo text_input box_leftX %}</td>
-                <td></td>
-                <td>{% gizmo text_input box_rightX %}</td>
-          </tr>
-          <tr>
-                <td></td>
-                <td> {% gizmo text_input box_bottomY %}</td>
-                <td></td>
-          </tr>
+    <!--Bootstrap panels (accordion) for clean looking inputs  -->
+    <div class="inputs_as_accordion" id="inputs_as_accordion">
 
-      </table>
+        <!--             First Input Section                  -->
+        <div class="panel panel-default">
+            <div class="panel-heading" data-toggle="collapse" data-target="#generalInputs">
+                <h4 class="panel-title">    1. General Inputs    </h4>
+            </div>
+
+            <div id="generalInputs" class="panel-collapse collapse in">
+                <div class="panel-body">
+
+                      {% gizmo text_input simulation_name %}
+                      {% gizmo text_input USGS_gage %}
+
+                      <table style="width:100%">
+                              <tr>
+                                    <th> {% gizmo date_picker simulation_start_date_picker %} </th>
+                                    <th>  {% gizmo date_picker simulation_end_date_picker %} </th>
+                              </tr>
+                      </table>
+                </div>
+            </div>
+
+        </div>
 
 
 
+        <!--             Second Input Section                  -->
+        <div class="panel panel-default">
+            <div class="panel-heading" data-toggle="collapse" data-target="#domainInputs">
+                <h4 class="panel-title">
+                    2. The domain
+                </h4>
+            </div>
+            <div id="domainInputs" class="panel-collapse collapse">
+                <div class="panel-body">
+
+                                    <input type="radio"  name="domain_radio" value="1" data-toggle="collapse" data-parent="#accordion" data-target="#specify" checked /> Specify long lat, or draw on map
+
+                                    <div id="specify" class="panel-collapse collapse" >
+                                      <br> <strong> OUTLET  </strong>
+
+                                      <table style="width:100%">
 
 
-      <table style="width:100%">
-          <tr>
-                <th> {% gizmo date_picker simulation_start_date_picker %} </th>
-                <th>  {% gizmo date_picker simulation_end_date_picker %} </th>
-          </tr>
-          <tr>
-                <td>{% gizmo select_input timeseries_source %}</td>
-                <td>{% gizmo select_input model_engine %} </td>
-          </tr>
-      </table>
+                                          <tr>
+                                                <th onChange="init()"> {% gizmo text_input outlet_x %} </th>
+                                                <th onChange="init()"> {% gizmo text_input outlet_y %} </th>
+                                          </tr>
 
-      {% gizmo text_input USGS_gage %}
-      {% gizmo text_input threshold %}
+                                        </table>
+                                        <br>
 
-      Optionally, upload .shp file geometry <br>
+                                      <strong> BOUNDING BOX </strong> <br>
+                                      <table width="100%">
+                                          <tr>
+                                                <th> </th>
+                                                <th onChange="init()"> {% gizmo text_input box_topY %}</th>
+                                                <th> </th>
+                                          </tr>
+                                          <tr>
+                                                <td onChange="init()">{% gizmo text_input box_leftX %}</td>
+                                                <td></td>
+                                                <td onChange="init()">{% gizmo text_input box_rightX %}</td>
+                                          </tr>
+                                          <tr>
+                                                <td></td>
+                                                <td onChange="init()"> {% gizmo text_input box_bottomY %}</td>
+                                                <td></td>
+                                          </tr>
 
-      <table>
-          <tr>
-              <th> Outlet </th>
-              <th><input type="file" name="outlet_shp" multiple/> </th>
-              <th><input type="submit" name="submit" value="Upload" /> </th>
-          </tr>
+                                      </table>
+                                    </div>
 
-          <tr>
-              <th> Watershed </th>
-              <th><input type="file" name="watershed_shp" multiple/> </th>
-              <th><input type="submit" name="submit" value="Upload" /> </th>
-          </tr>
+                                    <br><input type="radio" name="domain_radio" value="1" data-toggle="collapse" data-parent="#accordion" data-target="#upload" > Upload ESRI shp files
 
-       </table>
+                                    <div id="upload" class="collapse" >
+                                      <table width="20%">
+                                          <!--<tr>-->
+                                              <!--<th> Outlet </th>-->
+                                              <!--<th><input type="file" name="outlet_shp" accept=".shp, .shx, .dbf, .prj, .geojson, .json, .js /*" title=" " multiple/> </th>-->
+                                              <!--&lt;!&ndash;<th><input type="submit" name="submit" value="Upload" /> </th>&ndash;&gt;-->
+                                          <!--</tr>-->
+                                          <form id ="input_shp"  method="post" action="{% url 'hydrologic_modeling:visualize_shp' %}" enctype="multipart/form-data">
+                                              <tr>
+                                                  <!--<th> Watershed </th>-->
+                                                  <th><input type="file" name="watershed_upload"  accept=".shp, .shx, .dbf, .prj, .zip, .tif, .tiff/*" title="&nbsp;" multiple/> </th>
+                                              </tr>
 
-      <input type="submit" name="input-form" class="btn btn-default">
+                                              <tr>
+        <!--<th><input type="submit" name="submit" value="Upload" /> </th>-->
+                                                  <!--<th>  </th>-->
+                                                  <th> <input type="button" name="input_shp-form" class="btn btn-default" value="OK"></th>
+                                              </tr>
+                                          </form>
+                                       </table>
+                                    </div>
+
+                                    <!--Upload geojson-->
+                                    <br><input type="radio" name="domain_radio" value="1" data-toggle="collapse" data-parent="#accordion" data-target="#upload_geojson" > Upload geojson files for watershed
+
+                                    <div id="upload_geojson" class="collapse" >
+                                      <table width="20%">
+                                          <tr>
+                                              <!--<th> Outlet </th>-->
+                                              <!--<th><input type="file" id="outlet_geojson" accept=" .geojson, .json, .js /*" title=" " /> </th>-->
+                                              <!--&lt;!&ndash;<th><input type="submit" name="submit" value="Upload" /> </th>&ndash;&gt;-->
+                                          <!--</tr>-->
+                                          <tr>
+                                              <th> <input type="file" id="watershed_geojson"  accept=" .geojson, .json, .js /*" title="&nbsp;"  /> </th>
+                                              <!--<th><input type="submit" name="submit" value="Upload" /> </th>-->
+                                          </tr>
+                                          <tr>
+                                                <th> <p onclick="loadFileAsText()">Click here to Upload </p></th>
+                                          </tr>
+                                       </table>
+                                    </div>
+
+
+                                    <br><input type="radio" name="domain_radio" value="1" data-toggle="collapse" data-parent="#accordion" data-target="#hs_upload" > Specify Hydroshare Resource ID
+                                    <div id="hs_upload" class="collapse" >
+                                       <table>
+                                          <tr>
+                                              <th> Outlet  </th>
+                                              <th>{% gizmo text_input outlet_hs %} </th>
+                                          </tr>
+                                          <tr>
+                                              <th> Watershed </th>
+                                              <th>{% gizmo text_input bounding_box_hs %} </th>
+                                          </tr>
+                                       </table>
+                                    </div>
+
+
+                </div>
+            </div>
+        </div>
+
+
+
+        <!--             Third Input Section                  -->
+        <div class="panel panel-default">
+            <div class="panel-heading" data-toggle="collapse" data-target="#additionalInputs">
+                <h4 class="panel-title">
+                    3. Additional Inputs
+                </h4>
+            </div>
+            <div id="additionalInputs" class="panel-collapse collapse">
+                <div class="panel-body">
+
+                     <table>
+                         <tr  onChange="init()">{% gizmo text_input cell_size %} </tr>
+                         <tr>{% gizmo text_input timestep %} </tr>
+                         <tr> {% gizmo select_input timeseries_source %}</tr>
+                         <tr>{% gizmo select_input model_engine %} </tr>
+                         <tr> {% gizmo text_input threshold %}</tr>
+                            <!--{% gizmo text_input cell_size %}-->
+                            <!--{% gizmo text_input timestep %}-->
+                            <!--{% gizmo select_input timeseries_source %}-->
+                            <!--{% gizmo select_input model_engine %}-->
+                            <!--{% gizmo text_input threshold %}-->
+
+                     </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+          <a style="color:blue;" data-toggle="collapse" data-target="#download_request_form"> Only interested in input files? Click here! </a>
+          <div class="collapse" id="download_request_form">
+              <p style="color:red;">Make sure the 'domain', and the 'start and end dates' are correct </p>
+              <input type="radio" name="download_choice" value="geospatial"> Download geospatial files <br>
+              <input type="radio" name="download_choice" value="soil" > Download geospatial, and soil files<br>
+              <input type="radio" name="download_choice" value="forcing" > Download geospatial, and forcing files<br>
+
+          </div>
+
+
+      <input type="submit" name="input-form" class="btn btn-default" value="Send Request">
+
+
+
+
   </form>
 
+  <hr>
+  <form id ="load_simulation"  method="post" action="{% url 'hydrologic_modeling:model_run' %}" enctype="form-data">
+    {% csrf_token %}
+
+        <hr>
+          Simulation already prepared? Load the previously saved simulation from the dropdown menu, or enter the HydroShare resource ID containing simulations files.
+            {% gizmo select_input simulation_names_list %}
+
+      <a style="color:grey;" data-toggle="collapse" data-target="#hs_res_id_for_model"> Enter HydroShare resource id instead</a>
+      <div class="collapse" id="hs_res_id_for_model">{% gizmo text_input existing_sim_res_id %}  </div>
+
+
+  <input type="submit" name="simulation-load" class="btn btn-default" value="Load simulation" > <!--This line looks pretty useless to me-->
+  <input type="hidden" name="load_simulation_name" value= "{{hs_resource_id_created}}">   <!--This too is kinda useless, because hs_resource_id is not know in this html -->
+
+  </form>
+
+<hr>
+
+
 
 {% endblock %}
 
 
-{% block app_actions %}
 
-      <table style="width:100%">
-          <tr>
-              <th> {% gizmo select_input simulation_names_list %}</th>
-              <th> </th>
-              <th> </th>
-              <th> </th>
-              <th> </th>
-              <th> </th>
-              <th> </th>
-              <th>  <a href="{% url 'hydrologic_modeling:home' %}" class="btn btn-default">Back</a> </th>
-          </tr>
-
-      </table>
-
-
-
-  <!-- This is url tag-->
-  <!-- the structure is interesting. map represents name of UrlMap in App.py, and hydrologic_modeling is name of app-->
-  <!-- WE ARE NOT HARD CODING the url. URL is only mentioned once, in app.py-->
-{% endblock %}
-
-
-
-
- <!-- The following code is collected from googlemap.html-->
 {% block app_content %}
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Trying google maps</title>
+<!--Model inputs user form-->
+<!--<div id='form-container' class='col-md-3'style="margin-bottom:30px">-->
+<!--Input parameter settings form-->
+    <!---->
+<!--<form id='user-form' method="post" action='model_input_submit/'>-->
+<!--{% csrf_token %}-->
 
-    <style> #mymap {width:90%; height:600px;} </style>
-      <script async defer
-              src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCJVwfz-TJWiZCvLmgYHv2yHYc8vagp7V0&callback=initMap"
-              type="text/javascript"></script>
-
-    <script>
-        function  init() {
-            var mapDiv = document.getElementById("mymap");
-            var mapCenter = new google.maps.LatLng(41.74025, -111.7915);
-            var mapOptions = {
-                center: mapCenter,
-                zoom:9,
-                mapTypeId: google.maps.MapTypeId.ROADMAP
-            };
-            var map = new google.maps.Map(mapDiv, mapOptions);
-
-            var marker = new google.maps.Marker({
-                map:map,
-                position: mapCenter,
-                draggable:true,
-                label:"Outlet"
-            });
-
-            var rectangle = new google.maps.Rectangle({
-                map: map,
-                bounds: new google.maps.LatLngBounds (
-                        new google.maps.LatLng(41.88,-111.8461),
-                        new google.maps.LatLng(41.7215,-111.6208)
-                ),
-                fillColor:"green",
-                strokeColor:"red",
-                editable:true,
-                draggable:true
-            });
-
-            google.maps.event.addListener(rectangle, "bounds_changed", function(){
-                var bounds = rectangle.getBounds();
-                var NE = bounds.getNorthEast();
-                var SW = bounds.getSouthWest();
-
-                document.forms["inputs"]["box_topY"].value= SW.lat() ;
-                document.forms["inputs"]["box_rightX"].value= SW.lng();
-                document.forms["inputs"]["box_leftX"].value= NE.lng();
-                document.forms["inputs"]["box_bottomY"].value= NE.lat();
-
-            });
-
-            google.maps.event.addListener(marker, "dragend", function(event){
-                document.forms["inputs"]["outlet_x"].value= this.getPosition().lng() ;
-                document.forms["inputs"]["outlet_y"].value= this.getPosition().lat() ;
-            });
-
-        }
-        window.onload = init;
-
-    </script>
+<!--<input id='submit-model-input-btn' type="submit" value="Input Data Preparation" name='run-service' class="btn btn-success btn-lg pull-right">-->
+<!--</form>-->
+<!--<div id="wait" class="modal fade" role="dialog" data-backdrop="static" data-keyboard="false">-->
+<!--<div class="modal-dialog">-->
+<!--&lt;!&ndash; Modal content&ndash;&gt;-->
+<!--<div class="modal-content">-->
+<!--<div class="modal-header">-->
+<!--<h4 class="modal-title">Please wait for form processing..</h4>-->
+<!--</div>-->
+<!--<div class="modal-body">-->
+<!--<img align="middle" src="{% static 'ueb_app/images/waiting.gif' %}" width="550px" height="20px"/>-->
+<!--</div>-->
+<!--</div>-->
+<!--&lt;!&ndash;End modal content&ndash;&gt;-->
+<!--</div>-->
+<!--</div>-->
+<!--</div>-->
+<!--Google map-->
+<div id='map-container' class="col-md-8">
+<!-- app intro-->
+<div id='title' >
+<h3 style="color:#0073e6">Input Data Preparation</h3>
+<p style="font-size:120%">
+This application helps prepare a complete model-instance for PyTOPKAPI model simulation, or model-input files for TOPNET or geospatial dataset for a user
+defined area (within the bounds of supporting data in the continental US).<br>
+<span data-toggle="collapse" data-target="#intro-detail" style="color: green; margin-bottom: 20px"><strong><u>See more details here.</u></strong></span>
+</p>
+<div id="intro-detail" class="collapse" style="background-color:#f2f2f2">
+<p style="font-size:120%">
+<strong>PyTOPKAPI simulation:</strong> terrain slope and aspect. Data are derived from National Elevation Datasets USGS.<br>
+<strong>TOPNET model input:</strong> canopy coverage fraction, canopy height, leaf area index. Data are derived from National Land Cover Dataset.<br>
+<strong>Download geospatial dataset:</strong> Three options: 1) geospatial 2) geospatial+soil dataset (for US only), and 3) geospatial + soil dataset + forcing files  (for US only)<br>
+</p>
+</div>
+</div>
+<!-- map -->
+<h7>You can draw the research domain and outlet point in the map (Only watershed delineation offerd for non-US area)</h7>
+<div id="map" style="width:1000px; height:800px"></div>
+</div>
+{%endblock%}
 
 
-
-</head>
-<body>
-    <h5>  Specify the outlet and the bounding box hat completely contains the watershed</h5>
-    <div id="mymap"></div>
-    <div id="info"></div>
-</body>
-</html>
-
+{% block app_actions_override %}
 {% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script async defer
+src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCJVwfz-TJWiZCvLmgYHv2yHYc8vagp7V0&callback=initMap&libraries=drawing">
+</script>
+<script src="{% static 'hydrologic_modeling/js/model_Input.js' %} " type="text/javascript"></script>
+{% endblock %}
+
 
 

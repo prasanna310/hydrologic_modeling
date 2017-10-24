@@ -395,8 +395,6 @@ def model_run(request):
                     print "Downloading geospatial and soil file in progrress"
                     test_string ="Downloading geospatial and soil file in progrress"
                     inputs_dictionary = app_utils.create_model_input_dict_from_request(request)
-
-
                 elif download_choice == 'forcing':
                     print "Downloading geospatial and forcing file in progrress"
                     test_string = "Downloading geospatial and forcing file in progrress"
@@ -405,14 +403,13 @@ def model_run(request):
                 download_request_response = app_utils.download_geospatial_and_forcing_files(inputs_dictionary, download_request=download_choice)
                 print "Downloading all the files successfully completed"
 
-
                 if download_request_response != {}:
                     download_status = True
                     download_link = download_request_response
 
             except Exception, e:
                 print 'The forcing file creation step gave error'
-                f = file('/home/prasanna/Desktop/error_auto.html', 'w')
+                f = file('error_auto.html', 'w')
                 f.write(str(e))
                 f.close()
 
@@ -425,14 +422,14 @@ def model_run(request):
                 simulation_name = inputs_dictionary['simulation_name']
                 print "MSG: Inputs from user read"
 
-                # read shp. Not sure if this is needed
-                try:
-                    outlet_shp = request.FILES['outlet_shp']
-                    watershed_upload = request.FILES['watershed_upload']
-
-                    print "MSG: Shapefile from user read"
-                except:
-                    pass
+                # # read shp. Not sure if this is needed
+                # try:
+                #     outlet_shp = request.FILES['outlet_shp']
+                #     watershed_upload = request.FILES['watershed_upload']
+                #
+                #     print "MSG: Shapefile from user read"
+                # except:
+                #     pass
 
 
                 # # Method (1), STEP (2):call_runpytopkapi function
@@ -1320,33 +1317,199 @@ def test2(request):
     return render(request, 'hydrologic_modeling/test2.html', context)
 
 
-def model_input0(request): # for a URL with variables in it, the variables need to be added to the arguments of the controller function it maps to
+def model_input0(request):
+
+    user_name = request.user.username
+
+    # Define Gizmo Options
+    # from .model import engine, SessionMaker, Base, model_inputs_table, model_calibration_table
+
+    # Query DB for gage objects, all the entries by the user name
+    # give the value for thsi variable = 0 if the program is starting for the first time
+    simulation_names_list = app_utils.create_simulation_list_after_querying_db(given_user_name=user_name)
+
+    # # intials
+    watershed_name = 'SantaCruz' # 'RBC' , 'Santa Cruz', 'Barrow Creeks', 'Plunge' , Logan
+    initials = {
+
+        'Logan': {'simulation_name': 'Logan_sample', 'USGS_gage': '10109000', 'cell_size': '300', 't0': '10-01-2010',
+                  't': '10-30-2010', 'threshold': '25', 'del_t': '24', 'x': '-111.7836', 'y': '41.7436',
+                  'ymax': '42.12', 'xmax': '-111.44', 'ymin': '41.68', 'xmin': '-111.83'},
+
+        'RBC': {'simulation_name': 'RBC_sample', 'USGS_gage': '10172200', 'cell_size': '100', 't0': '10-01-2010',
+                  't': '10-03-2011', 'threshold': '2', 'del_t': '24', 'x': '-111.80624', 'y': '40.77968',
+                  'ymax': '40.8327', 'xmax': '-111.728', 'ymin': '40.772', 'xmin': '-111.834'},
+
+
+        'Plunge': {'simulation_name': 'Plunge_sample', 'USGS_gage': '11055500', 'cell_size': '300', 't0': '10-01-2010',
+                  't': '01-01-2011', 'threshold': '5', 'del_t': '24', 'x':'-117.141284', 'y': '34.12128',
+                  # 'ymax':'34.2336', 'xmax': '-117.048046', 'ymin': '34.10883', 'xmin': '-117.168289',
+                    'ymax':'34.213', 'xmax': '-117.062', 'ymin': '34.10883', 'xmin': '-117.18'
+                   },
+
+        'SantaCruz': {'simulation_name': 'SantaCruz_demo', 'USGS_gage': '11124500', 'cell_size': '500', 't0': '11-15-2010',
+                  't': '06-15-2011', 'threshold': '5', 'del_t': '24', 'x': '-119.90873', 'y': '34.59637',
+                  'ymax': '34.714', 'xmax':'-119.781', 'ymin':'34.586', 'xmin': '-119.925'},
+
+        'BlancoRiver': {'simulation_name': 'BlancoRiver_trial', 'USGS_gage': '08171000', 'cell_size': '500',
+                      't0': '01-01-2010',
+                      't': '12-30-2011', 'threshold': '20', 'del_t': '24', 'x': '-98.088989', 'y': '29.99349',
+                      'ymax': '30.20707', 'xmax': '-98.0679', 'ymin': '29.96298', 'xmin': '-98.4732'},
+
+        'OnionCreek': {'simulation_name': 'OnionCreek_trial', 'USGS_gage': '08158700', 'cell_size': '200',
+                        't0': '01-01-2010',
+                        't': '12-30-2011', 'threshold': '20', 'del_t': '24', 'x': '-98.00826', 'y': '30.08341',
+                        'ymax': '30.213', 'xmax': '-97.956', 'ymin': '30.027', 'xmin': '-98.461'},
+
+    }
+
+
+    simulation_name = TextInput(display_text='Simulation name', name='simulation_name', initial=initials[watershed_name]['simulation_name'])
+    USGS_gage = TextInput(display_text='USGS gage nearby', name='USGS_gage', initial=initials[watershed_name]['USGS_gage'])
+    cell_size = TextInput(display_text='Cell size in meters', name='cell_size', initial=initials[watershed_name]['cell_size'])
+    timestep = TextInput(display_text='Timestep in hrs', name='timestep', initial=initials[watershed_name]['del_t']) #, append="hours"
+    simulation_start_date_picker = DatePicker(name='simulation_start_date_picker', display_text='Start Date',
+                                              autoclose=True, format='mm-dd-yyyy', start_date='10-15-2005',
+                                              start_view='year', today_button=True, initial=initials[watershed_name]['t0'])
+    simulation_end_date_picker = DatePicker(name='simulation_end_date_picker', display_text='End Date',
+                                            autoclose=True, format='mm-dd-yyyy', start_date='10-15-2005',
+                                            start_view='year', today_button=False, initial=initials[watershed_name]['t'])
+    threshold = TextInput(display_text='Stream threshold in km2', name='threshold', initial=initials[watershed_name]['threshold'])
+
+    timeseries_source = SelectInput(display_text='Timeseries source',
+                name='timeseries_source',
+                multiple=False,
+                options=[  ('Daymet', 'Daymet'),('UEB', 'UEB')],
+                initial=['Daymet'],
+                original=['Daymet'])
+
+    model_engine = SelectInput(display_text='Choose Model',
+                name='model_engine',
+                multiple=False,
+                options=[('TOPKAPI', 'TOPKAPI'), ('TOPNET', 'TOPNET')],
+                initial=['TOPKAPI'],
+                original=['TOPKAPI'])
+
+
+
+    # # html form to django form
+
+    # (Any Watershed)
+    outlet_x = TextInput(display_text='Longitude', name='outlet_x', initial=initials[watershed_name]['x']) #41.74025, -111.7915
+    outlet_y = TextInput(display_text='Latitude', name='outlet_y', initial=initials[watershed_name]['y'])
+
+    box_topY = TextInput(display_text='North Y', name='box_topY', initial=initials[watershed_name]['ymax'])
+    box_rightX = TextInput(display_text='East X', name='box_rightX', initial=initials[watershed_name]['xmax'])
+    box_bottomY = TextInput(display_text='South Y', name='box_bottomY', initial=initials[watershed_name]['ymin'])
+    box_leftX = TextInput(display_text='West X', name='box_leftX', initial=initials[watershed_name]['xmin'])
+
+
+
+    outlet_hs = TextInput(display_text='', name='outlet_hs', initial='')
+    bounding_box_hs = TextInput(display_text='', name='bounding_box_hs', initial='')
+
+    existing_sim_res_id = TextInput(display_text='', name='existing_sim_res_id', initial='')
+
+    form_error = ""
+    observed_hydrograph = ""
+    test_function_response = ""
+    geojson_files = {}
+    geojson_outlet = 'Default'
+    geojson_domain = 'Default'
+    table_id = 0
+    validation_status = True
+
+    # when it receives request. This is not in effect. Currently, the request is sent to model_run, not model_input.html
+    if request.is_ajax and request.method == 'POST':
+        try:
+            validation_status, form_error, inputs_dictionary, geojson_files = app_utils.validate_inputs(request) # input_dictionary has proper data type. Not everything string
+            # if geojson_files != {}:
+            #     for geojson in geojson_files.keys():
+            #         if geojson == 'geojson_outlet':
+            #             geojson_outlet = geojson_files['geojson_outlet']
+            #         if geojson == 'geojson_domain':
+            #             geojson_domain = geojson_files['geojson_domain']
+
+
+            if form_error.startswith("Error 2") or form_error.startswith("Error 3"):  # may not need this part. Because if no shapefile input, will not read it
+                form_error = ""
+
+        except Exception, e:
+            if form_error.startswith("Error 2") or form_error.startswith("Error 3"):  # may not need this part. Because if no shapefile input, will not read it
+                form_error = ""
+            else:
+                form_error = "Error 0: " + str(e)
+
+        if not validation_status:
+            # useless code. If the file is prepared, we know validatoin status = False
+            import numpy as np
+            np.savetxt("/a%s.txt"%form_error, np.array([1, 1]))
+
+        if validation_status:
+            # hydrograpph series is a series (list) object.
+            # table_id is the id of the data just written in the database after the successful model run
+            hydrograph_series = []
+            # hydrograph_series, table_id = app_utils.run_model_with_input_as_dictionary(inputs_dictionary,False, simulation_folder="")
+
+
+            observed_hydrograph = TimeSeries(
+                height='500px',
+                width='500px',
+                engine='highcharts',
+                title='Hydrograph ',
+                subtitle="Simulated and Observed flow for " + inputs_dictionary['simulation_name'],
+                y_axis_title='Discharge',
+                y_axis_units='cumecs',
+                series=[{
+                    'name': 'Simulated Flow',
+                    'data': hydrograph_series,
+                }]
+            )
+
+
+    context = {
+
+        'test_function_response':test_function_response,
+        "observed_hydrograph":observed_hydrograph,
+
+        'simulation_name': simulation_name,
+        'cell_size': cell_size,
+        'timestep': timestep,
+        'simulation_start_date_picker': simulation_start_date_picker,
+        'simulation_end_date_picker': simulation_end_date_picker,
+        'timeseries_source': timeseries_source,
+        'threshold': threshold,
+        'USGS_gage': USGS_gage,
+        'model_engine': model_engine,
+        'gage_id': id,
+        'outlet_x': outlet_x, 'outlet_y': outlet_y,
+        'box_topY': box_topY, 'box_rightX': box_rightX, 'box_leftX': box_leftX, 'box_bottomY': box_bottomY,
+        'simulation_names_list': simulation_names_list,
+        'existing_sim_res_id':existing_sim_res_id,
+        'outlet_hs': outlet_hs,
+        'bounding_box_hs': bounding_box_hs,
+
+        'form_error': form_error,
+        'validation_status': validation_status,
+        'model_inputs_table_id':table_id,
+        'geojson_outlet':geojson_outlet,
+        'geojson_domain':geojson_files,
+
+    }
+
+    return render(request, 'hydrologic_modeling/model-input0.html', context)
+
+
+def model_input0_backup(request): # for a URL with variables in it, the variables need to be added to the arguments of the controller function it maps to
     """
     Controller for ..........
     """
 
     user_name = request.user.username
 
-    # # DROP DOWN LIST---- query existing simulation records. Put them in drop down --------- # #
-    from .model import engine, SessionMaker, Base, model_inputs_table, model_calibration_table
-    Base.metadata.create_all(engine)    # Create tables
-    session = SessionMaker()            # Make session
-    # Query DB for gage objects
-    simulations_queried = session.query(model_inputs_table).filter(model_inputs_table.user_name==user_name).all() # searches just the id input in URL
+    simulation_names_list = app_utils.create_simulation_list_after_querying_db(given_user_name=user_name)
 
-    simulation_names_list_queried = []
-    simulation_names_id = []
 
-    for row in simulations_queried:
-        simulation_names_list_queried.append(row.simulation_name)
-        simulation_names_id.append(row.id)
-
-    queries = zip(simulation_names_list_queried,simulation_names_id )
-
-    simulation_names_list = SelectInput(display_text='Load Saved Simulations',
-                                     name='simulation_names_list',
-                                     multiple=False,
-                                     options=  queries )
     # # -------------------------------- querying ---------------------------------------- # #
 
 
