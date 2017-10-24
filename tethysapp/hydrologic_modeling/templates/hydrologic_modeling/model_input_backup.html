@@ -170,12 +170,19 @@
             <div id="additionalInputs" class="panel-collapse collapse">
                 <div class="panel-body">
 
-                            {% gizmo text_input cell_size %}
-                            {% gizmo text_input timestep %}
-                            {% gizmo select_input timeseries_source %}
-                            {% gizmo select_input model_engine %}
-                            {% gizmo text_input threshold %}
+                     <table>
+                         <tr  onChange="init()">{% gizmo text_input cell_size %} </tr>
+                         <tr>{% gizmo text_input timestep %} </tr>
+                         <tr> {% gizmo select_input timeseries_source %}</tr>
+                         <tr>{% gizmo select_input model_engine %} </tr>
+                         <tr> {% gizmo text_input threshold %}</tr>
+                            <!--{% gizmo text_input cell_size %}-->
+                            <!--{% gizmo text_input timestep %}-->
+                            <!--{% gizmo select_input timeseries_source %}-->
+                            <!--{% gizmo select_input model_engine %}-->
+                            <!--{% gizmo text_input threshold %}-->
 
+                     </table>
                 </div>
             </div>
         </div>
@@ -224,15 +231,12 @@
 
 
 {% block app_content %}
-    {% gizmo plot_view observed_hydrograph %}
-    {% gizmo highcharts_plot_view observed_hydrograph2 %}
-    {% gizmo plot_view observed_hydrograph2 %}
-
 
         <html lang="en">
         <head>
             <meta charset="UTF-8">
             <title>Domain information from google maps</title>
+
 
             <style> #mymap {width:95%; height:800px;} </style>
               <script async defer
@@ -241,6 +245,7 @@
 
 
             <script>
+
 
                 function  init() {
                     var mapDiv = document.getElementById("mymap");
@@ -278,8 +283,6 @@
                         draggable:true
                     });
 
-
-
                     //map.data.loadGeoJson("usgsgages" );  //https://usgsgages.000webhostapp.com/googletryjson.json
 
 
@@ -295,15 +298,24 @@
 
 
                         // :TODO Area of bounding box, and if its > -- km2, give prompt
-                        var di_along_long = 6371* (SW.lng() - NE.lng())*3.14/180 ;
-                        var di_along_lat = 6371* Math.cos((NE.lat()+ SW.lat())/2*3.14/180.0) * (NE.lat() - SW.lat())*3.14/180  ;
+                        var di_along_long = 3985* (SW.lng() - NE.lng())*3.14/180 ;
+                        var di_along_lat = 3985* Math.cos((NE.lat()+ SW.lat())/2*3.14/180.0) * (NE.lat() - SW.lat())*3.14/180  ;
                         var bb_area = parseInt( Math.abs( di_along_long * di_along_lat) ) ;  // im km2
 
-                        if (bb_area > 500) {
-                            var total_no_of_cells = parseInt( bb_area / Math.pow(document.forms["inputs"]["cell_size"].value/1000.0,2) );
+                        var total_no_of_cells = parseInt( bb_area / Math.pow(document.forms["inputs"]["cell_size"].value/1000.0,2) );
+                        document.getElementById('prompt').innerHTML = 'Total drainage area in mi2= ' + bb_area+ ' Total no of cells= ' +  total_no_of_cells  ;
 
-                            document.getElementById('prompt').innerHTML = 'Total drainage area in km2= ' + bb_area+ ' Total no of cells= ' +  total_no_of_cells  ;
+                        // if greater than 300 miles, warnings
+                        if (bb_area > 300) {
+                             document.getElementById('prompt').style.color = "red";
+
                         }
+
+                        if (bb_area <= 300) {
+                            document.getElementById('prompt').style.color = "grey";
+//                            document.getElementById('prompt').innerHTML = ''  ;
+                        }
+
 
                     });
 
@@ -312,10 +324,97 @@
                         document.forms["inputs"]["outlet_y"].value= this.getPosition().lat() ;
                     });
 
+
+
+
+
+
+//                    // Create the search box and link it to the UI element.
+//                    var input = document.getElementById('pac-input');
+//                    var searchBox = new google.maps.places.SearchBox(input);
+//                    map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+//
+//                    // Bias the SearchBox results towards current map's viewport.
+//                    map.addListener('bounds_changed', function() {
+//                      searchBox.setBounds(map.getBounds());
+//                    });
+//
+//                    searchBox.addListener('places_changed', function() {
+//                      var places = searchBox.getPlaces();
+//
+//
+//
+//                      // For each place, get the icon, name and location.
+//                      var bounds = new google.maps.LatLngBounds();
+//                      places.forEach(function(place) {
+//                        if (!place.geometry) {
+//                          console.log("Returned place contains no geometry");
+//                          return;
+//                        }
+//                        var icon = {
+//                          url: place.icon,
+//                          size: new google.maps.Size(71, 71),
+//                          origin: new google.maps.Point(0, 0),
+//                          anchor: new google.maps.Point(17, 34),
+//                          scaledSize: new google.maps.Size(25, 25)
+//                        };
+//
+//
+//                        if (place.geometry.viewport) {
+//                          // Only geocodes have viewport.
+//                          bounds.union(place.geometry.viewport);
+//                        } else {
+//                          bounds.extend(place.geometry.location);
+//                        }
+//                      });
+//                      map.fitBounds(bounds);
+//                    });
+//
+//
+
+
+
+
                 //inti closes
                 }
 
+//google.maps.event.addDomListener(window, 'load', init);
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        // This block of code for trying to uncheck download btns
+        var allRadios = document.getElementsByName('download_choice');
+        var booRadio;
+        var x = 0;
+        for(x = 0; x < allRadios.length; x++){
+
+            allRadios[x].onclick = function() {
+                if(booRadio == this){
+                    this.checked = false;
+                    booRadio = null;
+                }else{
+                    booRadio = this;
+                }
+            };
+        }
 
 
                 window.onload = init;
@@ -330,8 +429,18 @@
             <!--<p> Variable1, Error: {{form_error}} </p>-->
             <!--<p> Variable2, geojson file: {{geojson_domain}} </p>-->
 
-            <div id="mymap"></div>
+
+
+
+
+            <!--<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=places"></script>-->
+            <!--<input id="pac-input" class="controls" type="text" placeholder="Search Box">-->
+            <div class="container" id="mymap"></div>
             <div id="info"></div>
+
+
+
+         <!--<div class="container" id="mymap" style="height:300px;"></div>-->
         </body>
         </html>
 
@@ -362,6 +471,9 @@
 {% block scripts %}
   {{ block.super }}
   <!--<script src="main.js" type="text/javascript"></script>-->
+
+
+
   <script>
       function mToDegree(distance_in_m, avg_lat){
 
@@ -474,7 +586,8 @@
 
 
 //    function loadFileAsText()
-//    {
+//    {clear
+
 //        document.getElementById('test_para').innerHTML = 'we have entered the function'
 //        var fileToLoad = document.getElementById("watershed_geojson").files[0]; //this could be outlet_geojson too
 //
