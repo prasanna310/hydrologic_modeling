@@ -572,7 +572,7 @@ def model_run(request):
 
         ######### START: need to get two variables: i) hs_resource_id_created, and ii) hydrograph series ##############
         response_JSON_file = '/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/16ea0402dd4c403bbb4e5b23ed597728/pytopkpai_responseJSON.txt'
-        # response_JSON_file =  app_utils.loadpytopkapi(hs_res_id=hs_resource_id, out_folder='')
+        response_JSON_file =  app_utils.loadpytopkapi(hs_res_id=hs_resource_id, out_folder='')
         json_data = app_utils.read_data_from_json(response_JSON_file)
 
         hs_resource_id_created = hs_resource_id_loaded =hs_resource_id  #json_data['hs_res_id_created']
