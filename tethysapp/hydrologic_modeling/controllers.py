@@ -408,13 +408,14 @@ def model_run(request):
                     download_link = download_request_response
 
             except Exception, e:
-                print 'The forcing file creation step gave error'
+                print 'The downloading-files step gave error'
                 f = file('error_auto.html', 'w')
                 f.write(str(e))
                 f.close()
 
                 if download_choice != None:
-                    stop
+                    print 'Error: Downlading file step gave error'
+                    pass
 
                 # # Method (1), STEP (1): get input dictionary from request ( request I)
                 inputs_dictionary = app_utils.create_model_input_dict_from_request(request)
@@ -570,8 +571,8 @@ def model_run(request):
 
 
         ######### START: need to get two variables: i) hs_resource_id_created, and ii) hydrograph series ##############
-        response_JSON_file = '/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/0a6ffd827ba14b07b6fed5dc8559877f/pytopkpai_responseJSON.txt'
-        response_JSON_file =  app_utils.loadpytopkapi(hs_res_id=hs_resource_id, out_folder='')
+        response_JSON_file = '/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/16ea0402dd4c403bbb4e5b23ed597728/pytopkpai_responseJSON.txt'
+        # response_JSON_file =  app_utils.loadpytopkapi(hs_res_id=hs_resource_id, out_folder='')
         json_data = app_utils.read_data_from_json(response_JSON_file)
 
         hs_resource_id_created = hs_resource_id_loaded =hs_resource_id  #json_data['hs_res_id_created']
@@ -709,12 +710,12 @@ def model_run(request):
 
 
         ######### START: need to get at leaset two variables: i) hs_resource_id_created, and ii) hydrograph series #####
+        response_JSON_file = '/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/16ea0402dd4c403bbb4e5b23ed597728/pytopkpai_responseJSON.txt'
         response_JSON_file =  app_utils.modifypytopkapi(hs_res_id=hs_resource_id_created, out_folder='',
                                                         fac_l=fac_L_form, fac_ks=fac_Ks_form, fac_n_o=fac_n_o_form,
                                                         fac_n_c=fac_n_c_form, fac_th_s=fac_th_s_form,
                                                         pvs_t0=pvs_t0_form, vo_t0=vo_t0_form, qc_t0=qc_t0_form,
                                                         kc=kc_form )
-        #response_JSON_file = '/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/5115bcf068fe4a1a8e90a7ebb84ab871/pytopkpai_responseJSON.txt'
         json_data = app_utils.read_data_from_json(response_JSON_file)
 
         hs_resource_id_created = hs_resource_id_modified =  json_data['hs_res_id_created']
@@ -908,16 +909,18 @@ def model_run(request):
 
 
     # gizmo settings
-    fac_L = TextInput(display_text='fac_L', name='fac_L', initial=float(fac_L_init))
-    fac_Ks = TextInput(display_text='fac_Ks', name='fac_Ks', initial=float(fac_Ks_init))
-    fac_n_o = TextInput(display_text='fac_n_o', name='fac_n_o', initial=float(fac_n_o_init))
-    fac_n_c = TextInput(display_text='fac_n_c', name='fac_n_c', initial=float(fac_n_c_init))
-    fac_th_s = TextInput(display_text='fac_th_s', name='fac_th_s', initial=float(fac_th_s_init))
+    fac_L = TextInput(display_text='Soil depth across all model cells', name='fac_L', initial=float(fac_L_init))
+    fac_Ks = TextInput(display_text='Saturated hydraulic conductivity', name='fac_Ks', initial=float(fac_Ks_init))
+    fac_n_o = TextInput(display_text="Manning's n for overland", name='fac_n_o', initial=float(fac_n_o_init))
+    fac_n_c = TextInput(display_text="Manning's n for channel", name='fac_n_c', initial=float(fac_n_c_init))
+    fac_th_s = TextInput(display_text='Soil saturation', name='fac_th_s', initial=float(fac_th_s_init))
 
-    pvs_t0 = TextInput(display_text='pvs_t0', name='pvs_t0', initial=float(pvs_t0_init))
-    vo_t0 = TextInput(display_text='vo_t0', name='vo_t0', initial=float(vo_t0_init))
-    qc_t0 = TextInput(display_text='qc_t0', name='qc_t0', initial=float(qc_t0_init))
-    kc = TextInput(display_text='kc', name='kc', initial=float(kc_init))
+    pvs_t0 = TextInput(display_text="Soil cell's saturation %", name='pvs_t0', initial=float(pvs_t0_init))
+    vo_t0 = TextInput(display_text="Water volume in Overland cells (m3)", name='vo_t0', initial=float(vo_t0_init))
+    qc_t0 = TextInput(display_text='Flow in channel cells (m3/s)', name='qc_t0', initial=float(qc_t0_init))
+    kc = TextInput(display_text='Crop coefficient across all model cells', name='kc', initial=float(kc_init))
+
+
 
 
     context = {'simulation_name':simulation_name,

@@ -179,11 +179,6 @@
                          <tr> {% gizmo select_input timeseries_source %}</tr>
                          <tr>{% gizmo select_input model_engine %} </tr>
                          <tr> {% gizmo text_input threshold %}</tr>
-                            <!--{% gizmo text_input cell_size %}-->
-                            <!--{% gizmo text_input timestep %}-->
-                            <!--{% gizmo select_input timeseries_source %}-->
-                            <!--{% gizmo select_input model_engine %}-->
-                            <!--{% gizmo text_input threshold %}-->
 
                      </table>
                 </div>
@@ -228,9 +223,9 @@
 
 <hr>
 
-
-
 {% endblock %}
+
+
 
 
 
@@ -238,36 +233,38 @@
 
 <!--Google map-->
 <div id='map-container' class="col-md-8">
-<!-- app intro-->
-<div id='title' >
-<h3 style="color:#0073e6">Input Data Preparation</h3>
-<p style="font-size:100%">
-This application helps prepare a complete model-instance for PyTOPKAPI model simulation, or model-input files for TOPNET or geospatial dataset for a user
-defined area (within the bounds of supporting data in the continental US).<br>
-<span data-toggle="collapse" data-target="#intro-detail" style="color: green; margin-bottom: 20px"><strong><u>See more details here.</u></strong></span>
-</p>
-<div id="intro-detail" class="collapse" style="background-color:#f2f2f2">
-<p style="font-size:100%">
-<strong>PyTOPKAPI simulation:</strong> terrain slope and aspect. Data are derived from National Elevation Datasets USGS.<br>
-<strong>TOPNET model input:</strong> canopy coverage fraction, canopy height, leaf area index. Data are derived from National Land Cover Dataset.<br>
-<strong>Download geospatial dataset:</strong> Three options: 1) geospatial 2) geospatial+soil dataset (for US only), and 3) geospatial + soil dataset + forcing files  (for US only)<br>
-</p>
+    <!-- app intro-->
+    <div id='title'>
+        <h3 style="color:#0073e6">Input Data Preparation</h3>
+        <p style="font-size:100%">
+            This application helps prepare a complete model-instance for PyTOPKAPI model simulation, or model-input files for TOPNET or geospatial dataset for a user defined area (within the bounds of supporting data in the continental US).<br>
+            <span data-toggle="collapse" data-target="#intro-detail" style="color: green; margin-bottom: 20px"><strong><u>See more details here.</u></strong></span>
+        </p>
+        <div id="intro-detail" class="collapse" style="background-color:#f2f2f2">
+            <p style="font-size:100%">
+                <strong>PyTOPKAPI simulation:</strong> terrain slope and aspect. Data are derived from National Elevation Datasets USGS.<br>
+                <strong>TOPNET model input:</strong> canopy coverage fraction, canopy height, leaf area index. Data are derived from National Land Cover Dataset.<br>
+                <strong>Download geospatial dataset:</strong> Three options: 1) geospatial 2) geospatial+soil dataset (for US only), and 3) geospatial + soil dataset + forcing files (for US only)<br>
+            </p>
+        </div>
+    </div>
+    <!-- map -->
+    <h7>You can draw the research domain and outlet point in the map (Only watershed delineation offerd for non-US area)</h7>
+    <div id="map" style="width:95%; height:900px"></div>
 </div>
-</div>
-<!-- map -->
-<h7>You can draw the research domain and outlet point in the map (Only watershed delineation offerd for non-US area)</h7>
-<div id="map" style="width:1000px; height:600px"></div>
-</div>
+
+
 {%endblock%}
 
 
 {% block app_actions_override %}
 {% endblock %}
 
+
+
 {% block scripts %}
 {{ block.super }}
-<script async defer
-src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCJVwfz-TJWiZCvLmgYHv2yHYc8vagp7V0&callback=initMap&libraries=drawing">
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCJVwfz-TJWiZCvLmgYHv2yHYc8vagp7V0&callback=initMap&libraries=drawing">
 </script>
 <script src="{% static 'hydrologic_modeling/js/model_Input.js' %} " type="text/javascript"></script>
 {% endblock %}

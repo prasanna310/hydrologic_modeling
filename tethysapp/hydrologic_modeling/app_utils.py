@@ -549,13 +549,13 @@ def create_simulation_list_after_querying_db(given_user_name=None, return_hs_res
             queries = zip(simulation_names_list_queried, hs_resourceID)  # returns hs_resource of model instance
 
         if len(queries)<= 1:
-            print '**************Success: Error in reading database, length only 1'
+            print 'Error in reading database, length only 1'
             stop
         print '**************Success: Querying the db to create a list of existing simulation'
 
     except Exception,e:
         queries = [( 'No saved model', '44248166e239490383f23f6568de5fcf')]
-        print '**************Error: Could not query the db to create a list of existing simulation. Error = >',e
+        print '**************Warning: Could not query the db to create a list of existing simulation. Error = >',e
 
     simulation_names_list = SelectInput(display_text='Saved Models',
                                      name='simulation_names_list',
@@ -1835,7 +1835,7 @@ def call_runpytopkapi(inputs_dictionary, out_folder=''):
     subsetDEM_request = HDS.subset_raster2(input_raster='nedWesternUS.tif', left=inputs_dictionary['box_leftX'],
                                            top=inputs_dictionary['box_topY'], right=inputs_dictionary['box_rightX'],
                                            bottom=inputs_dictionary['box_bottomY'], cell_size= float(inputs_dictionary['cell_size']),
-                                           output_raster= 'BlancoRiver.tif')  # BlancoRiver
+                                           output_raster= 'DEM84.tif')  # BlancoRiver
     DEM_resample_request = HDS.project_resample_raster(input_raster_url_path=subsetDEM_request['output_raster'],cell_size_dx=int(inputs_dictionary['cell_size']), cell_size_dy=int(inputs_dictionary['cell_size']), epsg_code=epsgCode, output_raster='DEM84'+str( int(inputs_dictionary['cell_size']))+'.tif', resample='bilinear')
     #DEM_resample_request = HDS.project_resample_raster(input_raster_url_path='http://129.123.9.159:20199/files/data/user_6/loganSample100m.tif',cell_size_dx=int(inputs_dictionary['cell_size']), cell_size_dy=int(inputs_dictionary['cell_size']), epsg_code=epsgCode, output_raster='DEM84'+str( int(inputs_dictionary['cell_size']))+'.tif', resample='bilinear')
 
