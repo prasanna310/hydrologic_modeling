@@ -124,7 +124,7 @@ function initMap() {
 
 
     // block for places
-    
+
     // Create the search box and link it to the UI element.
     var input = document.getElementById('pac-input');
     var searchBox = new google.maps.places.SearchBox(input);
@@ -368,6 +368,10 @@ window.geojson_callback = function(results) {
 
 //    initMap();
 
+
+    // I don't know how it works, but when a geojson is uploaded, I think the json string is added as
+    // a variable in the script section as 'results'.
+    // This will be loaded
 	map.data.addGeoJson(results);
 	if (results.features.length >1) {
 		alert("Select feature class that contains just the one feature.")
@@ -394,18 +398,19 @@ window.geojson_callback = function(results) {
 		}
 	}
 	// Manage extent of the map, after the geojson is uploaded
-				var cell = document.forms["inputs"]["cell_size"].value;
-				xy = new Array();
-				xy = mToDegree(cell, document.forms["inputs"]["box_bottomY"].value );
-				var buffer  = 3;
-				document.forms["inputs"]["box_bottomY"].value= ymin - buffer*xy[1] ;
-				document.forms["inputs"]["box_leftX"].value=xmin - buffer*xy[0] ;
-				document.forms["inputs"]["box_rightX"].value= xmax + buffer*xy[0] ;
-				document.forms["inputs"]["box_topY"].value= ymax + buffer*xy[1];
 
-				var new_center = new google.maps.LatLng( (ymin+ymax)/2 ,(xmin+xmax)/2);
-				map.panTo(new_center);
-				//google.maps.event.trigger(rectangle, 'bounds_changed');
+            var cell = document.forms["inputs"]["cell_size"].value;
+            xy = new Array();
+            xy = mToDegree(cell, document.forms["inputs"]["box_bottomY"].value );
+            var buffer  = 3;
+            document.forms["inputs"]["box_bottomY"].value= ymin - buffer*xy[1] ;
+            document.forms["inputs"]["box_leftX"].value=xmin - buffer*xy[0] ;
+            document.forms["inputs"]["box_rightX"].value= xmax + buffer*xy[0] ;
+            document.forms["inputs"]["box_topY"].value= ymax + buffer*xy[1];
+
+            var new_center = new google.maps.LatLng( (ymin+ymax)/2 ,(xmin+xmax)/2);
+            map.panTo(new_center);
+            //google.maps.event.trigger(rectangle, 'bounds_changed');
 
 			var marker2 = new google.maps.Marker({
 				map:map,
