@@ -12,7 +12,7 @@ class HydrologicModeling(TethysAppBase):
     icon = 'hydrologic_modeling/images/icon.gif'
     package = 'hydrologic_modeling'
     root_url = 'hydrologic-modeling'
-    color = '#f1c40f'
+    color = 'blue'
     description = 'Place a brief description of your app here.'
     enable_feedback = False
     feedback_emails = []
