@@ -60,8 +60,17 @@ function initMap() {
             lng: -95.712891
         },
         zoom: 9,
-    });
+        mapTypeControlOptions: {
+              style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+              position: google.maps.ControlPosition.TOP_RIGHT
+          },
+
+    }
+
+    );
     map.setMapTypeId('terrain');
+
+    // small tool in map that gives option to draw on it
     var drawingManager = new google.maps.drawing.DrawingManager({
         drawingControl: true,
         drawingControlOptions: {
@@ -81,17 +90,21 @@ function initMap() {
             draggable: true
         }
     });
+
     drawingManager.setMap(map);
-	
+
+
     google.maps.event.addListener(drawingManager, 'rectanglecomplete', function(rectangle) {
         for (var i = 0; i < allRectangles.length; i++) {
             allRectangles[i].setMap(null);
         };
-
+        allRectangles.push(rectangle);
 
 
         var coordinates = (rectangle.getBounds());
         processDrawing(coordinates, 'rectangle');
+
+        //also check (if drawing completed) whether bound is changed (i.e. edited)
         rectangle.addListener('bounds_changed', function() {
             var coordinates = (rectangle.getBounds());
             processDrawing(coordinates, "rectangle");
@@ -99,6 +112,7 @@ function initMap() {
 
         });
     });
+
     google.maps.event.addListener(drawingManager, 'markercomplete', function(marker) {
         for (var i = 0; i < allMarkers.length; i++) {
             allMarkers[i].setMap(null);
@@ -118,7 +132,7 @@ function initMap() {
 
     drawRectangleOnTextChange();
     drawMarkerOnTextChange();
-
+//    area_domain();
 
 
 
@@ -187,12 +201,13 @@ function initMap() {
 
 
 
-
-//    initAutocomplete();
 } // end of initmap function
+
 
 function processDrawing(coordinates, shape) {
     if (shape == "rectangle") {
+
+
         // get coordinate value
         var bounds = {
             north: parseFloat(coordinates.getNorthEast().lat()),
@@ -344,7 +359,34 @@ for (x = 0; x < allRadios.length; x++) {
 
 
 
+function area_domain(){
 
+        var box_bottomY= document.forms["inputs"]["box_bottomY"].value;
+        var box_leftX =document.forms["inputs"]["box_leftX"].value;
+        var box_rightX= document.forms["inputs"]["box_rightX"].value;
+        var box_topY= document.forms["inputs"]["box_topY"].value;
+
+
+
+        // :TODO Area of bounding box, and if its > -- km2, give prompt
+        var di_along_long = 3985* (box_leftX - box_rightX)*3.14/180 ;
+        var di_along_lat = 3985* Math.cos((box_topY + box_bottomY)/2*3.14/180.0) * (box_topY - box_bottomY)*3.14/180  ;
+        var bb_area = parseInt( Math.abs( di_along_long * di_along_lat) ) ;  // im km2
+
+        var total_no_of_cells = parseInt( bb_area / Math.pow(document.forms["inputs"]["cell_size"].value/1000.0,2) );
+        document.getElementById('prompt').innerHTML = 'Total drainage area in mi2= ' + bb_area+ ' Total no of cells= ' +  total_no_of_cells  ;
+
+        // if greater than 300 miles, warnings
+        if (bb_area > 300) {
+             document.getElementById('prompt').style.color = "red";
+
+        }
+
+        if (bb_area <= 300) {
+            document.getElementById('prompt').style.color = "grey";
+//                            document.getElementById('prompt').innerHTML = ''  ;
+        }
+}
 
 
 function mToDegree(distance_in_m, avg_lat){
@@ -358,7 +400,7 @@ function mToDegree(distance_in_m, avg_lat){
 		}
 
 
-
+// for geojson visualization
 window.geojson_callback = function(results) {
 	 var map = new google.maps.Map(document.getElementById('map'), {
 	 zoom: 9,

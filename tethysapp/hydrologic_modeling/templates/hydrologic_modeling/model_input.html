@@ -80,17 +80,17 @@
                                       <table width="100%">
                                           <tr>
                                                 <th> </th>
-                                                <th onChange="init()"> {% gizmo text_input box_topY %}</th>
+                                                <th onChange="area_domain()"> {% gizmo text_input box_topY %}</th>
                                                 <th> </th>
                                           </tr>
                                           <tr>
-                                                <td onChange="init()">{% gizmo text_input box_leftX %}</td>
+                                                <td onChange="area_domain()">{% gizmo text_input box_leftX %}</td>
                                                 <td></td>
-                                                <td onChange="init()">{% gizmo text_input box_rightX %}</td>
+                                                <td onChange="area_domain()">{% gizmo text_input box_rightX %}</td>
                                           </tr>
                                           <tr>
                                                 <td></td>
-                                                <td onChange="init()"> {% gizmo text_input box_bottomY %}</td>
+                                                <td onChange="area_domain()"> {% gizmo text_input box_bottomY %}</td>
                                                 <td></td>
                                           </tr>
 
@@ -248,6 +248,7 @@
                 <strong>Download geospatial dataset:</strong> Three options: 1) geospatial 2) geospatial+soil dataset (for US only), and 3) geospatial + soil dataset + forcing files (for US only)<br>
             </p>
         </div>
+        <p id="prompt">  </p>
     </div>
     <!-- map -->
     <h7>You can draw the research domain and outlet point in the map (Only watershed delineation offerd for non-US area)</h7>
