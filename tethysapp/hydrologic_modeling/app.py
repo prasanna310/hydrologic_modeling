@@ -9,11 +9,11 @@ class HydrologicModeling(TethysAppBase):
 
     name = 'hydrologic modeling'
     index = 'hydrologic_modeling:home'
-    icon = 'hydrologic_modeling/images/icon.gif'
+    icon = 'hydrologic_modeling/images/icon2.png'
     package = 'hydrologic_modeling'
     root_url = 'hydrologic-modeling'
     color = 'blue'
-    description = 'Place a brief description of your app here.'
+    description = 'Use this app to 1) Prepare a TOPKAPI model, 2) Perform TauDEM terrain analysis, 3) download SSURGO soil dataset, 4) download Daymet Forcing files, or 5) Prepare TOPNET model input files'
     enable_feedback = False
     feedback_emails = []
 
