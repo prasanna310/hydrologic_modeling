@@ -1267,12 +1267,43 @@ def modifypytopkapi(hs_res_id, out_folder="",  fac_l=1.0, fac_ks=1.0, fac_n_o=1.
 
     return out_folder + '/' + os.path.basename(responseJSON)  # ,      out_folder + '/' + os.path.basename(hydrograph_txt_file)
 
-
 def download_geospatial_and_forcing_files(inputs_dictionary, download_request='geospatial', out_folder=''):
+    out_folder = generate_uuid_file_path()
+    inputs_dictionary_json_file = os.path.join( out_folder , 'inputs.txt')
+
+    with open (inputs_dictionary_json_file, 'w') as f:
+        json.dump(inputs_dictionary,f, indent=4)
+
+    json_hydrods_link = HDS.upload_file(inputs_dictionary_json_file)
+
+    download_request = HDS.downloadgeospatialandforcingfiles(inputs_dictionary_json=json_hydrods_link, download_request=download_request)
+
+    print 'Functions for donwloaing files completed = ', download_request
+
+    temp_file = out_folder + '/' + os.path.basename(download_request['output_response_txt'])
+    HDS.download_file(download_request['output_response_txt'], temp_file)
+
+    print 'temporary json respnse files = ',temp_file
+    print 'download_request = ', download_request
+
+    with open( temp_file ) as f:
+        json_res = json.load(f)
+
+        download_request['output_json_string'] = json_res
+
+    print 'download_request=',download_request
+
+    return download_request
+
+def download_geospatial_and_forcing_files2(inputs_dictionary, download_request='geospatial', out_folder=''):
     """
     :param inputs_dictionary:  Dictionary. Inputs from Tethys, or user requesting the service
     :return: Timeseries file- hydrograph, or list of input files if the user only wants input files
     """
+
+
+
+
     prepared_file = {}
 
     # if out_folder == "":

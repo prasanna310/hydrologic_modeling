@@ -1,52 +1,58 @@
 {% extends "hydrologic_modeling/model-calibration.html" %}
 {% load tethys_gizmos %}
 
-{% block app_navigation_items %}
-  <form method="post" action="{% url 'hydrologic_modeling:model_run' %}" >
-      {% csrf_token %}
-      <b> Use your hydrologic judgement to change the model parameters of the model created, and click submit to re-run the model </b>
-      <br>
-      <br>
+ {% if download_status %}
+        {% block app_navigation_override %}
+        {% endblock %}
 
-      <u><strong>Multiplicative factors </strong></u>
-      <br>
-      <table style="width:100%">
-          <tr>
-                <th> {% gizmo text_input fac_L %} </th>
-                <th> {% gizmo text_input fac_Ks %} </th>
-          </tr>
-          <tr>
-                <td>{% gizmo text_input fac_n_o %}</td>
-                <td>{% gizmo text_input fac_n_c %}</td>
-          </tr>
-          <tr>
-                <td>{% gizmo text_input fac_th_s %}</td>
-                <td></td>
-          </tr>
-          </table>
-      <br> <br>
+  {% else %}
 
-      <u><strong>Initial Parameters</strong></u>
-      <br>
+    {% block app_navigation_items %}
+      <form method="post" action="{% url 'hydrologic_modeling:model_run' %}" >
+          {% csrf_token %}
+          <b> Use your hydrologic judgement to change the model parameters of the model created, and click submit to re-run the model </b>
+          <br>
+          <br>
+
+          <u><strong>Multiplicative factors </strong></u>
+          <br>
           <table style="width:100%">
-          <tr>
-                <th> {% gizmo text_input pvs_t0 %} </th>
-                <th> {% gizmo text_input vo_t0 %} </th>
-          </tr>
-          <tr>
-                <td>{% gizmo text_input qc_t0 %}</td>
-                <td>{% gizmo text_input kc %}</td>
-          </tr>
+              <tr>
+                    <th> {% gizmo text_input fac_L %} </th>
+                    <th> {% gizmo text_input fac_Ks %} </th>
+              </tr>
+              <tr>
+                    <td>{% gizmo text_input fac_n_o %}</td>
+                    <td>{% gizmo text_input fac_n_c %}</td>
+              </tr>
+              <tr>
+                    <td>{% gizmo text_input fac_th_s %}</td>
+                    <td></td>
+              </tr>
+              </table>
+          <br> <br>
+
+          <u><strong>Initial Parameters</strong></u>
+          <br>
+              <table style="width:100%">
+              <tr>
+                    <th> {% gizmo text_input pvs_t0 %} </th>
+                    <th> {% gizmo text_input vo_t0 %} </th>
+              </tr>
+              <tr>
+                    <td>{% gizmo text_input qc_t0 %}</td>
+                    <td>{% gizmo text_input kc %}</td>
+              </tr>
 
 
-        </table>
+            </table>
 
 
-      <input type="submit" name="input-form" class="btn btn-default">
-      <input type="hidden" name="model_inputs_table_id_from_another_html" value= {{hs_resource_id_created}}>
-  </form>
-{% endblock %}
-
+          <input type="submit" name="input-form" class="btn btn-default">
+          <input type="hidden" name="model_inputs_table_id_from_another_html" value= {{hs_resource_id_created}}>
+      </form>
+    {% endblock %}
+{% endif %}
 
 
 {% block app_content %}
@@ -61,16 +67,15 @@
 
   <!--If the user wants to download only  -->
   {% if download_status %}
+
             <h2> Congratulations! Files were created successfully! </h2>
             <hr>
-                <p> The created geospatial and forcing files can be accessed temporarily by using this link: </p>
-<!--<a href="{{download_link}}"> {{download_link}}</a>-->
-                <p> The HydroShare ID for the resource that contains the created files are <strong>{{hs_res_created}}</strong>  </p>
-                <p> The dictionary that contains links to all the files created is: <strong>{{download_link}}</strong>  </p>
+                <p> The created geospatial and forcing files can be accessed temporarily by using this link:
+                    <a href="{{download_link}}"> Download zip here </a>  </p>
 
-          {% else %}
+                <p> The files is also saved permanantly in HydroShare, with the  ID
+                    <a href="http://www.hydroshare.org/resource/{{hs_res_downloadfile}}">{{hs_res_downloadfile}}</a></p>
 
-                <hr>
                 <!--<p> The request is being processed. Please wait while the input files (geospatial, and forcing files) for the region selected are being created</p>-->
                 <!--<p> Test string : {{test_string}}</p>-->
   {% endif %}
@@ -101,10 +106,11 @@
 
 
    <!--If user loads the simulation from HydroShare or dropdown menu-->
-   {% if  hs_resource_id_prepared != None  %}
+   {% if  hs_resource_id_prepared != None and download_status != True %}
 
         <h6> PyTOPKAPI simualation- {{simulation_name}} ran successfully!  </h6>
-        <h7> Results saved in HydroShare with resource ID: <a href="http://www.hydroshare.org/resource/{{hs_resource_id_created}}"> {{hs_resource_id_created}} </a> </h7>
+        <h7> Results saved in HydroShare with resource ID:
+            <a href="http://www.hydroshare.org/resource/{{hs_resource_id_created}}"> {{hs_resource_id_created}}</a></h7>
 
          Here is the simulated discharge for the outlet chosen
         <br>

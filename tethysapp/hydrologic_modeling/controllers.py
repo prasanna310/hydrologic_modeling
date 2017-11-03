@@ -93,7 +93,7 @@ def model_input(request):
     simulation_name = TextInput(display_text='Simulation name', name='simulation_name', initial=initials[watershed_name]['simulation_name'])
     USGS_gage = TextInput(display_text='USGS gage nearby', name='USGS_gage', initial=initials[watershed_name]['USGS_gage'])
     cell_size = TextInput(display_text='Cell size in meters', name='cell_size', initial=initials[watershed_name]['cell_size'])
-    timestep = TextInput(display_text='Timestep in hrs', name='timestep', initial=initials[watershed_name]['del_t']) #, append="hours"
+    timestep = TextInput(display_text='Timestep in hrs', name='timestep', initial=initials[watershed_name]['del_t'], disabled=True) #, append="hours"
     simulation_start_date_picker = DatePicker(name='simulation_start_date_picker', display_text='Start Date',
                                               autoclose=True, format='mm-dd-yyyy', start_date='10-15-2005',
                                               start_view='year', today_button=True, initial=initials[watershed_name]['t0'])
@@ -283,6 +283,7 @@ def model_run(request):
     ppt_ts_obj  = ppt_ts_obj_modified  = ppt_ts_obj_loaded  = ''
 
     model_run_hidden_form = ''
+    model_input_prepare_request = None
     hs_resource_id_created = ''
     hs_resource_id_loaded = ''
     hs_resource_id_modified = ''
@@ -295,6 +296,7 @@ def model_run(request):
 
     # if user wants to download the file only
     download_response = {}
+    hs_res_downloadfile = ''
     download_status = download_response['download_status'] = None #False
     download_link = download_response['download_link'] = 'http://link.to.zipped.files'
     hs_res_created = download_response['hs_res_created'] = ''
@@ -323,8 +325,11 @@ def model_run(request):
     # # check to see if the request is from method (1)
     try:
         model_input_prepare_request = request.POST['simulation_name']
+        # if request.POST['download_choice'] != None:
+        #     model_input_prepare_request = None
         print "MSG from I: Preparing model simulation, simulation name is: ", model_input_prepare_request
     except:
+
         model_input_prepare_request = None
 
 
@@ -377,35 +382,45 @@ def model_run(request):
             # Check if user wants to just download the file
             try:
                 download_choice = request.POST['download_choice']
+                inputs_dictionary = app_utils.create_model_input_dict_from_request(request)
+
                 print '*********** download choice is ******', download_choice
-                if download_choice == "geospatial":
-                    print "Calling Geospatial function now!"
+                # if download_choice == "geospatial":
+                #     print "Calling Geospatial function now!"
+                #
+                #     # validate  / return a confirmation to use regarding bounding box / input watershed
+                #
+                #     # creata input_dictionary from the request
+                #     inputs_dictionary = app_utils.create_model_input_dict_from_request(request)
+                #
+                #     test_string = inputs_dictionary['cell_size']
+                #     download_request_response = app_utils.download_geospatial_and_forcing_files(inputs_dictionary)
+                #     if download_request_response != {}:
+                #         download_status = True
+                #         download_link = download_request_response
+                # elif download_choice == 'soil':
+                #     print "Downloading geospatial and soil file in progrress"
+                #     test_string ="Downloading geospatial and soil file in progrress"
+                #     inputs_dictionary = app_utils.create_model_input_dict_from_request(request)
+                # elif download_choice == 'forcing':
+                #     print "Downloading geospatial and forcing file in progrress"
+                #     test_string = "Downloading geospatial and forcing file in progrress"
+                #     inputs_dictionary = app_utils.create_model_input_dict_from_request(request)
 
-                    # validate  / return a confirmation to use regarding bounding box / input watershed
 
-                    # creata input_dictionary from the request
-                    inputs_dictionary = app_utils.create_model_input_dict_from_request(request)
+                # download_request_response = app_utils.download_geospatial_and_forcing_files(inputs_dictionary, download_request=download_choice)
+                download_request_response = {
+                    u'output_response_txt': u'http://129.123.9.159:20199/files/data/user_6/metadata.txt',
+                    u'output_zipfile': u'http://129.123.9.159:20199/files/data/user_6/output.zip',
+                    u'output_json_string':{'hs_res_id_created':'12456'}}
 
-                    test_string = inputs_dictionary['cell_size']
-                    download_request_response = app_utils.download_geospatial_and_forcing_files(inputs_dictionary)
-                    if download_request_response != {}:
-                        download_status = True
-                        download_link = download_request_response
-                elif download_choice == 'soil':
-                    print "Downloading geospatial and soil file in progrress"
-                    test_string ="Downloading geospatial and soil file in progrress"
-                    inputs_dictionary = app_utils.create_model_input_dict_from_request(request)
-                elif download_choice == 'forcing':
-                    print "Downloading geospatial and forcing file in progrress"
-                    test_string = "Downloading geospatial and forcing file in progrress"
-                    inputs_dictionary = app_utils.create_model_input_dict_from_request(request)
-
-                download_request_response = app_utils.download_geospatial_and_forcing_files(inputs_dictionary, download_request=download_choice)
                 print "Downloading all the files successfully completed"
 
                 if download_request_response != {}:
                     download_status = True
-                    download_link = download_request_response
+                    download_link = download_request_response['output_zipfile']
+                    hs_res_downloadfile = download_request_response['output_json_string']['hs_res_id_created']
+
 
             except Exception, e:
                 print 'The downloading-files step gave error'
@@ -414,8 +429,8 @@ def model_run(request):
                 f.close()
 
                 if download_choice != None:
-                    print 'Error: Downlading file step gave error'
-                    pass
+                    print 'Error: ', e
+                    stop
 
                 # # Method (1), STEP (1): get input dictionary from request ( request I)
                 inputs_dictionary = app_utils.create_model_input_dict_from_request(request)
@@ -983,6 +998,7 @@ def model_run(request):
                'hs_resource_id_modified': model_run_calib_request,
 
                 # fow download request
+               'hs_res_downloadfile':hs_res_downloadfile,
                'download_status': download_status,
                'download_link': download_link,
                'hs_res_created': hs_res_created,
