@@ -13,7 +13,7 @@
     <p id="test_para">Prepare the hydrologic model by entering the inputs (in the three steps) below. </p>
 
 
-  <form id ="inputs"  method="post" action="{% url 'hydrologic_modeling:model_run' %}" enctype="multipart/form-data">
+  <form id ="inputs"  method="post" action="{% url 'hydrologic_modeling:model_run' %}" enctype="multipart/form-data" onsubmit="validateOutlet();">
   {% csrf_token %}
 
     <!--http://stackoverflow.com/questions/29151241/using-bootstrap-collapse-on-radio-buttons-to-show-hide-content-no-js-->
@@ -174,7 +174,7 @@
                 <div class="panel-body">
 
                      <table>
-                         <tr  onChange="init()">{% gizmo text_input cell_size %} </tr>
+                         <tr  onChange="area_domain()">{% gizmo text_input cell_size %} </tr>
                          <tr>{% gizmo text_input timestep %} </tr>
                          <tr> {% gizmo select_input timeseries_source %}</tr>
                          <tr>{% gizmo select_input model_engine %} </tr>
@@ -233,7 +233,7 @@
 
 <!--Google map-->
 
-<div id='map-container' class="col-md-8">
+<div id='map-container' class="col-md-8" style="height: 80%;width: 100%">
     <!-- app intro-->
     <div id='title'>
         <h3 style="color:#0073e6">Input Data Preparation</h3>
@@ -248,8 +248,10 @@
                 <strong>Download geospatial dataset:</strong> Three options: 1) geospatial 2) geospatial+soil dataset (for US only), and 3) geospatial + soil dataset + forcing files (for US only)<br>
             </p>
         </div>
-        <p id="prompt">  </p>
+
     </div>
+
+    <p id="prompt"> ...  </p>
     <!-- map -->
     <h7>You can draw the research domain and outlet point in the map (Only watershed delineation offerd for non-US area)</h7>
 
@@ -259,16 +261,21 @@
 
     <input id="pac-input" style="width: 300px;" class="controls" type="text" placeholder="Search Box">
 
-    <div id="map" style="width:110%; height:800px"></div>
+    <div id="map" style="width:100%; height:550px"></div>
 </div>
 
 
 {%endblock%}
 
 
-{% block app_actions_override %}
-{% endblock %}
 
+{% block app_actions %}
+  <a href="{% url 'hydrologic_modeling:model_input' %}" class="btn btn-default">Demo1</a>
+  <a href="{% url 'hydrologic_modeling:model_input' %}" class="btn btn-default">Demo2</a>
+  <a href="{% url 'hydrologic_modeling:model_input' %}" class="btn btn-default">GitHub1</a>
+  <a href="{% url 'hydrologic_modeling:model_input' %}" class="btn btn-default">GitHub2</a>
+
+{% endblock %}
 
 
 {% block scripts %}
