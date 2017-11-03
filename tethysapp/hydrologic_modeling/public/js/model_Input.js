@@ -50,6 +50,9 @@ $(document).ready(function() {
 //        });
 //        return false;
 //    });
+
+
+
 });
 
 function initMap() {
@@ -220,18 +223,18 @@ function processDrawing(coordinates, shape) {
         $('#collapse1').addClass('in')
         $('#collapse1').attr('style', '')
         // update form fields
-        $("#box_topY").val(bounds.north.toFixed(4));
-        $("#box_bottomY").val(bounds.south.toFixed(4));
-        $("#box_rightX").val(bounds.east.toFixed(4));
-        $("#box_leftX").val(bounds.west.toFixed(4));
+        $("#box_topY").val(bounds.north.toFixed(5));
+        $("#box_bottomY").val(bounds.south.toFixed(5));
+        $("#box_rightX").val(bounds.east.toFixed(5));
+        $("#box_leftX").val(bounds.west.toFixed(5));
     } else {
         // collapse form for outlet point
         $('[id^=collapse]').removeClass('in')
         $('#collapse3').addClass('in')
         $('#collapse3').attr('style', '')
         // update form fields
-        $("#outlet_x").val(parseFloat(coordinates.lng()).toFixed(4));
-        $("#outlet_y").val(parseFloat(coordinates.lat()).toFixed(4));
+        $("#outlet_x").val(parseFloat(coordinates.lng()).toFixed(5));
+        $("#outlet_y").val(parseFloat(coordinates.lat()).toFixed(5));
     }
 } // end of processingDrawing function
 
@@ -323,6 +326,7 @@ function drawRectangleOnTextChange() {
     var bounds = new google.maps.LatLngBounds(southWest, northEast);
     // map.fitBounds(bounds);
     allRectangles.push(rectangle);
+
 }
 
 
@@ -349,6 +353,45 @@ for (x = 0; x < allRadios.length; x++) {
 
 
 
+//// data validation
+//function validateOutlet()  //,y,topY, rightX, bottomY, leftX
+//{
+//
+//
+//    var x= document.forms["inputs"]["outlet_x"].value;
+//    var y =document.forms["inputs"]["outlet_y"].value;
+//
+//    var bottomY= document.forms["inputs"]["box_bottomY"].value;
+//    var leftX =document.forms["inputs"]["box_leftX"].value;
+//    var rightX= document.forms["inputs"]["box_rightX"].value;
+//    var topY= document.forms["inputs"]["box_topY"].value;
+//
+//
+//    alert("Outlet x,y : "+ x+ " "+ y);
+//
+//    if (x.trim() === "" || x.trim() === "") {
+//        alert("Please enter a value");
+//        document.forms["inputs"]["outlet_x"].focus();
+////        y.focus();
+//        return false;
+//    }
+//
+//
+//
+//    if (x > rightX ||  x < leftX || y > topY || x < bottomY  ) {
+//        alert("Outlet should be inside the bounding box");
+//        document.forms["inputs"]["outlet_x"].focus();
+////        y.focus();
+//        return false;
+//    }
+//
+//    return true;
+//}
+
+
+
+
+
 
 
 
@@ -361,6 +404,7 @@ for (x = 0; x < allRadios.length; x++) {
 
 function area_domain(){
 
+
         var box_bottomY= document.forms["inputs"]["box_bottomY"].value;
         var box_leftX =document.forms["inputs"]["box_leftX"].value;
         var box_rightX= document.forms["inputs"]["box_rightX"].value;
@@ -370,8 +414,14 @@ function area_domain(){
 
         // :TODO Area of bounding box, and if its > -- km2, give prompt
         var di_along_long = 3985* (box_leftX - box_rightX)*3.14/180 ;
-        var di_along_lat = 3985* Math.cos((box_topY + box_bottomY)/2*3.14/180.0) * (box_topY - box_bottomY)*3.14/180  ;
+        window.alert("2:"+di_along_long);
+        var di_along_lat = 3985* Math.cos((box_topY + box_bottomY)*0.5  *3.14/180.0) * (box_topY - box_bottomY)*3.14/180  ;
+        window.alert("3: top btm"+Math.cos((box_topY + box_bottomY)));
         var bb_area = parseInt( Math.abs( di_along_long * di_along_lat) ) ;  // im km2
+//        window.alert("4:"+bb_area);
+
+        document.getElementById('prompt').innerHTML = bb_area;
+//        window.alert("5");
 
         var total_no_of_cells = parseInt( bb_area / Math.pow(document.forms["inputs"]["cell_size"].value/1000.0,2) );
         document.getElementById('prompt').innerHTML = 'Total drainage area in mi2= ' + bb_area+ ' Total no of cells= ' +  total_no_of_cells  ;
