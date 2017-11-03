@@ -3359,6 +3359,21 @@ class HydroDS(object):
         response = self._make_data_service_request(url=url, params=payload)
         return self._process_dataservice_response(response, save_as)
 
+
+    def downloadgeospatialandforcingfiles(self, inputs_dictionary_json,download_request='geospatial',
+                                          output_zipfile='output.zip',output_response_txt='metadata.txt', save_as=None):
+        if save_as:
+            self._validate_file_save_as(save_as)
+
+        url = self._get_dataservice_specific_url('downloadgeospatialandforcingfiles')
+        payload = {"inputs_dictionary_json": inputs_dictionary_json,
+                   'download_request': download_request,
+                   'output_zipfile':output_zipfile,
+                   'output_response_txt': output_response_txt
+                   }
+        response = self._make_data_service_request(url=url, params=payload)
+        return self._process_dataservice_response(response, save_as)
+
     ##################################END OF TOPKAPI FUNCTIONS ################################
 
 
