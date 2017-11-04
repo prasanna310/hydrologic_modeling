@@ -190,9 +190,19 @@
           <a style="color:blue;" data-toggle="collapse" data-target="#download_request_form"> Only interested in hydrologic dataset? Click here! </a> <br>
           <div class="collapse" id="download_request_form">
               <p style="color:red;">Make sure the 'domain', and the 'start and end dates' are correct </p>
-              <input type="radio" name="download_choice" value="geospatial"> Download geospatial files <br>
-              <input type="radio" name="download_choice" value="soil" > Download geospatial, and soil files<br>
-              <input type="radio" name="download_choice" value="forcing" > Download geospatial, and forcing files<br>
+              <!--<input type="radio" name="download_choice" value="geospatial"> Download geospatial files <br>-->
+              <!--<input type="radio" name="download_choice" value="soil" > Download geospatial, and soil files<br>-->
+              <!--<input type="radio" name="download_choice" value="forcing" > Download geospatial, and forcing files<br>-->
+
+              <input type="checkbox" id="download_terrain" name="download_choice2[]" value="terrain">
+              <label for="download_terrain">download geospatial files</label> <br>
+
+              <input type="checkbox" id="download_soil" name="download_choice2[]" value="soil">
+              <label for="download_soil">download soil files</label> <br>
+
+              <input type="checkbox" id="download_forcing" name="download_choice2[]" value="forcing">
+              <label for="download_forcing">download forcing files</label> <br>
+
 
           </div>
 

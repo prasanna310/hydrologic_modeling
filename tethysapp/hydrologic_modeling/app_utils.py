@@ -1267,7 +1267,8 @@ def modifypytopkapi(hs_res_id, out_folder="",  fac_l=1.0, fac_ks=1.0, fac_n_o=1.
 
     return out_folder + '/' + os.path.basename(responseJSON)  # ,      out_folder + '/' + os.path.basename(hydrograph_txt_file)
 
-def download_geospatial_and_forcing_files(inputs_dictionary, download_request='geospatial', out_folder=''):
+def download_geospatial_and_forcing_files(inputs_dictionary, download_request=['terrain'], out_folder=''):
+    download_choices = ",".join(download_request)
     out_folder = generate_uuid_file_path()
     inputs_dictionary_json_file = os.path.join( out_folder , 'inputs.txt')
 
@@ -1276,7 +1277,7 @@ def download_geospatial_and_forcing_files(inputs_dictionary, download_request='g
 
     json_hydrods_link = HDS.upload_file(inputs_dictionary_json_file)
 
-    download_request = HDS.downloadgeospatialandforcingfiles(inputs_dictionary_json=json_hydrods_link, download_request=download_request)
+    download_request = HDS.downloadgeospatialandforcingfiles(inputs_dictionary_json=json_hydrods_link, download_request=download_choices)
 
     print 'Functions for donwloaing files completed = ', download_request
 

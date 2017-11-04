@@ -330,24 +330,24 @@ function drawRectangleOnTextChange() {
 }
 
 
-// This block of code for trying to uncheck download btns
-var allRadios = document.getElementsByName('download_choice');
-var booRadio;
-var x = 0;
-for (x = 0; x < allRadios.length; x++) {
-
-    allRadios[x].onclick = function() {
-        if (booRadio == this) {
-            this.checked = false;
-            booRadio = null;
-        } else {
-            booRadio = this;
-        }
-    };
-}
-
-
-
+// // This block of code for trying to uncheck download btns
+// var allRadios = document.getElementsByName('download_choice');
+// var booRadio;
+// var x = 0;
+// for (x = 0; x < allRadios.length; x++) {
+//
+//     allRadios[x].onclick = function() {
+//         if (booRadio == this) {
+//             this.checked = false;
+//             booRadio = null;
+//         } else {
+//             booRadio = this;
+//         }
+//     };
+// }
+//
+//
+//
 
 
 

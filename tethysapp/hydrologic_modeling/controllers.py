@@ -93,23 +93,23 @@ def model_input(request):
     simulation_name = TextInput(display_text='Simulation name', name='simulation_name', initial=initials[watershed_name]['simulation_name'])
     USGS_gage = TextInput(display_text='USGS gage nearby', name='USGS_gage', initial=initials[watershed_name]['USGS_gage'])
     cell_size = TextInput(display_text='Cell size in meters', name='cell_size', initial=initials[watershed_name]['cell_size'])
-    timestep = TextInput(display_text='Timestep in hrs', name='timestep', initial=initials[watershed_name]['del_t'], disabled=True) #, append="hours"
+    timestep = TextInput(display_text='Timestep in hrs', name='timestep', initial=initials[watershed_name]['del_t']) #, append="hours"
     simulation_start_date_picker = DatePicker(name='simulation_start_date_picker', display_text='Start Date',
-                                              autoclose=True, format='mm-dd-yyyy', start_date='10-15-2005',
+                                              autoclose=True, format='mm-dd-yyyy', start_date='10-15-2005',   #'01-01-2010'
                                               start_view='year', today_button=True, initial=initials[watershed_name]['t0'])
     simulation_end_date_picker = DatePicker(name='simulation_end_date_picker', display_text='End Date',
-                                            autoclose=True, format='mm-dd-yyyy', start_date='10-15-2005',
+                                            autoclose=True, format='mm-dd-yyyy', start_date='10-15-2005',     # '01-01-2010'
                                             start_view='year', today_button=False, initial=initials[watershed_name]['t'])
-    threshold = TextInput(display_text='Stream threshold in km2', name='threshold', initial=initials[watershed_name]['threshold'])
+    threshold = TextInput(display_text='Stream threshold in square km', name='threshold', initial=initials[watershed_name]['threshold'])
 
-    timeseries_source = SelectInput(display_text='Timeseries source',
+    timeseries_source = SelectInput(display_text='Forcing source',
                 name='timeseries_source',
                 multiple=False,
                 options=[  ('Daymet', 'Daymet'),('UEB', 'UEB')],
                 initial=['Daymet'],
                 original=['Daymet'])
 
-    model_engine = SelectInput(display_text='Choose Model',
+    model_engine = SelectInput(display_text='Choose a Model',
                 name='model_engine',
                 multiple=False,
                 options=[('TOPKAPI', 'TOPKAPI'), ('TOPNET', 'TOPNET')],
@@ -381,38 +381,22 @@ def model_run(request):
         else:
             # Check if user wants to just download the file
             try:
-                download_choice = request.POST['download_choice']
+                # download_choice = request.POST['download_choice'] # for radio btn that existed earlier on
+
+                download_choice = request.POST.getlist('download_choice2[]')
+
+                print 'download_choice(s)=',download_choice
+
                 inputs_dictionary = app_utils.create_model_input_dict_from_request(request)
 
-                print '*********** download choice is ******', download_choice
-                # if download_choice == "geospatial":
-                #     print "Calling Geospatial function now!"
-                #
-                #     # validate  / return a confirmation to use regarding bounding box / input watershed
-                #
-                #     # creata input_dictionary from the request
-                #     inputs_dictionary = app_utils.create_model_input_dict_from_request(request)
-                #
-                #     test_string = inputs_dictionary['cell_size']
-                #     download_request_response = app_utils.download_geospatial_and_forcing_files(inputs_dictionary)
-                #     if download_request_response != {}:
-                #         download_status = True
-                #         download_link = download_request_response
-                # elif download_choice == 'soil':
-                #     print "Downloading geospatial and soil file in progrress"
-                #     test_string ="Downloading geospatial and soil file in progrress"
-                #     inputs_dictionary = app_utils.create_model_input_dict_from_request(request)
-                # elif download_choice == 'forcing':
-                #     print "Downloading geospatial and forcing file in progrress"
-                #     test_string = "Downloading geospatial and forcing file in progrress"
-                #     inputs_dictionary = app_utils.create_model_input_dict_from_request(request)
 
-
-                # download_request_response = app_utils.download_geospatial_and_forcing_files(inputs_dictionary, download_request=download_choice)
                 download_request_response = {
                     u'output_response_txt': u'http://129.123.9.159:20199/files/data/user_6/metadata.txt',
                     u'output_zipfile': u'http://129.123.9.159:20199/files/data/user_6/output.zip',
                     u'output_json_string':{'hs_res_id_created':'12456'}}
+
+                download_request_response = app_utils.download_geospatial_and_forcing_files(inputs_dictionary, download_request=download_choice)
+
 
                 print "Downloading all the files successfully completed"
 
@@ -451,7 +435,7 @@ def model_run(request):
                 # # Method (1), STEP (2):call_runpytopkapi function
 
                 ######### START: need to get two variables: i) hs_resource_id_created, and ii) hydrograph series ###############
-                response_JSON_file = '/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/8c6a4bf0a3ad45c69b661a1b55bb0d4d/pytopkpai_responseJSON.txt'
+                # response_JSON_file = '/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/16ea0402dd4c403bbb4e5b23ed597728/pytopkpai_responseJSON.txt'
                 response_JSON_file =  app_utils.call_runpytopkapi(inputs_dictionary= inputs_dictionary)
 
                 json_data = app_utils.read_data_from_json(response_JSON_file)
