@@ -297,7 +297,6 @@
                         document.forms["inputs"]["box_topY"].value= NE.lat();
 
 
-                        // :TODO Area of bounding box, and if its > -- km2, give prompt
                         var di_along_long = 3985* (SW.lng() - NE.lng())*3.14/180 ;
                         var di_along_lat = 3985* Math.cos((NE.lat()+ SW.lat())/2*3.14/180.0) * (NE.lat() - SW.lat())*3.14/180  ;
                         var bb_area = parseInt( Math.abs( di_along_long * di_along_lat) ) ;  // im km2

@@ -102,6 +102,12 @@ def model_input(request):
                                             start_view='year', today_button=False, initial=initials[watershed_name]['t'])
     threshold = TextInput(display_text='Stream threshold in square km', name='threshold', initial=initials[watershed_name]['threshold'])
 
+    threshold_topnet = TextInput(display_text='Stream threshold', name='threshold_topnet', initial=100)
+    pk_min_threshold = TextInput(display_text='pk_min_threshold', name='pk_min_threshold', initial=500)
+    pk_max_threshold = TextInput(display_text='pk_max_threshold', name='pk_max_threshold', initial=50000)
+    pk_num_thershold = TextInput(display_text='pk_num_thershold', name='pk_num_thershold', initial=12)
+
+
     timeseries_source = SelectInput(display_text='Forcing source',
                 name='timeseries_source',
                 multiple=False,
@@ -149,13 +155,6 @@ def model_input(request):
     if request.is_ajax and request.method == 'POST':
         try:
             validation_status, form_error, inputs_dictionary, geojson_files = app_utils.validate_inputs(request) # input_dictionary has proper data type. Not everything string
-            # if geojson_files != {}:
-            #     for geojson in geojson_files.keys():
-            #         if geojson == 'geojson_outlet':
-            #             geojson_outlet = geojson_files['geojson_outlet']
-            #         if geojson == 'geojson_domain':
-            #             geojson_domain = geojson_files['geojson_domain']
-
 
             if form_error.startswith("Error 2") or form_error.startswith("Error 3"):  # may not need this part. Because if no shapefile input, will not read it
                 form_error = ""
@@ -220,6 +219,11 @@ def model_input(request):
         'model_inputs_table_id':table_id,
         'geojson_outlet':geojson_outlet,
         'geojson_domain':geojson_files,
+
+        'threshold_topnet':threshold_topnet,
+        'pk_min_threshold': pk_min_threshold,
+        'pk_max_threshold': pk_max_threshold,
+        'pk_num_thershold': pk_num_thershold,
 
     }
 

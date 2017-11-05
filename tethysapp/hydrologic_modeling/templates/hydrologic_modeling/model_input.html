@@ -1,8 +1,21 @@
-{% extends "hydrologic_modeling/googlemap.html" %}
+{% extends "hydrologic_modeling/base.html" %}
 
 {% load staticfiles %}
 
 {% load tethys_gizmos %}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -80,17 +93,17 @@
                                       <table width="100%">
                                           <tr>
                                                 <th> </th>
-                                                <th onChange="area_domain()"> {% gizmo text_input box_topY %}</th>
+                                                <th> {% gizmo text_input box_topY %}</th>
                                                 <th> </th>
                                           </tr>
                                           <tr>
-                                                <td onChange="area_domain()">{% gizmo text_input box_leftX %}</td>
+                                                <td>{% gizmo text_input box_leftX %}</td>
                                                 <td></td>
-                                                <td onChange="area_domain()">{% gizmo text_input box_rightX %}</td>
+                                                <td>{% gizmo text_input box_rightX %}</td>
                                           </tr>
                                           <tr>
                                                 <td></td>
-                                                <td onChange="area_domain()"> {% gizmo text_input box_bottomY %}</td>
+                                                <td > {% gizmo text_input box_bottomY %}</td>
                                                 <td></td>
                                           </tr>
 
@@ -142,19 +155,6 @@
                                     </div>
 
 
-                                    <!--<br><input type="radio" name="domain_radio" value="1" data-toggle="collapse" data-parent="#accordion" data-target="#hs_upload" > Specify Hydroshare Resource ID-->
-                                    <!--<div id="hs_upload" class="collapse" >-->
-                                       <!--<table>-->
-                                          <!--<tr>-->
-                                              <!--<th> Outlet  </th>-->
-                                              <!--<th>{% gizmo text_input outlet_hs %} </th>-->
-                                          <!--</tr>-->
-                                          <!--<tr>-->
-                                              <!--<th> Watershed </th>-->
-                                              <!--<th>{% gizmo text_input bounding_box_hs %} </th>-->
-                                          <!--</tr>-->
-                                       <!--</table>-->
-                                    <!--</div>-->
 
 
                 </div>
@@ -174,13 +174,35 @@
                 <div class="panel-body">
 
                      <table>
-                         <tr  onChange="area_domain()">{% gizmo text_input cell_size %} </tr>
-                         <tr>{% gizmo text_input timestep %} </tr>
-                         <tr> {% gizmo select_input timeseries_source %}</tr>
-                         <tr>{% gizmo select_input model_engine %} </tr>
+                         <tr >{% gizmo text_input cell_size %} </tr>
                          <tr> {% gizmo text_input threshold %}</tr>
+                         <tr> {% gizmo select_input model_engine %} </tr>
+
 
                      </table>
+
+                    <div id="todo_parameters" style="display: none" >
+                         <table>
+                             <tr >{% gizmo text_input timestep %} </tr>
+                             <tr> {% gizmo select_input timeseries_source %}</tr>
+                         </table>
+                    </div>
+
+
+
+                    <div id="topnet_input" style="display: none">
+                       <table>
+                           <tr >{% gizmo text_input threshold_topnet %} </tr>
+                             <tr >{% gizmo text_input pk_min_threshold %} </tr>
+                             <tr>{% gizmo text_input pk_max_threshold %} </tr>
+                             <tr> {% gizmo text_input pk_num_thershold %}</tr>
+
+
+                         </table>
+                    </div>
+
+
+
                 </div>
             </div>
         </div>
@@ -195,7 +217,7 @@
               <!--<input type="radio" name="download_choice" value="forcing" > Download geospatial, and forcing files<br>-->
 
               <input type="checkbox" id="download_terrain" name="download_choice2[]" value="terrain">
-              <label for="download_terrain">download geospatial files</label> <br>
+              <label for="download_terrain">download terrain files</label> <br>
 
               <input type="checkbox" id="download_soil" name="download_choice2[]" value="soil">
               <label for="download_soil">download soil files</label> <br>
@@ -243,35 +265,36 @@
 
 <!--Google map-->
 
-<div id='map-container' class="col-md-8" style="height: 80%;width: 100%">
+<div id='map-container' class="col-md-8" style="height: 90%;width: 100%">
     <!-- app intro-->
     <div id='title'>
-        <h3 style="color:#0073e6">Input Data Preparation</h3>
+        <!--<h3 style="color:#0073e6">Input Data Preparation</h3>-->
         <p style="font-size:100%">
-            This application helps prepare a complete model-instance for PyTOPKAPI model simulation, or model-input files for TOPNET or geospatial dataset for a user defined area (within the bounds of supporting data in the continental US).<br>
+            This application helps prepare a complete model-instance for TOPKAPI model simulation, or model-input files for TOPNET or geospatial dataset for a user defined area (within the bounds of supporting data in the continental US).
             <span data-toggle="collapse" data-target="#intro-detail" style="color: green; margin-bottom: 20px"><strong><u>See more details here.</u></strong></span>
         </p>
         <div id="intro-detail" class="collapse" style="background-color:#f2f2f2">
             <p style="font-size:100%">
-                <strong>PyTOPKAPI simulation:</strong> terrain slope and aspect. Data are derived from National Elevation Datasets USGS.<br>
-                <strong>TOPNET model input:</strong> canopy coverage fraction, canopy height, leaf area index. Data are derived from National Land Cover Dataset.<br>
-                <strong>Download geospatial dataset:</strong> Three options: 1) geospatial 2) geospatial+soil dataset (for US only), and 3) geospatial + soil dataset + forcing files (for US only)<br>
+                <strong>TOPKAPI simulation:</strong> Prepare a TOPKAPI model <br>
+                <strong>TOPNET model input:</strong> Prepare input files for TOPNET <br>
+                <strong>Download geospatial dataset:</strong> Three options: i) geospatial ii) geospatial+soil dataset (for US only), and iii) geospatial + soil dataset + forcing files (for US only)<br>
             </p>
         </div>
 
     </div>
 
-    <p id="prompt"> ...  </p>
+
     <!-- map -->
-    <h7>You can draw the research domain and outlet point in the map (Only watershed delineation offerd for non-US area)</h7>
+    <p style="font-size:100%">You can draw the research domain and outlet point in the map (Only watershed delineation offerd for non-US area).</p>
 
 
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
     <meta charset="utf-8">
 
-    <input id="pac-input" style="width: 300px;" class="controls" type="text" placeholder="Search Box">
-
-    <div id="map" style="width:100%; height:550px"></div>
+    <input id="pac-input" style="width: 300px" class="controls" type="text" placeholder="Search Box">
+    <p id="prompt" style="font-size:80%"> Prompt Area  </p>
+    <div id="map" style="width:100%;height:620px"></div>
+    <p id="tdCursor" > Coordinates: </p>
 </div>
 
 
@@ -279,12 +302,7 @@
 
 
 
-{% block app_actions %}
-  <a href="{% url 'hydrologic_modeling:model_input' %}" class="btn btn-default">Demo1</a>
-  <a href="{% url 'hydrologic_modeling:model_input' %}" class="btn btn-default">Demo2</a>
-  <a href="{% url 'hydrologic_modeling:model_input' %}" class="btn btn-default">GitHub1</a>
-  <a href="{% url 'hydrologic_modeling:model_input' %}" class="btn btn-default">GitHub2</a>
-
+{% block app_actions_override %}
 {% endblock %}
 
 
@@ -297,3 +315,9 @@
 
 
 
+
+
+{% block content_dependent_styles %}
+  {{ block.super }}
+  <link href="{% static 'hydrologic_modeling/css/model_input.css' %}" rel="stylesheet"/>
+{% endblock %}

@@ -72,13 +72,13 @@ def create_model_input_dict_from_request(request):
                          "model_engine": request.POST['model_engine']
                          }
 
-    # # # modify the input_dictionary based on file (shapefile, geojson) inputs, etc..
 
-    # if the input is hydroshare id
-    if request.POST['outlet_hs']:
-        pass #:todo
-    if request.POST['bounding_box_hs']:
-        pass #:todo
+
+    # # if the input is hydroshare id
+    # if request.POST['outlet_hs']:
+    #     pass #:todo
+    # if request.POST['bounding_box_hs']:
+    #     pass #:todo
 
 
     avg_lat = (inputs_dictionary['box_bottomY'] + inputs_dictionary['box_topY'])/2
@@ -145,7 +145,6 @@ def create_model_input_dict_from_request(request):
 
 
     if request.is_ajax and request.method == 'POST' and request.FILES.getlist('outlet_upload') != []:
-    # :TODO this option seems to be not available in html right now :p
         print "Outlet file(s) detected", request.FILES.getlist('outlet_upload')
 
         for afile in request.FILES.getlist('outlet_upload'):
@@ -178,6 +177,13 @@ def create_model_input_dict_from_request(request):
 
             # update the input dictionary
             inputs_dictionary['outlet_x'], inputs_dictionary['outlet_y'] = round(lon, 6), round(lat, 6)
+
+
+    if inputs_dictionary['model_engine'].lower() == 'topnet':
+        inputs_dictionary['threshold_topnet'] = int(request.POST['threshold_topnet'])
+        inputs_dictionary['pk_min_threshold'] = int(request.POST['pk_min_threshold'])
+        inputs_dictionary['pk_max_threshold'] = int(request.POST['pk_max_threshold'])
+        inputs_dictionary['pk_num_thershold'] = int(request.POST['pk_num_thershold'])
 
 
     return inputs_dictionary
@@ -790,7 +796,7 @@ def validate_inputs(request):
     error_msg = ""
     inputs = {}
     inputs_dictionary = {}
-    geojson_files = {}  #:TODO if geosjson, its input should supercede other inputs. So may be write code at last
+    geojson_files = {}
 
     # All these inputs should go in the validation functions itself, not here in the front
 
@@ -1473,17 +1479,17 @@ def run_topnet(inputs_dictionary):
     epsgCode = 102003  ## albers conic projection
     dx, dy = int(inputs_dictionary['cell_size']), int(inputs_dictionary['cell_size'])  # Grid cell sizes (m) for reprojection
     # Set parameters for watershed delineation
-    streamThreshold =  100#int( inputs_dictionary['threshold'] / ((int(inputs_dictionary['cell_size']) )**2)   )   # :TODo (TOPNET) understnad and make changes to the streamflow. Rightnow, it is in km2, IDK if this can be converted to TOPNET relevant threshold
-    pk_min_threshold = 500                              # :TODo (TOPNET) Change input form to accomodate threshold values
-    pk_max_threshold = 5000
-    pk_num_thershold = 12
+    streamThreshold =  inputs_dictionary['threshold_topnet']   #int( inputs_dictionary['threshold'] / ((int(inputs_dictionary['cell_size']) )**2)   )   # :TODo (TOPNET) understnad and make changes to the streamflow. Rightnow, it is in km2, IDK if this can be converted to TOPNET relevant threshold
+    pk_min_threshold =  inputs_dictionary['pk_min_threshold'] #500
+    pk_max_threshold = inputs_dictionary['pk_max_threshold']  #5000
+    pk_num_thershold = inputs_dictionary['pk_num_thershold'] #12
     watershedName = ''.join(e for e in inputs_dictionary['simulation_name'] if e.isalnum())
 
     lat_outlet = inputs_dictionary['outlet_y']
     lon_outlet = inputs_dictionary['outlet_x']
     #### model start and end dates
-    start_year = inputs_dictionary['simulation_start_date'].replace('-','/')[-4:]
-    end_year = inputs_dictionary['simulation_end_date'].replace('-','/')[-4:]
+    start_year = int(inputs_dictionary['simulation_start_date'].replace('-','/')[-4:])
+    end_year = int(inputs_dictionary['simulation_end_date'].replace('-','/')[-4:])
 
     usgs_gage_number =inputs_dictionary['USGS_gage']
 
@@ -1496,6 +1502,15 @@ def run_topnet(inputs_dictionary):
     # upload topnet control and watermangement files
     upload_lutlcfile = HDS.upload_file(os.path.join(workingDir, "lutluc.txt"))
 
+    leftX, topY, rightX, bottomY = -111.822, 42.128, -111.438, 41.686
+    lat_outlet = 41.744
+    lon_outlet = -111.7836
+    watershedName = 'LoganRiver_demo'
+    dx, dy = 30, 30
+    #### model start and end dates
+    start_year = 2000
+    end_year = 2001
+    usgs_gage_number = '10109001'
 
     try:
         # # offline run
@@ -1658,9 +1673,13 @@ def run_topnet(inputs_dictionary):
 
         """getting and processed climate data"""
         download_process_climatedata=HDS.get_daymet_data(input_raster_url_path=Watershed_prod['output_watershedfile'],
-                                            start_year=start_year,end_year=end_year,
-                                            output_gagefile='Climate_Gage.shp',output_rainfile='rain.dat',
-                                            output_temperaturefile='tmaxtmintdew.dat',output_cliparfile='clipar.dat')
+                                            start_year=start_year,
+                                            end_year=end_year,
+                                            output_gagefile='Climate_Gage.shp',
+                                             output_rainfile='rain.dat',
+                                             output_temperaturefile='tmaxtmintdew.dat',
+                                             output_cliparfile='clipar.dat')
+
         print "download_process_climatedata = ", download_process_climatedata
         list_of_outfiles_dict.append(download_process_climatedata)
 
@@ -1801,11 +1820,12 @@ def run_topnet(inputs_dictionary):
 
 
     except Exception, error_returned:
-
-        file = open("/home/prasanna/Desktop/error_auto.html", 'w')
+        print 'Failure to complete TOPNET input-file preparation!'
+        file = open("error_auto.html", 'w')
         file.write(str(error_returned))
 
         file.close()
+        print 'list_of_outfiles_dict=',list_of_outfiles_dict
 
 
 

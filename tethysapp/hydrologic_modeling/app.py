@@ -9,7 +9,7 @@ class HydrologicModeling(TethysAppBase):
 
     name = 'hydrologic modeling'
     index = 'hydrologic_modeling:home'
-    icon = 'hydrologic_modeling/images/icon2.png'
+    icon = 'hydrologic_modeling/images/icon.gif'
     package = 'hydrologic_modeling'
     root_url = 'hydrologic-modeling'
     color = 'blue'

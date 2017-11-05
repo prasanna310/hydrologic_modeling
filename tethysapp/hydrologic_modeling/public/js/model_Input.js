@@ -11,6 +11,10 @@ $(document).ready(function() {
     $("#box_bottomY").bind('input', drawRectangleOnTextChange);
     $("#box_rightX").bind('input', drawRectangleOnTextChange);
     $("#box_leftX").bind('input', drawRectangleOnTextChange);
+
+    $("#model_engine").bind('input', ShowHideTopnetInputs);
+    $("#cell_size").bind('input', area_domain);
+
     // ajax call function to submit the form
 //    var user_form = $('#user-form');
 //    user_form.submit(function() {
@@ -68,9 +72,7 @@ function initMap() {
               position: google.maps.ControlPosition.TOP_RIGHT
           },
 
-    }
-
-    );
+    }    );
     map.setMapTypeId('terrain');
 
     // small tool in map that gives option to draw on it
@@ -131,17 +133,16 @@ function initMap() {
         });
     });
 
-	
+
 
     drawRectangleOnTextChange();
     drawMarkerOnTextChange();
-//    area_domain();
+    area_domain();
 
 
 
 
-    // block for places
-
+    // block for places search //
     // Create the search box and link it to the UI element.
     var input = document.getElementById('pac-input');
     var searchBox = new google.maps.places.SearchBox(input);
@@ -153,8 +154,7 @@ function initMap() {
     });
 
     var markers = [];
-    // Listen for the event fired when the user selects a prediction and retrieve
-    // more details for that place.
+    // Listen for the event fired when the user selects a prediction and retrieve more details for that place.
     searchBox.addListener('places_changed', function() {
       var places = searchBox.getPlaces();
 
@@ -201,41 +201,45 @@ function initMap() {
       map.fitBounds(bounds);
     });
 
-
+	google.maps.event.addListener(map, 'mousemove', function (event) {
+              displayCoordinates(event.latLng);
+          });
 
 
 } // end of initmap function
 
 
 function processDrawing(coordinates, shape) {
-    if (shape == "rectangle") {
 
+        if (shape == "rectangle") {
 
-        // get coordinate value
-        var bounds = {
-            north: parseFloat(coordinates.getNorthEast().lat()),
-            south: parseFloat(coordinates.getSouthWest().lat()),
-            east: parseFloat(coordinates.getNorthEast().lng()),
-            west: parseFloat(coordinates.getSouthWest().lng())
-        };
-        // collapse form for bounding box
-        $('[id^=collapse]').removeClass('in')
-        $('#collapse1').addClass('in')
-        $('#collapse1').attr('style', '')
-        // update form fields
-        $("#box_topY").val(bounds.north.toFixed(5));
-        $("#box_bottomY").val(bounds.south.toFixed(5));
-        $("#box_rightX").val(bounds.east.toFixed(5));
-        $("#box_leftX").val(bounds.west.toFixed(5));
-    } else {
-        // collapse form for outlet point
-        $('[id^=collapse]').removeClass('in')
-        $('#collapse3').addClass('in')
-        $('#collapse3').attr('style', '')
-        // update form fields
-        $("#outlet_x").val(parseFloat(coordinates.lng()).toFixed(5));
-        $("#outlet_y").val(parseFloat(coordinates.lat()).toFixed(5));
-    }
+            // get coordinate value
+            var bounds = {
+                north: parseFloat(coordinates.getNorthEast().lat()),
+                south: parseFloat(coordinates.getSouthWest().lat()),
+                east: parseFloat(coordinates.getNorthEast().lng()),
+                west: parseFloat(coordinates.getSouthWest().lng())
+            };
+            // collapse form for bounding box
+            $('[id^=collapse]').removeClass('in')
+            $('#collapse1').addClass('in')
+            $('#collapse1').attr('style', '')
+            // update form fields
+            $("#box_topY").val(bounds.north.toFixed(5));
+            $("#box_bottomY").val(bounds.south.toFixed(5));
+            $("#box_rightX").val(bounds.east.toFixed(5));
+            $("#box_leftX").val(bounds.west.toFixed(5));
+        } else {
+            // collapse form for outlet point
+            $('[id^=collapse]').removeClass('in')
+            $('#collapse3').addClass('in')
+            $('#collapse3').attr('style', '')
+            // update form fields
+            $("#outlet_x").val(parseFloat(coordinates.lng()).toFixed(5));
+            $("#outlet_y").val(parseFloat(coordinates.lat()).toFixed(5));
+        }
+        area_domain();
+
 } // end of processingDrawing function
 
 function drawMarkerOnTextChange() {
@@ -330,112 +334,62 @@ function drawRectangleOnTextChange() {
 }
 
 
-// // This block of code for trying to uncheck download btns
-// var allRadios = document.getElementsByName('download_choice');
-// var booRadio;
-// var x = 0;
-// for (x = 0; x < allRadios.length; x++) {
-//
-//     allRadios[x].onclick = function() {
-//         if (booRadio == this) {
-//             this.checked = false;
-//             booRadio = null;
-//         } else {
-//             booRadio = this;
-//         }
-//     };
-// }
-//
-//
-//
+function displayCoordinates(pnt) {
+          var coordsLabel = document.getElementById("tdCursor");
+          var lat = pnt.lat();
+          lat = lat.toFixed(4);
+          var lng = pnt.lng();
+          lng = lng.toFixed(4);
+          coordsLabel.innerHTML = "Latitude: " + lat + "  Longitude: " + lng;
+      }
 
 
 
 
 
-//// data validation
-//function validateOutlet()  //,y,topY, rightX, bottomY, leftX
-//{
-//
-//
-//    var x= document.forms["inputs"]["outlet_x"].value;
-//    var y =document.forms["inputs"]["outlet_y"].value;
-//
-//    var bottomY= document.forms["inputs"]["box_bottomY"].value;
-//    var leftX =document.forms["inputs"]["box_leftX"].value;
-//    var rightX= document.forms["inputs"]["box_rightX"].value;
-//    var topY= document.forms["inputs"]["box_topY"].value;
-//
-//
-//    alert("Outlet x,y : "+ x+ " "+ y);
-//
-//    if (x.trim() === "" || x.trim() === "") {
-//        alert("Please enter a value");
-//        document.forms["inputs"]["outlet_x"].focus();
-////        y.focus();
-//        return false;
-//    }
-//
-//
-//
-//    if (x > rightX ||  x < leftX || y > topY || x < bottomY  ) {
-//        alert("Outlet should be inside the bounding box");
-//        document.forms["inputs"]["outlet_x"].focus();
-////        y.focus();
-//        return false;
-//    }
-//
-//    return true;
-//}
+function ShowHideTopnetInputs() {
+    var model_engine = document.forms["inputs"]["model_engine"].value;
+    // window.alert(model_engine);
 
+    if (model_engine=='TOPNET') {
+        // $("#topnet_input").show();  //only this is required for jQuery!
+        document.getElementById("topnet_input").style.display = "block";
+    }
 
-
-
-
-
-
-
-
-
-
-
-
+}
 
 
 function area_domain(){
+        document.getElementById('prompt').style.display = "block";
+        var radius_earth = 6371; //km
+        var box_bottomY= document.forms["inputs"]["box_bottomY"].value*3.14/180;
+        var box_leftX =document.forms["inputs"]["box_leftX"].value*3.14/180;
+        var box_rightX= document.forms["inputs"]["box_rightX"].value*3.14/180;
+        var box_topY= document.forms["inputs"]["box_topY"].value*3.14/180;
 
-
-        var box_bottomY= document.forms["inputs"]["box_bottomY"].value;
-        var box_leftX =document.forms["inputs"]["box_leftX"].value;
-        var box_rightX= document.forms["inputs"]["box_rightX"].value;
-        var box_topY= document.forms["inputs"]["box_topY"].value;
-
-
-
-        // :TODO Area of bounding box, and if its > -- km2, give prompt
-        var di_along_long = 3985* (box_leftX - box_rightX)*3.14/180 ;
-        window.alert("2:"+di_along_long);
-        var di_along_lat = 3985* Math.cos((box_topY + box_bottomY)*0.5  *3.14/180.0) * (box_topY - box_bottomY)*3.14/180  ;
-        window.alert("3: top btm"+Math.cos((box_topY + box_bottomY)));
+        var di_along_long = radius_earth* (box_leftX - box_rightX) ;
+        var di_along_lat = radius_earth* Math.cos(box_topY + box_bottomY) * (box_topY - box_bottomY);
         var bb_area = parseInt( Math.abs( di_along_long * di_along_lat) ) ;  // im km2
-//        window.alert("4:"+bb_area);
 
         document.getElementById('prompt').innerHTML = bb_area;
-//        window.alert("5");
 
         var total_no_of_cells = parseInt( bb_area / Math.pow(document.forms["inputs"]["cell_size"].value/1000.0,2) );
-        document.getElementById('prompt').innerHTML = 'Total drainage area in mi2= ' + bb_area+ ' Total no of cells= ' +  total_no_of_cells  ;
+        document.getElementById('prompt').innerHTML = 'Approximate drainage area is ' + bb_area+ ' square kilometers, with ' + total_no_of_cells + ' number of cells (Approx)' ;
 
         // if greater than 300 miles, warnings
-        if (bb_area > 300) {
+
+        if (bb_area <= 200) { document.getElementById('prompt').style.color = "grey"; }
+
+        if (bb_area > 250 && bb_area < 350) {  document.getElementById('prompt').style.color = "red"; }
+
+        if (bb_area > 350) {
              document.getElementById('prompt').style.color = "red";
-
+             document.getElementById('prompt').style.fontWeight = "bold";
+             alert('Please select a smaller watershed');
         }
 
-        if (bb_area <= 300) {
-            document.getElementById('prompt').style.color = "grey";
-//                            document.getElementById('prompt').innerHTML = ''  ;
-        }
+        return bb_area;
+
 }
 
 
@@ -553,6 +507,72 @@ window.geojson_callback = function(results) {
 
 
 
+
+
+
+
+
+
+
+
+
+// // This block of code for trying to uncheck download btns
+// var allRadios = document.getElementsByName('download_choice');
+// var booRadio;
+// var x = 0;
+// for (x = 0; x < allRadios.length; x++) {
+//
+//     allRadios[x].onclick = function() {
+//         if (booRadio == this) {
+//             this.checked = false;
+//             booRadio = null;
+//         } else {
+//             booRadio = this;
+//         }
+//     };
+// }
+//
+//
+//
+
+
+
+
+
+//// data validation
+//function validateOutlet()  //,y,topY, rightX, bottomY, leftX
+//{
+//
+//
+//    var x= document.forms["inputs"]["outlet_x"].value;
+//    var y =document.forms["inputs"]["outlet_y"].value;
+//
+//    var bottomY= document.forms["inputs"]["box_bottomY"].value;
+//    var leftX =document.forms["inputs"]["box_leftX"].value;
+//    var rightX= document.forms["inputs"]["box_rightX"].value;
+//    var topY= document.forms["inputs"]["box_topY"].value;
+//
+//
+//    alert("Outlet x,y : "+ x+ " "+ y);
+//
+//    if (x.trim() === "" || x.trim() === "") {
+//        alert("Please enter a value");
+//        document.forms["inputs"]["outlet_x"].focus();
+////        y.focus();
+//        return false;
+//    }
+//
+//
+//
+//    if (x > rightX ||  x < leftX || y > topY || x < bottomY  ) {
+//        alert("Outlet should be inside the bounding box");
+//        document.forms["inputs"]["outlet_x"].focus();
+////        y.focus();
+//        return false;
+//    }
+//
+//    return true;
+//}
 
 
 
