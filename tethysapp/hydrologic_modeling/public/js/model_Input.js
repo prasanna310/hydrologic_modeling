@@ -67,6 +67,7 @@ function initMap() {
             lng: -95.712891
         },
         zoom: 9,
+        scaleControl: true,
         mapTypeControlOptions: {
               style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
               position: google.maps.ControlPosition.TOP_RIGHT
@@ -74,6 +75,7 @@ function initMap() {
 
     }    );
     map.setMapTypeId('terrain');
+
 
     // small tool in map that gives option to draw on it
     var drawingManager = new google.maps.drawing.DrawingManager({
@@ -137,7 +139,159 @@ function initMap() {
 
     drawRectangleOnTextChange();
     drawMarkerOnTextChange();
-    area_domain();
+    // area_domain();
+
+
+
+
+    // block for places search //
+    // Create the search box and link it to the UI element.
+    var input = document.getElementById('pac-input');
+    var searchBox = new google.maps.places.SearchBox(input);
+    map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+
+    // Bias the SearchBox results towards current map's viewport.
+    map.addListener('bounds_changed', function() {
+      searchBox.setBounds(map.getBounds());
+    });
+
+    var markers = [];
+    // Listen for the event fired when the user selects a prediction and retrieve more details for that place.
+    searchBox.addListener('places_changed', function() {
+      var places = searchBox.getPlaces();
+
+      if (places.length == 0) {
+        return;
+      }
+
+      // Clear out the old markers.
+      markers.forEach(function(marker) {
+        marker.setMap(null);
+      });
+      markers = [];
+
+      // For each place, get the icon, name and location.
+      var bounds = new google.maps.LatLngBounds();
+      places.forEach(function(place) {
+        if (!place.geometry) {
+          console.log("Returned place contains no geometry");
+          return;
+        }
+        var icon = {
+          url: place.icon,
+          size: new google.maps.Size(71, 71),
+          origin: new google.maps.Point(0, 0),
+          anchor: new google.maps.Point(17, 34),
+          scaledSize: new google.maps.Size(25, 25)
+        };
+
+        // Create a marker for each place.
+        markers.push(new google.maps.Marker({
+          map: map,
+          icon: icon,
+          title: place.name,
+          position: place.geometry.location
+        }));
+
+        if (place.geometry.viewport) {
+          // Only geocodes have viewport.
+          bounds.union(place.geometry.viewport);
+        } else {
+          bounds.extend(place.geometry.location);
+        }
+      });
+      map.fitBounds(bounds);
+    });
+
+	google.maps.event.addListener(map, 'mousemove', function (event) {
+              displayCoordinates(event.latLng);
+          });
+
+
+} // end of initmap function
+
+function initMap2(res) {
+    var mapDiv = document.getElementById('map');
+    map = new google.maps.Map(mapDiv, {
+        center: {
+            lat: 37.09024,
+            lng: -95.712891
+        },
+        zoom: 9,
+        scaleControl: true,
+        mapTypeControlOptions: {
+              style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+              position: google.maps.ControlPosition.TOP_RIGHT
+          },
+
+    }    );
+    map.setMapTypeId('terrain');
+    map.data.addGeoJson(res);
+
+
+    // small tool in map that gives option to draw on it
+    var drawingManager = new google.maps.drawing.DrawingManager({
+        drawingControl: true,
+        drawingControlOptions: {
+            position: google.maps.ControlPosition.TOP_CENTER,
+            drawingModes: [
+                google.maps.drawing.OverlayType.MARKER,
+                google.maps.drawing.OverlayType.RECTANGLE
+            ]
+        },
+        rectangleOptions: {
+            editable: true,
+            draggable: true
+        },
+
+        markerOptions: {
+            editable:true,
+            draggable: true
+        }
+    });
+
+    drawingManager.setMap(map);
+
+
+    google.maps.event.addListener(drawingManager, 'rectanglecomplete', function(rectangle) {
+        for (var i = 0; i < allRectangles.length; i++) {
+            allRectangles[i].setMap(null);
+        };
+        allRectangles.push(rectangle);
+
+
+        var coordinates = (rectangle.getBounds());
+        processDrawing(coordinates, 'rectangle');
+
+        //also check (if drawing completed) whether bound is changed (i.e. edited)
+        rectangle.addListener('bounds_changed', function() {
+            var coordinates = (rectangle.getBounds());
+            processDrawing(coordinates, "rectangle");
+
+
+        });
+    });
+
+    google.maps.event.addListener(drawingManager, 'markercomplete', function(marker) {
+        for (var i = 0; i < allMarkers.length; i++) {
+            allMarkers[i].setMap(null);
+        };
+        var coordinates = (marker.getPosition());
+        processDrawing(coordinates, 'marker');
+        allMarkers.push(marker);
+
+        //added so that when the marker is dragged it gets redrawn
+        marker.addListener( "dragend", function(){
+            var coordinates = (marker.getPosition());
+            processDrawing(coordinates, 'marker');
+        });
+    });
+
+
+
+    drawRectangleOnTextChange();
+    drawMarkerOnTextChange();
+    // area_domain();
 
 
 
@@ -274,6 +428,7 @@ function drawMarkerOnTextChange() {
     map.setCenter(marker.getPosition());
     allMarkers.push(marker);
 } // end of drawMarkerOnTextChange
+
 function drawRectangleOnTextChange() {
     var bounds = {
         north: parseFloat($("#box_topY").val()),
@@ -328,7 +483,7 @@ function drawRectangleOnTextChange() {
     var southWest = new google.maps.LatLng(bounds.south, bounds.west);
     var northEast = new google.maps.LatLng(bounds.north, bounds.east);
     var bounds = new google.maps.LatLngBounds(southWest, northEast);
-    // map.fitBounds(bounds);
+    map.fitBounds(bounds);
     allRectangles.push(rectangle);
 
 }
@@ -349,11 +504,24 @@ function displayCoordinates(pnt) {
 
 function ShowHideTopnetInputs() {
     var model_engine = document.forms["inputs"]["model_engine"].value;
-    // window.alert(model_engine);
+    // alert(model_engine);
 
     if (model_engine=='TOPNET') {
         // $("#topnet_input").show();  //only this is required for jQuery!
         document.getElementById("topnet_input").style.display = "block";
+        document.getElementById("download_input").style.display = "none";
+    }
+
+    if (model_engine=='download') {
+        // $("#topnet_input").show();  //only this is required for jQuery!
+        document.getElementById("download_input").style.display = "block";
+        document.getElementById("topnet_input").style.display = "none";
+    }
+
+    if (model_engine=='TOPKAPI') {
+        // $("#topnet_input").show();  //only this is required for jQuery!
+        document.getElementById("download_input").style.display = "none";
+        document.getElementById("topnet_input").style.display = "none";
     }
 
 }
@@ -380,12 +548,15 @@ function area_domain(){
 
         if (bb_area <= 200) { document.getElementById('prompt').style.color = "grey"; }
 
-        if (bb_area > 250 && bb_area < 350) {  document.getElementById('prompt').style.color = "red"; }
+        if (bb_area > 250 && bb_area < 350) {  document.getElementById('prompt').style.color = "brown"; }
 
         if (bb_area > 350) {
+            document.getElementById('prompt').innerHTML = 'Warning! Select a smaller watershed. Approximate drainage area is ' + bb_area+ ' square kilometers, with ' + total_no_of_cells + ' number of cells (Approx)' ;
              document.getElementById('prompt').style.color = "red";
-             document.getElementById('prompt').style.fontWeight = "bold";
-             alert('Please select a smaller watershed');
+             // document.getElementById('prompt').style.fontWeight = "bold";
+             // alert('Please select a smaller watershed');
+            // $('#statusbar').removeClass('alert-info');
+            // $('#statusbar').addClass('alert-error');
         }
 
         return bb_area;
@@ -406,13 +577,14 @@ function mToDegree(distance_in_m, avg_lat){
 
 // for geojson visualization
 window.geojson_callback = function(results) {
+
 	 var map = new google.maps.Map(document.getElementById('map'), {
 	 zoom: 9,
 	 center: {lat: 42, lng: -111.3},
 	 mapTypeId: 'terrain'
 	  });
 
-//    initMap();
+
 
 
     // I don't know how it works, but when a geojson is uploaded, I think the json string is added as
@@ -448,7 +620,7 @@ window.geojson_callback = function(results) {
             var cell = document.forms["inputs"]["cell_size"].value;
             xy = new Array();
             xy = mToDegree(cell, document.forms["inputs"]["box_bottomY"].value );
-            var buffer  = 3;
+            var buffer  = 2;
             document.forms["inputs"]["box_bottomY"].value= ymin - buffer*xy[1] ;
             document.forms["inputs"]["box_leftX"].value=xmin - buffer*xy[0] ;
             document.forms["inputs"]["box_rightX"].value= xmax + buffer*xy[0] ;
@@ -460,8 +632,8 @@ window.geojson_callback = function(results) {
 
 			var marker2 = new google.maps.Marker({
 				map:map,
-//				position: new google.maps.LatLng( document.forms["inputs"]["outlet_y"].value , document.forms["inputs"]["outlet_x"].value),
-				position: new_center, //google.maps.LatLng( document.forms["inputs"]["outlet_y"].value , document.forms["inputs"]["outlet_x"].value),
+				position: new google.maps.LatLng( document.forms["inputs"]["outlet_y"].value , document.forms["inputs"]["outlet_x"].value),
+				// position: new_center, //google.maps.LatLng( document.forms["inputs"]["outlet_y"].value , document.forms["inputs"]["outlet_x"].value),
 
 				draggable:true,
 				label:"Outlet",

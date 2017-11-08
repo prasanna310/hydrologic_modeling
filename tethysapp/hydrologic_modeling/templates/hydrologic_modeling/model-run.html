@@ -1,9 +1,9 @@
-{% extends "hydrologic_modeling/model-calibration.html" %}
+{% extends "hydrologic_modeling/base.html" %}
 {% load tethys_gizmos %}
 
  {% if download_status %}
-        {% block app_navigation_override %}
-        {% endblock %}
+
+       <p > The downloading geospatial files completed successfully. Download status = {{download_status}} </p>
 
   {% else %}
 

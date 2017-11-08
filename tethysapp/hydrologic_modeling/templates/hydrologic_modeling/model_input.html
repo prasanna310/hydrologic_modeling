@@ -201,6 +201,19 @@
                          </table>
                     </div>
 
+                    <div id="download_input" style="display: none">
+                        <p> Select download options below</p>
+
+                          <input type="checkbox" id="download_terrain" name="download_choice2[]" value="terrain" checked>
+                          <label for="download_terrain">download terrain files</label> <br>
+
+                          <input type="checkbox" id="download_soil" name="download_choice2[]" value="soil">
+                          <label for="download_soil">download soil files</label> <br>
+
+                          <input type="checkbox" id="download_forcing" name="download_choice2[]" value="forcing">
+                          <label for="download_forcing">download forcing files</label> <br>
+
+                    </div>
 
 
                 </div>
@@ -209,24 +222,24 @@
     </div>
 
 
-          <a style="color:blue;" data-toggle="collapse" data-target="#download_request_form"> Only interested in hydrologic dataset? Click here! </a> <br>
-          <div class="collapse" id="download_request_form">
-              <p style="color:red;">Make sure the 'domain', and the 'start and end dates' are correct </p>
-              <!--<input type="radio" name="download_choice" value="geospatial"> Download geospatial files <br>-->
-              <!--<input type="radio" name="download_choice" value="soil" > Download geospatial, and soil files<br>-->
-              <!--<input type="radio" name="download_choice" value="forcing" > Download geospatial, and forcing files<br>-->
+          <!--<a style="color:blue;" data-toggle="collapse" data-target="#download_request_form"> Only interested in hydrologic dataset? Click here! </a> <br>-->
+          <!--<div class="collapse" id="download_request_form">-->
+              <!--<p style="color:red;">Make sure the 'domain', and the 'start and end dates' are correct </p>-->
+              <!--&lt;!&ndash;<input type="radio" name="download_choice" value="geospatial"> Download geospatial files <br>&ndash;&gt;-->
+              <!--&lt;!&ndash;<input type="radio" name="download_choice" value="soil" > Download geospatial, and soil files<br>&ndash;&gt;-->
+              <!--&lt;!&ndash;<input type="radio" name="download_choice" value="forcing" > Download geospatial, and forcing files<br>&ndash;&gt;-->
 
-              <input type="checkbox" id="download_terrain" name="download_choice2[]" value="terrain">
-              <label for="download_terrain">download terrain files</label> <br>
+              <!--&lt;!&ndash;<input type="checkbox" id="download_terrain" name="download_choice2[]" value="terrain">&ndash;&gt;-->
+              <!--&lt;!&ndash;<label for="download_terrain">download terrain files</label> <br>&ndash;&gt;-->
 
-              <input type="checkbox" id="download_soil" name="download_choice2[]" value="soil">
-              <label for="download_soil">download soil files</label> <br>
+              <!--&lt;!&ndash;<input type="checkbox" id="download_soil" name="download_choice2[]" value="soil">&ndash;&gt;-->
+              <!--&lt;!&ndash;<label for="download_soil">download soil files</label> <br>&ndash;&gt;-->
 
-              <input type="checkbox" id="download_forcing" name="download_choice2[]" value="forcing">
-              <label for="download_forcing">download forcing files</label> <br>
+              <!--&lt;!&ndash;<input type="checkbox" id="download_forcing" name="download_choice2[]" value="forcing">&ndash;&gt;-->
+              <!--&lt;!&ndash;<label for="download_forcing">download forcing files</label> <br>&ndash;&gt;-->
 
 
-          </div>
+          <!--</div>-->
 
 
       <input type="submit" name="input-form" class="btn btn-default" value="Send Request">
@@ -270,11 +283,12 @@
     <div id='title'>
         <!--<h3 style="color:#0073e6">Input Data Preparation</h3>-->
         <p style="font-size:100%">
-            This application helps prepare a complete model-instance for TOPKAPI model simulation, or model-input files for TOPNET or geospatial dataset for a user defined area (within the bounds of supporting data in the continental US).
-            <span data-toggle="collapse" data-target="#intro-detail" style="color: green; margin-bottom: 20px"><strong><u>See more details here.</u></strong></span>
+
+            <span data-toggle="collapse" data-target="#intro-detail" style="color: green; margin-bottom: 20px"><strong><u>Click here for quick help</u></strong></span>
         </p>
         <div id="intro-detail" class="collapse" style="background-color:#f2f2f2">
             <p style="font-size:100%">
+                This application helps prepare a complete model-instance for TOPKAPI model simulation, or model-input files for TOPNET or geospatial dataset for a user defined area (within the bounds of supporting data in the continental US).
                 <strong>TOPKAPI simulation:</strong> Prepare a TOPKAPI model <br>
                 <strong>TOPNET model input:</strong> Prepare input files for TOPNET <br>
                 <strong>Download geospatial dataset:</strong> Three options: i) geospatial ii) geospatial+soil dataset (for US only), and iii) geospatial + soil dataset + forcing files (for US only)<br>
@@ -292,7 +306,12 @@
     <meta charset="utf-8">
 
     <input id="pac-input" style="width: 300px" class="controls" type="text" placeholder="Search Box">
-    <p id="prompt" style="font-size:80%"> Prompt Area  </p>
+    <p id="prompt" style="font-size:80%">   </p>
+
+    <!--<div id="statusbar" class="alert alert-info" style="height:5px">-->
+        <!--<p id="prompt" style="font-size:80%"> Prompt Area  </p>-->
+    <!--</div>-->
+
     <div id="map" style="width:100%;height:620px"></div>
     <p id="tdCursor" > Coordinates: </p>
 </div>
