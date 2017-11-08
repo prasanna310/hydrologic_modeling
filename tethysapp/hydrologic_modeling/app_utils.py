@@ -297,6 +297,17 @@ def read_data_from_json(json_fname):
         eta_sum= 0
         ppt_sum = 0
         qobs_sum = 0
+
+        def float2(num):
+            try:
+                num2 = float(num)
+                if np.isnan(num2):
+                    return 0
+                else:
+                    return float(num)
+            except:
+                return 0
+
         # also accomodate discharge in mm if area of watershed is provided
         if 'watershed_area' in data:
             watershed_area = data['watershed_area']
@@ -312,20 +323,21 @@ def read_data_from_json(json_fname):
 
             for yr, mon, day, hr, min, q in yr_mon_day_hr_min_discharge_list:
                 date = datetime.datetime(year=int(yr), month=int(mon), day=int(day), hour=int(hr), minute=int(min))
-                hydrograph_series_obs.append([date, float(q)])
+                hydrograph_series_obs.append([date, float2(q)])
 
                 if 'watershed_area' in data:
-                    qobs_sum = qobs_sum + float(q) * cfs_2_mm
+                    qobs_sum = qobs_sum + float2(q) * cfs_2_mm
                     q_obs_cum.append([date, qobs_sum])
 
         if 'ppt' in data:
             yr_mon_day_hr_min_ppt = data['ppt']
+
             for yr, mon, day, hr, min, val in yr_mon_day_hr_min_ppt:
                 date = datetime.datetime(year=int(yr), month=int(mon), day=int(day), hour=int(hr), minute=int(min))
-                ppt.append([date, float(val)])
+                ppt.append([date, float2(val)])
 
                 if 'watershed_area' in data:
-                    ppt_sum = ppt_sum + float(val)
+                    ppt_sum = ppt_sum + float2(val)
                     ppt_cum.append([date, ppt_sum])
 
         if 'runs' in data:
@@ -333,9 +345,9 @@ def read_data_from_json(json_fname):
                 yr_mon_day_hr_min_discharge_list = data['runs'][-1]['simulated_discharge']  # of the last run
                 for yr, mon, day, hr, min, q in yr_mon_day_hr_min_discharge_list:
                     date = datetime.datetime(year=int(yr), month=int(mon), day=int(day), hour=int(hr), minute=int(min))
-                    hydrograph_series_sim.append([date, float(q)])
+                    hydrograph_series_sim.append([date, float2(q)])
                     if 'watershed_area' in data:
-                        qsim_sum = qsim_sum + float(q) * cfs_2_mm
+                        qsim_sum = qsim_sum + float2(q) * cfs_2_mm
                         q_sim_cum.append([date, qsim_sum])
 
                 hydrograph_series_sim = [[item[0], 0] if np.isnan(item[-1]) else item for item in hydrograph_series_sim]  # replace nan to 0
@@ -344,10 +356,11 @@ def read_data_from_json(json_fname):
                 yr_mon_day_hr_min_eta = data['runs'][-1]['et_a']
                 for yr, mon, day, hr, min, val in yr_mon_day_hr_min_eta:
                     date = datetime.datetime(year=int(yr), month=int(mon), day=int(day), hour=int(hr), minute=int(min))
-                    eta.append([date, float(val)])
+
+                    eta.append([date, float2(val)])
 
                     if 'watershed_area' in data:
-                        eta_sum = eta_sum + float(val)
+                        eta_sum = eta_sum + float2(val)
                         eta_cum.append([date, eta_sum])
 
                 eta = [[item[0], 0] if np.isnan(item[-1]) else item for item in eta]  # replace nan to 0
@@ -357,21 +370,21 @@ def read_data_from_json(json_fname):
                 yr_mon_day_hr_min_eta = data['runs'][-1]['vc']
                 for yr, mon, day, hr, min, val in yr_mon_day_hr_min_eta:
                     date = datetime.datetime(year=int(yr), month=int(mon), day=int(day), hour=int(hr), minute=int(min))
-                    vc.append([date, float(val)])
+                    vc.append([date, float2(val)])
                 vc = [[item[0], 0] if np.isnan(item[-1]) else item for item in vc]  # replace nan to 0
 
             if 'vs' in data['runs'][-1]:
                 yr_mon_day_hr_min_eta = data['runs'][-1]['vs']
                 for yr, mon, day, hr, min, val in yr_mon_day_hr_min_eta:
                     date = datetime.datetime(year=int(yr), month=int(mon), day=int(day), hour=int(hr), minute=int(min))
-                    vs.append([date, float(val)])
+                    vs.append([date, float2(val)])
                 vs = [[item[0], 0] if np.isnan(item[-1]) else item for item in vs]  # replace nan to 0
 
             if 'vo' in data['runs'][-1]:
                 yr_mon_day_hr_min_eta = data['runs'][-1]['vo']
                 for yr, mon, day, hr, min, val in yr_mon_day_hr_min_eta:
                     date = datetime.datetime(year=int(yr), month=int(mon), day=int(day), hour=int(hr), minute=int(min))
-                    vo.append([date, float(val)])
+                    vo.append([date, float2(val)])
                 vo = [[item[0], 0] if np.isnan(item[-1]) else item for item in vo]  # replace nan to 0
 
             # read numeric and calib parameters:
@@ -1502,15 +1515,15 @@ def run_topnet(inputs_dictionary):
     # upload topnet control and watermangement files
     upload_lutlcfile = HDS.upload_file(os.path.join(workingDir, "lutluc.txt"))
 
-    leftX, topY, rightX, bottomY = -111.822, 42.128, -111.438, 41.686
-    lat_outlet = 41.744
-    lon_outlet = -111.7836
-    watershedName = 'LoganRiver_demo'
-    dx, dy = 30, 30
-    #### model start and end dates
-    start_year = 2000
-    end_year = 2001
-    usgs_gage_number = '10109001'
+    # leftX, topY, rightX, bottomY = -111.822, 42.128, -111.438, 41.686
+    # lat_outlet = 41.744
+    # lon_outlet = -111.7836
+    # watershedName = 'LoganRiver_demo'
+    # dx, dy = 30, 30
+    # #### model start and end dates
+    # start_year = 2000
+    # end_year = 2001
+    # usgs_gage_number = '10109001'
 
     try:
         # # offline run
@@ -1791,6 +1804,7 @@ def run_topnet(inputs_dictionary):
         print "creat_latlonxyfile = ", creat_latlonxyfile
         list_of_outfiles_dict.append(creat_latlonxyfile)
 
+
         #get streamflow file :TODO, there seem to be some error with the function used in R
         streamflow = HDS.download_streamflow(usgs_gage=usgs_gage_number, start_year=start_year, end_year=end_year,
                                              output_streamflow='streamflow_calibration.dat')
@@ -2032,7 +2046,7 @@ def call_runpytopkapi(inputs_dictionary, out_folder=''):
                                        bubbling_pressure_fname=soil_files['output_bubbling_pressure_file'],
                                        resid_moisture_content_fname=soil_files['output_residual_soil_moisture_file'],
                                        sat_moisture_content_fname=soil_files['output_saturated_soil_moisture_file'],
-                                       conductivity_fname=soil_files['output_ksat_ssurgo_wtd_file'],  # only change is here, based on downloadsoildataforpytopkapi3 or 4
+                                       conductivity_fname= soil_files['output_ksat_LUT_file'], #soil_files['output_ksat_ssurgo_wtd_file'],  # only change is here, based on downloadsoildataforpytopkapi3 or 4
                                        # soil_files['output_ksat_rawls_file'],
                                        soil_depth_fname=  watershed_files['output_raster'],                                          # soil_files['output_sd_file'],
 

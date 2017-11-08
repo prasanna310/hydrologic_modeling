@@ -67,17 +67,17 @@ def model_input(request):
                   'ymax': '40.8327', 'xmax': '-111.728', 'ymin': '40.772', 'xmin': '-111.834'},
 
 
-        'Plunge': {'simulation_name': 'Plunge_sample', 'USGS_gage': '11055500', 'cell_size': '300', 't0': '10-01-2010',
-                  't': '01-01-2011', 'threshold': '5', 'del_t': '24', 'x':'-117.141284', 'y': '34.12128',
+        'Plunge': {'simulation_name': 'Plunge_demo', 'USGS_gage': '11055500', 'cell_size': '100', 't0': '10-01-2010',
+                  't': '10-01-2011', 'threshold': '5', 'del_t': '24', 'x':'-117.141284', 'y': '34.12128',
                   # 'ymax':'34.2336', 'xmax': '-117.048046', 'ymin': '34.10883', 'xmin': '-117.168289',
                     'ymax':'34.213', 'xmax': '-117.062', 'ymin': '34.10883', 'xmin': '-117.18'
                    },
 
-        'SantaCruz': {'simulation_name': 'SantaCruz_demo', 'USGS_gage': '11124500', 'cell_size': '500', 't0': '11-15-2010',
-                  't': '06-15-2011', 'threshold': '5', 'del_t': '24', 'x': '-119.90873', 'y': '34.59637',
+        'SantaCruz': {'simulation_name': 'SantaCruz_demo', 'USGS_gage': '11124500', 'cell_size': '100', 't0': '10-01-2010',
+                  't': '10-01-2011', 'threshold': '5', 'del_t': '24', 'x': '-119.90873', 'y': '34.59637',
                   'ymax': '34.714', 'xmax':'-119.781', 'ymin':'34.586', 'xmin': '-119.925'},
 
-        'BlancoRiver': {'simulation_name': 'BlancoRiver_trial', 'USGS_gage': '08171000', 'cell_size': '500',
+        'BlancoRiver': {'simulation_name': 'BlancoRiver_demo', 'USGS_gage': '08171000', 'cell_size': '100',
                       't0': '01-01-2010',
                       't': '12-30-2011', 'threshold': '20', 'del_t': '24', 'x': '-98.088989', 'y': '29.99349',
                       'ymax': '30.20707', 'xmax': '-98.0679', 'ymin': '29.96298', 'xmin': '-98.4732'},
@@ -86,6 +86,19 @@ def model_input(request):
                         't0': '01-01-2010',
                         't': '12-30-2011', 'threshold': '20', 'del_t': '24', 'x': '-98.00826', 'y': '30.08341',
                         'ymax': '30.213', 'xmax': '-97.956', 'ymin': '30.027', 'xmin': '-98.461'},
+
+        'BigCreek': {'simulation_name': 'BigCreek_freestone_tx', 'USGS_gage': '08110430', 'cell_size': '100',
+                       't0': '10-01-2010',
+                       't': '10-01-2011', 'threshold': '15', 'del_t': '24', 'x': '-96.5066', 'y': '31.08341',
+                       'ymax': '30.213', 'xmax': '-97.956', 'ymin': '30.027', 'xmin': '-97.99'},
+
+        'SantaMaria': {'simulation_name': 'SANTA_MARIA_CA_201011', 'USGS_gage': '11028500', 'cell_size': '100',
+                     't0': '10-01-2010',
+                     't': '10-01-2011', 'threshold': '15', 'del_t': '24', 'x': '-116.9455844', 'y': '33.0522655',
+                     'ymax': '30.213', 'xmax': '-97.956', 'ymin': '30.027', 'xmin': '-97.99'},
+
+
+
 
     }
 
@@ -115,12 +128,20 @@ def model_input(request):
                 initial=['Daymet'],
                 original=['Daymet'])
 
-    model_engine = SelectInput(display_text='Choose a Model',
+    # model_engine = SelectInput(display_text='Choose an action',
+    #             name='model_engine',
+    #             multiple=False,
+    #             options=[('TOPKAPI', 'TOPKAPI'), ('TOPNET is amazing', 'TOPNET')],
+    #             initial=['TOPKAPI'],
+    #             original=['TOPKAPI'])
+
+    model_engine = SelectInput(display_text='Choose an action',
                 name='model_engine',
                 multiple=False,
-                options=[('TOPKAPI', 'TOPKAPI'), ('TOPNET', 'TOPNET')],
-                initial=['TOPKAPI'],
-                original=['TOPKAPI'])
+                options=[('Download geospatial files', 'download'), ('Prepare TOPKAPI model', 'TOPKAPI'), ('Prepare TOPNET input-files', 'TOPNET') ],
+               initial=['TOPKAPI'],
+               original=['TOPKAPI']
+    )
 
 
 
@@ -305,7 +326,7 @@ def model_run(request):
     download_link = download_response['download_link'] = 'http://link.to.zipped.files'
     hs_res_created = download_response['hs_res_created'] = ''
     files_created_dict = 'No dict created'
-    download_choice = None
+    download_choice = []
 
     # initial values
     fac_L_init = fac_Ks_init = fac_n_o_init = fac_n_c_init = fac_th_s_init = 1.0
@@ -374,188 +395,166 @@ def model_run(request):
         # Checks the model chosen
         model_engine_chosen = request.POST['model_engine']
 
-        if model_engine_chosen.lower() == 'topnet':
-            test_string =  'TOPNET was chosen'
-            print test_string
+        if model_engine_chosen.lower() == 'download' : #request.POST.getlist('download_choice2[]') != []:
+            print 'User action: DOWNLOAD'
+
+            download_choice = request.POST.getlist('download_choice2[]')
+
+            print 'download_choice(s)=', download_choice
 
             inputs_dictionary = app_utils.create_model_input_dict_from_request(request)
-            print inputs_dictionary
+
+            download_request_response = {
+                u'output_response_txt': u'http://129.123.9.159:20199/files/data/user_6/metadata.txt',
+                u'output_zipfile': u'http://129.123.9.159:20199/files/data/user_6/output.zip',
+                u'output_json_string': {'hs_res_id_created': '12456'}}
+
+            download_request_response = app_utils.download_geospatial_and_forcing_files(inputs_dictionary,
+                                                                                        download_request=download_choice)
+
+            print "Downloading all the files successfully completed"
+
+            if download_request_response != {}:
+                download_status = True
+                download_link = download_request_response['output_zipfile']
+                hs_res_downloadfile = download_request_response['output_json_string']['hs_res_id_created']
+
+        elif model_engine_chosen.lower() == 'topnet':
+            print 'User action: TOPNET'
+
+            inputs_dictionary = app_utils.create_model_input_dict_from_request(request)
             run_request = app_utils.run_topnet(inputs_dictionary)
 
-        else:
-            # Check if user wants to just download the file
+        elif model_engine_chosen.lower() == 'topkapi':
+            print 'User action: topkapi'
+
+            # # Method (1), STEP (1): get input dictionary from request ( request I)
+            inputs_dictionary = app_utils.create_model_input_dict_from_request(request)
+            test_string =  str("Prepared  Values: ")+str(inputs_dictionary)
+            simulation_name = inputs_dictionary['simulation_name']
+            print "MSG: Inputs from user read"
+
+
+
+            # # Method (1), STEP (2):call_runpytopkapi function
+            # response_JSON_file = '/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/e14239bf38bc490cae63e131c822a17d/pytopkpai_responseJSON.txt'
+            # response_JSON_file = '/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/a3c75f158ad44fe1a46ceb8a67224aae/pytopkpai_responseJSON.txt'
+            response_JSON_file =  app_utils.call_runpytopkapi(inputs_dictionary= inputs_dictionary)
+
+            json_data = app_utils.read_data_from_json(response_JSON_file)
+
+            print 'MSG: Prepared Simulation Hydrograph ...'
+
+            hs_resource_id_created = json_data['hs_res_id_created']
+            hydrograph_series_obs = json_data['hydrograph_series_obs']
+            hydrograph_series_sim = json_data['hydrograph_series_sim']
+
+
+            eta =  json_data['eta']
+            vo = json_data['vo']
+            vc = json_data['vc']
+            vs = json_data['vs']
+            ppt= json_data['ppt']
+
+            ppt_cum = json_data['ppt_cum']  # cumulative
+            eta_cum = json_data['eta_cum']
+            q_obs_cum = json_data['q_obs_cum']
+            q_sim_cum = json_data['q_sim_cum']
+
+            # initial values
+            # calib_parameter= {"fac_l": 1.0, "fac_n_o": 1.0, "fac_n_c": 1.0, "fac_th_s": 1.0, "fac_ks": 1.0},
+            # numeric_param= {"pvs_t0": 50, "vo_t0": 750.0, "qc_t0": 0.0, "kc": 1.0},
+            if json_data['calib_parameter'] != None:
+                fac_L_init = json_data['calib_parameter']['fac_l']
+                fac_Ks_init = json_data['calib_parameter']['fac_ks']
+                fac_n_o_init = json_data['calib_parameter']['fac_n_o']
+                fac_n_c_init = json_data['calib_parameter']['fac_n_c']
+                fac_th_s_init = json_data['calib_parameter']['fac_th_s']
+            if json_data['numeric_param'] != None:
+                pvs_t0_init = json_data['numeric_param']['pvs_t0']
+                vo_t0_init = json_data['numeric_param']['vo_t0']
+                qc_t0_init = json_data['numeric_param']['qc_t0']
+                kc_init = json_data['numeric_param']['kc']
+
+            print '*****************', hs_resource_id_created
+            # print [i[-1] for i in hydrograph_series_sim]
+            # hydrograph_series_obs = np.nan_to_num(hydrograph_series_obs).tolist()
+
+            # replace nan values to 0 because Tethys timeseries cannot display nan
+            hydrograph_series_obs = [[item[0], 0] if np.isnan(item[-1]) else item for item in hydrograph_series_obs]
+
+
             try:
-                # download_choice = request.POST['download_choice'] # for radio btn that existed earlier on
-
-                download_choice = request.POST.getlist('download_choice2[]')
-
-                print 'download_choice(s)=',download_choice
-
-                inputs_dictionary = app_utils.create_model_input_dict_from_request(request)
-
-
-                download_request_response = {
-                    u'output_response_txt': u'http://129.123.9.159:20199/files/data/user_6/metadata.txt',
-                    u'output_zipfile': u'http://129.123.9.159:20199/files/data/user_6/output.zip',
-                    u'output_json_string':{'hs_res_id_created':'12456'}}
-
-                download_request_response = app_utils.download_geospatial_and_forcing_files(inputs_dictionary, download_request=download_choice)
-
-
-                print "Downloading all the files successfully completed"
-
-                if download_request_response != {}:
-                    download_status = True
-                    download_link = download_request_response['output_zipfile']
-                    hs_res_downloadfile = download_request_response['output_json_string']['hs_res_id_created']
-
-
-            except Exception, e:
-                print 'The downloading-files step gave error'
-                f = file('error_auto.html', 'w')
-                f.write(str(e))
-                f.close()
-
-                if download_choice != None:
-                    print 'Error: ', e
-                    stop
-
-                # # Method (1), STEP (1): get input dictionary from request ( request I)
-                inputs_dictionary = app_utils.create_model_input_dict_from_request(request)
-                test_string =  str("Prepared  Values: ")+str(inputs_dictionary)
-                simulation_name = inputs_dictionary['simulation_name']
-                print "MSG: Inputs from user read"
-
-                # # read shp. Not sure if this is needed
-                # try:
-                #     outlet_shp = request.FILES['outlet_shp']
-                #     watershed_upload = request.FILES['watershed_upload']
-                #
-                #     print "MSG: Shapefile from user read"
-                # except:
-                #     pass
-
-
-                # # Method (1), STEP (2):call_runpytopkapi function
-
-                ######### START: need to get two variables: i) hs_resource_id_created, and ii) hydrograph series ###############
-                # response_JSON_file = '/home/prasanna/tethysdev/hydrologic_modeling/tethysapp/hydrologic_modeling/workspaces/user_workspaces/16ea0402dd4c403bbb4e5b23ed597728/pytopkpai_responseJSON.txt'
-                response_JSON_file =  app_utils.call_runpytopkapi(inputs_dictionary= inputs_dictionary)
-
-                json_data = app_utils.read_data_from_json(response_JSON_file)
-
-                print 'MSG: Prepared Simulation Hydrograph ...'
-
-                hs_resource_id_created = json_data['hs_res_id_created']
-                hydrograph_series_obs = json_data['hydrograph_series_obs']
-                hydrograph_series_sim = json_data['hydrograph_series_sim']
-                
-                                        
-                eta =  json_data['eta']
-                vo = json_data['vo']
-                vc = json_data['vc']
-                vs = json_data['vs']
-                ppt= json_data['ppt']
-
-                ppt_cum = json_data['ppt_cum']  # cumulative
-                eta_cum = json_data['eta_cum']
-                q_obs_cum = json_data['q_obs_cum']
-                q_sim_cum = json_data['q_sim_cum']
-
-                # initial values
-                # calib_parameter= {"fac_l": 1.0, "fac_n_o": 1.0, "fac_n_c": 1.0, "fac_th_s": 1.0, "fac_ks": 1.0},
-                # numeric_param= {"pvs_t0": 50, "vo_t0": 750.0, "qc_t0": 0.0, "kc": 1.0},
-                if json_data['calib_parameter'] != None:
-                    fac_L_init = json_data['calib_parameter']['fac_l']
-                    fac_Ks_init = json_data['calib_parameter']['fac_ks']
-                    fac_n_o_init = json_data['calib_parameter']['fac_n_o']
-                    fac_n_c_init = json_data['calib_parameter']['fac_n_c']
-                    fac_th_s_init = json_data['calib_parameter']['fac_th_s']
-                if json_data['numeric_param'] != None:
-                    pvs_t0_init = json_data['numeric_param']['pvs_t0']
-                    vo_t0_init = json_data['numeric_param']['vo_t0']
-                    qc_t0_init = json_data['numeric_param']['qc_t0']
-                    kc_init = json_data['numeric_param']['kc']
-
-                print '*****************', hs_resource_id_created
-                # print [i[-1] for i in hydrograph_series_sim]
-                # hydrograph_series_obs = np.nan_to_num(hydrograph_series_obs).tolist()
-
-                # replace nan values to 0 because Tethys timeseries cannot display nan
-                hydrograph_series_obs = [[item[0], 0] if np.isnan(item[-1]) else item for item in hydrograph_series_obs]
-
-
                 try:
-                    try:
-                        data_qsim_qobs = zip([i[0] for i in hydrograph_series_sim], [i[-1] for i in hydrograph_series_sim],
-                                        [i[-1] for i in hydrograph_series_obs])
-                    except:
-                        data_qsim_qobs = zip([i[0] for i in hydrograph_series_sim], [i[-1] for i in hydrograph_series_sim])
-                        
-                    # Writing to model_inputs_table
-                    current_model_inputs_table_id = app_utils.write_to_model_input_table(inputs_dictionary=inputs_dictionary, hs_resource_id= hs_resource_id_created)
+                    data_qsim_qobs = zip([i[0] for i in hydrograph_series_sim], [i[-1] for i in hydrograph_series_sim],
+                                    [i[-1] for i in hydrograph_series_obs])
+                except:
+                    data_qsim_qobs = zip([i[0] for i in hydrograph_series_sim], [i[-1] for i in hydrograph_series_sim])
 
-                    # Writing to model_calibraiton_table (Because it is first record of the simulation)
-                    # IF the model did not run, or if user just wants the files, we don't write to calibration table
-                    current_model_calibration_table_id = app_utils.write_to_model_calibration_table( model_input_table_id=current_model_inputs_table_id,
-                                                                                 numeric_parameters_list=[pvs_t0_init, vo_t0_init,qc_t0_init, kc_init],
-                                                                                 calibration_parameters_list=[fac_L_init,fac_Ks_init, fac_n_o_init,fac_n_c_init,fac_th_s_init])
+                # Writing to model_inputs_table
+                current_model_inputs_table_id = app_utils.write_to_model_input_table(inputs_dictionary=inputs_dictionary, hs_resource_id= hs_resource_id_created)
 
-                    # Writing to model_result_table
-                    current_model_result_table_id = app_utils.write_to_model_result_table(model_calibration_table_id=current_model_calibration_table_id,
-                                                                                 timeseries_discharge_list=data_qsim_qobs)
-                except Exception, e:
-                    print "Error ---> Writing to DB", e
+                # Writing to model_calibraiton_table (Because it is first record of the simulation)
+                # IF the model did not run, or if user just wants the files, we don't write to calibration table
+                current_model_calibration_table_id = app_utils.write_to_model_calibration_table( model_input_table_id=current_model_inputs_table_id,
+                                                                             numeric_parameters_list=[pvs_t0_init, vo_t0_init,qc_t0_init, kc_init],
+                                                                             calibration_parameters_list=[fac_L_init,fac_Ks_init, fac_n_o_init,fac_n_c_init,fac_th_s_init])
 
+                # Writing to model_result_table
+                current_model_result_table_id = app_utils.write_to_model_result_table(model_calibration_table_id=current_model_calibration_table_id,
+                                                                             timeseries_discharge_list=data_qsim_qobs)
+            except Exception, e:
+                print "Error ---> Writing to DB", e
 
 
 
-                observed_hydrograph3 = TimeSeries(
-                    height='300px', width='500px', engine='highcharts',
-                    title="Simulated and Observed Hydrographs",
-                    subtitle='Nash value: %s, R2: %s'%(json_data['nash_value'], json_data['r2_value']),
-                    y_axis_title='Discharge ',
-                    y_axis_units='cfs',
-                    series=[{
-                        'name': 'Simulated Hydrograph',
-                        'data': hydrograph_series_sim,
-                        'fillOpacity': hydrograph_opacity,
-                    }, {
-                        'name': 'Observed Hydrograph',
-                        'data': hydrograph_series_obs,
-                        'fillOpacity': hydrograph_opacity,
-                    }])
+
+            observed_hydrograph3 = TimeSeries(
+                height='300px', width='500px', engine='highcharts',
+                title="Simulated and Observed Hydrographs",
+                subtitle='Nash value: %s, R2: %s'%(json_data['nash_value'], json_data['r2_value']),
+                y_axis_title='Discharge ',
+                y_axis_units='cfs',
+                series=[{
+                    'name': 'Simulated Hydrograph',
+                    'data': hydrograph_series_sim,
+                    'fillOpacity': hydrograph_opacity,
+                }, {
+                    'name': 'Observed Hydrograph',
+                    'data': hydrograph_series_obs,
+                    'fillOpacity': hydrograph_opacity,
+                }])
 
 
-                vol_bal_graphs = TimeSeries(
-                    height='600px',  width='500px', engine='highcharts',
-                    title="Cumulative volume of water in the basin",
-                    y_axis_title='Volume of water ',
-                    y_axis_units='mm',
-                    series=[{
-                        'name': 'Simulated Q',
-                        'data': q_sim_cum,
-                        'fillOpacity': hydrograph_opacity,
-                    }, {
-                        'name': 'Observed Q',
-                        'data': q_obs_cum,
-                        'fillOpacity': hydrograph_opacity,
-                    },{
-                        'name': 'ETa',
-                        'data': eta_cum,
-                        'fillOpacity': hydrograph_opacity,
-                    } , {
-                        'name': 'PPT',
-                        'data': ppt_cum,
-                        'fillOpacity': hydrograph_opacity,
-                    }
-                    ])
+            vol_bal_graphs = TimeSeries(
+                height='600px',  width='500px', engine='highcharts',
+                title="Cumulative volume of water in the basin",
+                y_axis_title='Volume of water ',
+                y_axis_units='mm',
+                series=[{
+                    'name': 'Simulated Q',
+                    'data': q_sim_cum,
+                    'fillOpacity': hydrograph_opacity,
+                }, {
+                    'name': 'Observed Q',
+                    'data': q_obs_cum,
+                    'fillOpacity': hydrograph_opacity,
+                },{
+                    'name': 'ETa',
+                    'data': eta_cum,
+                    'fillOpacity': hydrograph_opacity,
+                } , {
+                    'name': 'PPT',
+                    'data': ppt_cum,
+                    'fillOpacity': hydrograph_opacity,
+                }
+                ])
 
-                eta_ts_obj =app_utils.create_1d(timeseries_list=eta, label='Actual Evapotranspiration', unit='mm/day')
-                vc_ts_obj = app_utils.create_1d(timeseries_list=vc, label='Average Water Volume in Channel Cells', unit='mm/day')
-                vs_ts_obj = app_utils.create_1d(timeseries_list=vs, label='Average Water Volume in Soil Cells', unit='mm/day')
-                vo_ts_obj = app_utils.create_1d(timeseries_list=vo, label='Average Water Volume in Overland Cells', unit='mm/day')
-                ppt_ts_obj = app_utils.create_1d(timeseries_list=ppt, label='Rainfall', unit='mm/day')
+            eta_ts_obj =app_utils.create_1d(timeseries_list=eta, label='Actual Evapotranspiration', unit='mm/day')
+            vc_ts_obj = app_utils.create_1d(timeseries_list=vc, label='Average Water Volume in Channel Cells', unit='mm/day')
+            vs_ts_obj = app_utils.create_1d(timeseries_list=vs, label='Average Water Volume in Soil Cells', unit='mm/day')
+            vo_ts_obj = app_utils.create_1d(timeseries_list=vo, label='Average Water Volume in Overland Cells', unit='mm/day')
+            ppt_ts_obj = app_utils.create_1d(timeseries_list=ppt, label='Rainfall', unit='mm/day')
 
 
 
